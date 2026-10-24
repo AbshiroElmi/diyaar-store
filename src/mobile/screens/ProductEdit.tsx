@@ -90,7 +90,7 @@ export default function ProductEditScreen() {
           <div className="flex flex-col items-center pt-5">
             <div className="relative">
               <ProductArt category={form.category} image={product?.image} className="h-24 w-24 rounded-3xl" emojiClassName="text-[52px]" />
-              <span className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white shadow-lg ring-4 ring-[#efeff4] dark:ring-black">
+              <span className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white shadow-lg ring-4 ring-[#f7f9f9] dark:ring-black">
                 <Camera className="h-4 w-4" />
               </span>
             </div>

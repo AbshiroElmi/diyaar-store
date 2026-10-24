@@ -54,8 +54,11 @@ export default function HomeScreen() {
   return (
     <Screen title="Home" bare tabbar onRefresh={() => qc.invalidateQueries()}>
       {/* ── Brand header ───────────────────────────────── */}
-      <div className="bg-[#219186] px-4 pb-4 pt-[calc(env(safe-area-inset-top)+10px)] text-white">
-        <div className="flex items-start gap-3">
+      <div className="relative overflow-hidden rounded-b-[28px] bg-gradient-to-br from-[#3fd0bd] via-[#219186] to-[#0f4f48] px-4 pb-5 shadow-[0_12px_30px_-14px_rgba(33,145,134,0.55)] pt-[calc(env(safe-area-inset-top)+10px)] text-white">
+        {/* soft glows on the gradient */}
+        <span className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-[#BEFF00]/20 blur-3xl" />
+        <span className="pointer-events-none absolute -bottom-24 -left-16 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
+        <div className="relative flex items-start gap-3">
           <button onClick={() => go("/store")} className="min-w-0 flex-1 text-left">
             <p className="text-[12px] font-bold uppercase tracking-wider text-white/75">Diyaar Store</p>
             <p className="mt-0.5 truncate text-[22px] font-extrabold leading-tight tracking-tight">{open ? (store?.busy_mode ? "Busy right now" : "Open for orders") : "Store is closed"}</p>
@@ -66,7 +69,7 @@ export default function HomeScreen() {
           </button>
           <button onClick={() => go("/notifications")} className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15" aria-label="Notifications">
             <Bell className="h-5 w-5" />
-            {!!notifications?.unread && <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-[#BEFF00] ring-2 ring-[#219186]" />}
+            {!!notifications?.unread && <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-[#BEFF00] ring-2 ring-[#1d8278]" />}
           </button>
           <button onClick={() => go("/store")} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[13px] font-extrabold text-[#219186]">
             {store ? initials(store.store_name) : ""}
@@ -74,7 +77,7 @@ export default function HomeScreen() {
         </div>
 
         {/* Prep time · rating · online switch */}
-        <div className="mt-3 flex items-center gap-2">
+        <div className="relative mt-3 flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/15 px-2.5 py-1.5 text-[13px] font-bold">
             <Clock className="h-4 w-4" /> {store?.preparation_time ?? "–"} min prep
           </span>
@@ -94,7 +97,7 @@ export default function HomeScreen() {
         </div>
 
         {/* Search */}
-        <button onClick={() => go("/orders?tab=history")} className="mt-3 flex h-11 w-full items-center gap-2.5 rounded-xl bg-white px-3.5 text-left text-[15px] text-black/45 shadow-sm">
+        <button onClick={() => go("/orders?tab=history")} className="relative mt-3 flex h-11 w-full items-center gap-2.5 rounded-xl bg-white px-3.5 text-left text-[15px] text-black/45 shadow-sm">
           <Search className="h-5 w-5 text-black/60" />
           Search orders, customers…
         </button>
