@@ -20,8 +20,6 @@ interface ScreenProps {
   subtitle?: ReactNode;
   /** Show a back button (pushed screens). */
   back?: boolean;
-  /** iOS large title (tab root screens). */
-  large?: boolean;
   right?: ReactNode;
   subnavbar?: ReactNode;
   /** Leave space for the tab bar at the bottom. */
@@ -33,7 +31,7 @@ interface ScreenProps {
   bare?: boolean;
 }
 
-export function Screen({ title, subtitle, back, large, right, subnavbar, tabbar, onRefresh, children, footer, bare }: ScreenProps) {
+export function Screen({ title, subtitle, back, right, subnavbar, tabbar, onRefresh, children, footer, bare }: ScreenProps) {
   const navigate = useNavigate();
   const ios = useIsIos();
   return (
@@ -42,8 +40,6 @@ export function Screen({ title, subtitle, back, large, right, subnavbar, tabbar,
       <Navbar
         title={title}
         subtitle={subtitle}
-        large={large && ios}
-        transparent={large && ios}
         centerTitle={ios}
         left={
           back ? (

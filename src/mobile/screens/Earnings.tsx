@@ -18,7 +18,7 @@ export default function EarningsScreen() {
   const processing = data?.payouts[0]?.status === "processing";
 
   return (
-    <Screen title="Earnings" large tabbar onRefresh={refetch}>
+    <Screen title="Earnings" tabbar onRefresh={refetch}>
       {error ? (
         <ErrorBlock error={error} onRetry={refetch} />
       ) : isLoading || !data || !s ? (

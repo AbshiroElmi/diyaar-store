@@ -206,7 +206,6 @@ export default function OrdersScreen() {
   return (
     <Screen
       title="Orders"
-      large
       tabbar
       onRefresh={refetch}
       subnavbar={
