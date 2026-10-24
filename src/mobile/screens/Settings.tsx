@@ -17,6 +17,10 @@ import { ActionItem, Actions, IconTile, Loading, Screen } from "../ui";
 
 const LANG = { en: "English", so: "Soomaali", ar: "العربية" } as const;
 
+// The login background comes from the Diyaar API for now, so the store can't change it here.
+// Set to true to bring the "Login background" setting back.
+const SHOW_LOGIN_BACKGROUND = false;
+
 export default function SettingsScreen() {
   const { data } = useSettings();
   const update = useUpdateSettings();
@@ -80,7 +84,7 @@ export default function SettingsScreen() {
           <BlockTitle>App</BlockTitle>
           <List strong inset dividers>
             <ListItem link media={<IconTile icon={Moon} className="bg-[#5856d6]" />} title="Appearance" after={theme === "dark" ? "Dark" : theme === "system" ? "Automatic" : "Light"} onClick={() => setSheet("theme")} />
-            <ListItem link media={<IconTile icon={Clapperboard} className="bg-[#ff2d55]" />} title="Login background" after={loginBg.media ? (loginBg.media.kind === "video" ? "Your video" : "Your photo") : "Default"} onClick={() => setSheet("loginBg")} />
+            {SHOW_LOGIN_BACKGROUND && (<ListItem link media={<IconTile icon={Clapperboard} className="bg-[#ff2d55]" />} title="Login background" after={loginBg.media ? (loginBg.media.kind === "video" ? "Your video" : "Your photo") : "Default"} onClick={() => setSheet("loginBg")} />)}
             <ListItem link media={<IconTile icon={Globe} className="bg-[#007aff]" />} title="Language" after={LANG[s.language]} onClick={() => setSheet("language")} />
             {isMockApi && <ListItem link media={<IconTile icon={Database} className="bg-[#8e8e93]" />} title="Reset demo data" onClick={() => setSheet("reset")} />}
           </List>
@@ -137,7 +141,7 @@ export default function SettingsScreen() {
 
       <input ref={videoRef} type="file" accept="video/*" className="hidden" onChange={pickBg} />
       <input ref={photoRef} type="file" accept="image/*" className="hidden" onChange={pickBg} />
-      <Actions opened={sheet === "loginBg"} onBackdropClick={() => setSheet(null)}>
+      <Actions opened={SHOW_LOGIN_BACKGROUND && sheet === "loginBg"} onBackdropClick={() => setSheet(null)}>
         <ActionsGroup>
           {/* live preview of the login hero */}
           <div className="relative h-40 overflow-hidden bg-black">

@@ -369,6 +369,10 @@ function BannerEditor({ editing, onClose }: { editing: Banner | "new" | null; on
   );
 }
 
+// The live API can only list banners for now (no create/update/delete endpoints yet),
+// so editing is switched off. Set to true once those endpoints exist.
+const CAN_EDIT_BANNERS = false;
+
 export default function BannersScreen() {
   const { data, isLoading, error, refetch } = useBanners();
   const save = useSaveBanner();
@@ -394,9 +398,11 @@ export default function BannersScreen() {
       tabbar
       onRefresh={refetch}
       right={
-        <KLink navbar iconOnly onClick={() => setEditing("new")}>
-          <Plus className="h-7 w-7" />
-        </KLink>
+        CAN_EDIT_BANNERS && (
+          <KLink navbar iconOnly onClick={() => setEditing("new")}>
+            <Plus className="h-7 w-7" />
+          </KLink>
+        )
       }
     >
       {error ? (
@@ -409,9 +415,11 @@ export default function BannersScreen() {
           title="No banners yet"
           text="Banners slide across the top of Home. Use them to push a deal or a new dish."
           action={
-            <button className="font-semibold text-primary" onClick={() => setEditing("new")}>
-              Create a banner
-            </button>
+            CAN_EDIT_BANNERS && (
+              <button className="font-semibold text-primary" onClick={() => setEditing("new")}>
+                Create a banner
+              </button>
+            )
           }
         />
       ) : (
@@ -421,25 +429,27 @@ export default function BannersScreen() {
               const hidden = b.is_active === 0;
               return (
                 <div key={b.name}>
-                  <BannerCard banner={b} onClick={() => setSelected(b)} className={cn(hidden && "opacity-45 grayscale")} />
+                  <BannerCard banner={b} onClick={CAN_EDIT_BANNERS ? () => setSelected(b) : undefined} className={cn(hidden && "opacity-45 grayscale", !CAN_EDIT_BANNERS && "active:scale-100")} />
                   <div className="mt-2 flex items-center gap-2 px-1">
                     <span className={cn("rounded-md px-1.5 text-[11px] font-bold uppercase leading-[18px]", hidden ? "bg-black/[0.06] text-black/50 dark:bg-white/10 dark:text-white/55" : "bg-primary/10 text-primary")}>
                       {hidden ? "Hidden" : "Showing"}
                     </span>
                     <span className="truncate text-[12.5px] text-black/45 dark:text-white/50">Opens {describeLink(b.link, products?.data)}</span>
                     <span className="ml-auto">
-                      <Toggle checked={!hidden} onChange={() => save.mutate({ id: b.name, data: { is_active: hidden ? 1 : 0 }, silent: true })} />
+                      {CAN_EDIT_BANNERS && <Toggle checked={!hidden} onChange={() => save.mutate({ id: b.name, data: { is_active: hidden ? 1 : 0 }, silent: true })} />}
                     </span>
                   </div>
                 </div>
               );
             })}
           </div>
-          <p className="px-5 pb-2 pt-5 text-[13px] leading-snug text-black/45 dark:text-white/50">Tap a banner to edit, reorder or delete it. Switch one off to hide it from Home without losing it.</p>
+          <p className="px-5 pb-2 pt-5 text-[13px] leading-snug text-black/45 dark:text-white/50">
+            {CAN_EDIT_BANNERS ? "Tap a banner to edit, reorder or delete it. Switch one off to hide it from Home without losing it." : "These are the banners showing on your Home. Contact Diyaar to change them."}
+          </p>
         </>
       )}
 
-      <BannerEditor editing={editing} onClose={() => setEditing(null)} />
+      {CAN_EDIT_BANNERS && <BannerEditor editing={editing} onClose={() => setEditing(null)} />}
 
       <Actions opened={!!selected} onBackdropClick={() => setSelected(null)}>
         <ActionsGroup>

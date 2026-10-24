@@ -95,6 +95,7 @@ export function AssignDriverSheet({ order, onClose }: { order: Order | null; onC
           </div>
         )}
 
+        {/* Drivers come from the API, so there's no drivers page to link to for now.
         <button
           type="button"
           onClick={() => {
@@ -109,6 +110,7 @@ export function AssignDriverSheet({ order, onClose }: { order: Order | null; onC
           <span className="flex-1 text-[15px] font-bold">See all drivers</span>
           <ChevronRight className="h-5 w-5" />
         </button>
+        */}
 
         {order?.driver_phone && (
           <a href={`tel:${order.driver_phone}`} className="mt-2 flex items-center justify-center gap-1.5 py-2 text-[14px] font-semibold text-primary">

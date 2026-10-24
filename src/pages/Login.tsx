@@ -19,7 +19,11 @@ const RESEND_SECONDS = 30;
 
 export default function LoginPage() {
   const { requestOtp, verifyOtp } = useAuth();
-  const { media: customBg, ready: bgReady } = useLoginMedia();
+  // Custom backgrounds are switched off for now (the API will provide it); always use the built-in loop.
+  const SHOW_CUSTOM_BACKGROUND = false;
+  const login = useLoginMedia();
+  const customBg = SHOW_CUSTOM_BACKGROUND ? login.media : null;
+  const bgReady = SHOW_CUSTOM_BACKGROUND ? login.ready : true;
   const { resolvedTheme } = useTheme();
   const [step, setStep] = useState<"phone" | "otp">("phone");
   const [phone, setPhone] = useState(isMockApi ? "613187029" : "");

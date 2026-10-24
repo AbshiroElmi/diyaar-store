@@ -8,8 +8,7 @@ import {
   Bell,
   Clock,
   // FolderTree, // Categories hidden for now
-  GalleryHorizontal,
-  Bike,
+  // GalleryHorizontal, Bike — used by the hidden banners/drivers menu entries
   Headphones,
   LayoutGrid,
   LogOut,
@@ -40,8 +39,9 @@ import EarningsScreen from "./screens/Earnings";
 import ReportsScreen from "./screens/Reports";
 import ReviewsScreen from "./screens/Reviews";
 import PromotionsScreen from "./screens/Promotions";
-import BannersScreen from "./screens/Banners";
-import DriversScreen from "./screens/Drivers";
+// Banners and drivers come from the Diyaar API; the store can't create them, so these screens are hidden for now.
+// import BannersScreen from "./screens/Banners";
+// import DriversScreen from "./screens/Drivers";
 // Categories hidden for now — products only.
 // import CategoriesScreen from "./screens/Categories";
 import StoreProfileScreen from "./screens/StoreProfile";
@@ -89,7 +89,7 @@ const MENU: Array<{ title: string; items: MenuEntry[] }> = [
       { href: "/reports", label: "Reports", icon: BarChart3, tint: "bg-[#007aff]" },
       { href: "/reviews", label: "Reviews", icon: Star, tint: "bg-[#ff9500]", badge: "reviews" },
       { href: "/promotions", label: "Promotions", icon: Megaphone, tint: "bg-[#ff2d55]" },
-      { href: "/banners", label: "Home banners", icon: GalleryHorizontal, tint: "bg-[#34c759]" },
+      // { href: "/banners", label: "Home banners", icon: GalleryHorizontal, tint: "bg-[#34c759]" }, // banners come from the API
       // { href: "/categories", label: "Categories", icon: FolderTree, tint: "bg-[#5856d6]" },
     ],
   },
@@ -99,7 +99,7 @@ const MENU: Array<{ title: string; items: MenuEntry[] }> = [
       { href: "/store", label: "Store Profile", icon: Store, tint: "bg-[#219186]" },
       { href: "/hours", label: "Opening Hours", icon: Clock, tint: "bg-[#34c759]" },
       { href: "/team", label: "Team", icon: Users, tint: "bg-[#5ac8fa]" },
-      { href: "/drivers", label: "Delivery drivers", icon: Bike, tint: "bg-[#ff9500]" },
+      // { href: "/drivers", label: "Delivery drivers", icon: Bike, tint: "bg-[#ff9500]" }, // drivers come from the API
     ],
   },
   {
@@ -386,12 +386,12 @@ export default function MobileApp() {
         <Route path="reports" element={<ReportsScreen />} />
         <Route path="reviews" element={<ReviewsScreen />} />
         <Route path="promotions" element={<PromotionsScreen />} />
-        <Route path="banners" element={<BannersScreen />} />
+        {/* <Route path="banners" element={<BannersScreen />} /> */}
         {/* <Route path="categories" element={<CategoriesScreen />} /> */}
         <Route path="store" element={<StoreProfileScreen />} />
         <Route path="hours" element={<HoursScreen />} />
         <Route path="team" element={<TeamScreen />} />
-        <Route path="drivers" element={<DriversScreen />} />
+        {/* <Route path="drivers" element={<DriversScreen />} /> */}
         <Route path="notifications" element={<NotificationsScreen />} />
         <Route path="support" element={<SupportScreen />} />
         <Route path="support/:id" element={<TicketScreen />} />
