@@ -66,12 +66,12 @@ function AppToaster() {
         unstyled: true,
         classNames: {
           toast:
-            "w-full flex items-center gap-3 rounded-xl bg-white/15 px-4 py-3.5 font-sans shadow-[0_8px_24px_-8px_rgba(0,0,0,0.15)] ring-1 ring-white/20 backdrop-blur-xl",
+            "w-full flex items-center gap-3 rounded-xl bg-white/95 px-4 py-3.5 font-sans shadow-[0_8px_24px_-8px_rgba(0,0,0,0.2)] ring-1 ring-black/5 backdrop-blur-xl dark:bg-[#2c2c2e]/95 dark:ring-white/10",
           content: "min-w-0",
-          title: "text-[14px] font-semibold leading-tight text-white",
-          description: "mt-0.5 text-[12px] leading-tight text-white/75",
-          icon: "flex h-[18px] w-[18px] shrink-0 items-center justify-center text-white",
-          actionButton: "ml-auto shrink-0 rounded-lg bg-white/20 px-3 py-1.5 text-[12px] font-semibold text-white",
+          title: "text-[14px] font-semibold leading-tight text-[#1c1c1e] dark:text-white",
+          description: "mt-0.5 text-[12px] leading-tight text-black/55 dark:text-white/60",
+          icon: "flex h-[18px] w-[18px] shrink-0 items-center justify-center",
+          actionButton: "ml-auto shrink-0 rounded-lg bg-primary px-3 py-1.5 text-[12px] font-semibold text-white",
         },
       }}
     />

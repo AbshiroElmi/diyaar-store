@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { useTheme } from "next-themes";
@@ -30,7 +30,8 @@ export default function HomeScreen() {
   const { resolvedTheme } = useTheme();
   const { data, isLoading, error, refetch } = useDashboard();
   const { data: banners } = useBanners();
-  const { data: categories } = useCategories();
+  const { data: allCategories } = useCategories();
+  const categories = allCategories?.filter((c) => c.is_active);
   const { data: store } = useStore();
   const { data: products } = useProducts();
   const categoryOf = (id: string) => products?.data.find((x) => x.name === id)?.category ?? "";
@@ -48,9 +49,54 @@ export default function HomeScreen() {
   }, [resolvedTheme]);
 
   const open = !!store?.is_open;
+  const toggleOpen = () => {
+    haptic.press();
+    setOpen.mutate(!open);
+  };
+
+  // Once the search bar scrolls under the status bar, slide in the compact header.
+  const searchRef = useRef<HTMLButtonElement>(null);
+  const [collapsed, setCollapsed] = useState(false);
+  useEffect(() => {
+    const el = searchRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => setCollapsed(!e.isIntersecting && e.boundingClientRect.top < 100), { rootMargin: "-100px 0px 0px 0px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   return (
     <Screen title="Home" bare tabbar>
+      {/* ── Compact sticky header (appears on scroll) ─────── */}
+      <div
+        aria-hidden={!collapsed}
+        className={cn(
+          "fixed inset-x-0 top-0 z-40 bg-gradient-to-r from-[#219186] to-[#0f4f48] px-4 pb-2.5 pt-[calc(env(safe-area-inset-top)+6px)] text-white shadow-[0_8px_24px_-12px_rgba(15,79,72,0.6)] transition-all duration-300 ease-out",
+          collapsed ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-full opacity-0",
+        )}
+      >
+        <div className="flex items-center gap-2.5">
+          <button onClick={() => go("/store")} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[12px] font-extrabold text-[#219186]">
+            {store ? initials(store.store_name) : ""}
+          </button>
+          <button onClick={() => go("/store")} className="min-w-0 flex-1 text-left">
+            <p className="truncate text-[15px] font-extrabold leading-tight">{store?.store_name}</p>
+            <p className="truncate text-[12px] font-medium text-white/80">{open ? (store?.busy_mode ? "Busy right now" : "Open for orders") : "Store is closed"}</p>
+          </button>
+          <button onClick={toggleOpen} className="inline-flex items-center gap-1.5 rounded-lg bg-white/15 px-2.5 py-1.5 text-[12px] font-extrabold active:bg-white/25">
+            <span className={cn("h-2 w-2 rounded-full", open ? "bg-[#BEFF00]" : "bg-[#ff4d4f]")} />
+            {open ? "Open" : "Closed"}
+          </button>
+          <button onClick={() => go("/orders?tab=history")} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15" aria-label="Search">
+            <Search className="h-[18px] w-[18px]" />
+          </button>
+          <button onClick={() => go("/notifications")} className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15" aria-label="Notifications">
+            <Bell className="h-[18px] w-[18px]" />
+            {!!notifications?.unread && <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#BEFF00] ring-2 ring-[#1d8278]" />}
+          </button>
+        </div>
+      </div>
+
       {/* ── Brand header ───────────────────────────────── */}
       <div className="relative overflow-hidden bg-gradient-to-br from-[#3fd0bd] via-[#219186] to-[#0f4f48] px-4 pb-14 pt-[calc(env(safe-area-inset-top)+10px)] text-white">
         {/* bottom of the header fades into the page */}
@@ -85,10 +131,7 @@ export default function HomeScreen() {
             <Star className="h-4 w-4 fill-[#BEFF00] text-[#BEFF00]" /> {store?.rating.toFixed(1) ?? "–"}
           </span>
           <button
-            onClick={() => {
-              haptic.press();
-              setOpen.mutate(!open);
-            }}
+            onClick={toggleOpen}
             className="ml-auto inline-flex items-center gap-2 rounded-lg bg-white/15 px-3 py-1.5 text-[13px] font-extrabold text-white transition-colors active:bg-white/25"
           >
             <span className={cn("h-2 w-2 rounded-full", open ? "bg-[#BEFF00]" : "bg-[#ff4d4f]")} />
@@ -97,7 +140,7 @@ export default function HomeScreen() {
         </div>
 
         {/* Search */}
-        <button onClick={() => go("/orders?tab=history")} className="relative z-10 mt-3 flex h-11 w-full items-center gap-2.5 rounded-xl bg-white px-3.5 text-left text-[15px] text-black/45 shadow-[0_6px_20px_-8px_rgba(15,79,72,0.35)]">
+        <button ref={searchRef} onClick={() => go("/orders?tab=history")} className="relative z-10 mt-3 flex h-11 w-full items-center gap-2.5 rounded-xl bg-white px-3.5 text-left text-[15px] text-black/45 shadow-[0_6px_20px_-8px_rgba(15,79,72,0.35)]">
           <Search className="h-5 w-5 text-black/60" />
           Search orders, customers…
         </button>
@@ -186,7 +229,7 @@ export default function HomeScreen() {
                   const [, emoji, tint] = categoryLook(c.category_name);
                   return (
                     <button key={c.name} onClick={() => go(`/products?category=${encodeURIComponent(c.category_name)}`)} className="flex flex-col items-center gap-1.5 transition-transform active:scale-95">
-                      <span className={cn("flex aspect-square w-full items-center justify-center rounded-xl text-[34px]", tint, !c.is_active && "opacity-40 grayscale")}>{emoji}</span>
+                      <span className={cn("flex aspect-square w-full items-center justify-center rounded-xl text-[34px]", tint)}>{emoji}</span>
                       <span className="line-clamp-2 text-center text-[11px] font-bold leading-tight">{c.category_name}</span>
                     </button>
                   );
