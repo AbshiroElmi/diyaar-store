@@ -80,14 +80,15 @@ export function readProductsCsv(text: string, categories: Category[]): ImportRow
   const [head, ...body] = parseCsv(text);
   if (!head) throw new Error("The file is empty");
   const col = Object.fromEntries(head.map((h, i) => [h.trim().toLowerCase().replace(/\s+/g, "_"), i]));
-  for (const h of ["name", "category", "price"]) if (col[h] === undefined) throw new Error(`Missing “${h}” column`);
+  for (const h of ["name", "price"]) if (col[h] === undefined) throw new Error(`Missing “${h}” column`);
   const get = (r: string[], h: string) => (col[h] === undefined ? "" : (r[col[h]] ?? "").trim());
   const byName = new Map(categories.map((c) => [c.category_name.toLowerCase(), c.category_name]));
 
   return body.map((r, i) => {
     const line = i + 2;
     const name = get(r, "name");
-    const rawCategory = get(r, "category");
+    // Category is optional (categories are hidden for now): blank rows go into the first one.
+    const rawCategory = get(r, "category") || categories[0]?.category_name || "Menu";
     const category = byName.get(rawCategory.toLowerCase()) ?? rawCategory;
     const price = Number(get(r, "price"));
     const sale = get(r, "sale_price") ? Number(get(r, "sale_price")) : undefined;

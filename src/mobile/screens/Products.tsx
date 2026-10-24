@@ -12,6 +12,9 @@ import { haptic } from "@/lib/native";
 import { cn } from "@/lib/utils";
 import { ActionItem, Actions, CARD, Empty, ErrorBlock, FormSheet, Loading, ProductArt, Screen, SearchField } from "../ui";
 
+// Categories are hidden for now — products only. Set to true to bring them back.
+const SHOW_CATEGORIES = false;
+
 function ProductCard({ p }: { p: Product }) {
   const navigate = useNavigate();
   const toggle = useToggleProduct();
@@ -61,7 +64,7 @@ export default function ProductsScreen() {
   const debounced = useDebounce(search, 250);
   const { data: categories } = useCategories();
   const { data: all } = useProducts();
-  const { data, isLoading, error, refetch } = useProducts({ search: debounced || undefined, category: category === "all" ? undefined : category });
+  const { data, isLoading, error, refetch } = useProducts({ search: debounced || undefined, category: !SHOW_CATEGORIES || category === "all" ? undefined : category });
 
   // Keep the rail pinned just under the navbar (its height differs on iOS / Material).
   const railRef = useRef<HTMLElement>(null);
@@ -124,7 +127,8 @@ export default function ProductsScreen() {
       }
     >
       <div className="flex">
-        {/* Category rail (Blinkit-style) */}
+        {/* Category rail (Blinkit-style) — hidden while SHOW_CATEGORIES is off */}
+        {SHOW_CATEGORIES && (
         <nav ref={railRef} style={{ top: railTop }} className="sticky w-[78px] shrink-0 self-start border-r border-black/[0.06] bg-white pb-28 dark:border-white/10 dark:bg-[#111]">
           {rail.map((c) => {
             const active = (c.name === "all" ? "all" : c.category_name) === category;
@@ -137,6 +141,7 @@ export default function ProductsScreen() {
             );
           })}
         </nav>
+        )}
 
         {/* Product grid */}
         <div className="min-w-0 flex-1 p-2.5">
@@ -149,7 +154,7 @@ export default function ProductsScreen() {
           ) : (
             <>
               <p className="px-1 pb-2 text-[13px] font-extrabold">
-                {category === "all" ? "All items" : category} <span className="font-semibold text-black/40 dark:text-white/40">· {data.total}</span>
+                {!SHOW_CATEGORIES || category === "all" ? "All items" : category} <span className="font-semibold text-black/40 dark:text-white/40">· {data.total}</span>
               </p>
               <div className="grid grid-cols-2 gap-2">
                 {data.data.map((p) => (

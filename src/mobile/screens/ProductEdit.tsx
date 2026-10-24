@@ -20,6 +20,9 @@ interface Form {
   image: string;
 }
 
+// Categories are hidden for now — products only. Set to true to bring them back.
+const SHOW_CATEGORIES = false;
+
 export default function ProductEditScreen() {
   const { id } = useParams();
   const isNew = !id;
@@ -134,6 +137,7 @@ export default function ProductEditScreen() {
           <List strongIos insetIos>
             <ListInput label="Name" type="text" placeholder="e.g. Chicken Shawarma" value={form.product_name} onInput={(e: React.ChangeEvent<HTMLInputElement>) => set("product_name", e.target.value)} />
             <ListInput label="Description" type="textarea" placeholder="What's in it?" inputClassName="!h-20 resize-none" value={form.description} onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) => set("description", e.target.value)} />
+            {SHOW_CATEGORIES && (
             <ListItem
               link
               chevron={false}
@@ -146,6 +150,7 @@ export default function ProductEditScreen() {
               title={form.category || "Choose a category"}
               after={<ChevronDown className="h-5 w-5 text-black/35 dark:text-white/35" />}
             />
+            )}
           </List>
 
           <BlockTitle>Price</BlockTitle>
@@ -177,7 +182,7 @@ export default function ProductEditScreen() {
             </List>
           )}
 
-          <Sheet opened={pickingCategory} onBackdropClick={() => setPickingCategory(false)} className="w-full rounded-t-[22px] pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
+          <Sheet opened={SHOW_CATEGORIES && pickingCategory} onBackdropClick={() => setPickingCategory(false)} className="w-full rounded-t-[22px] pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
             <div className="mx-auto mt-2.5 h-1.5 w-10 rounded-full bg-black/15 dark:bg-white/20" />
             <p className="px-5 pb-3 pt-3 text-center text-[17px] font-bold">Choose a category</p>
             <div className="grid grid-cols-3 gap-2.5 px-4">

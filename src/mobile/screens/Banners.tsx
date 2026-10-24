@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
-import { ArrowDown, ArrowUp, Camera, Check, Eye, EyeOff, FolderOpen, GalleryHorizontal, Globe, LayoutGrid, Package, Pencil, Plus, Search, Smile, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Camera, Check, Eye, EyeOff, GalleryHorizontal, Globe, LayoutGrid, Package, Pencil, Plus, Search, Smile, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { ActionsGroup, ActionsLabel, BlockFooter, Link as KLink, List, ListInput, Toggle } from "konsta/react";
+import { ActionsGroup, ActionsLabel, Link as KLink, List, ListInput, Toggle } from "konsta/react";
 import { useBanners, useCategories, useDeleteBanner, useProducts, useSaveBanner } from "@/hooks/queries";
 import type { Banner, Product } from "@/api";
 import { haptic } from "@/lib/native";
@@ -28,7 +28,7 @@ type LinkKind = "page" | "product" | "category" | "web";
 const LINK_KINDS: Array<{ value: LinkKind; label: string; icon: typeof Globe }> = [
   { value: "page", label: "Page", icon: LayoutGrid },
   { value: "product", label: "Product", icon: Package },
-  { value: "category", label: "Category", icon: FolderOpen },
+  // { value: "category", label: "Category", icon: FolderOpen }, // categories hidden for now
   { value: "web", label: "Website", icon: Globe },
 ];
 
@@ -237,7 +237,7 @@ function BannerEditor({ editing, onClose }: { editing: Banner | "new" | null; on
       </List>
 
       <p className="px-5 pb-2 pt-5 text-[13px] font-bold uppercase tracking-wide text-black/45 dark:text-white/50">When tapped, open</p>
-      <div className="mx-4 grid grid-cols-4 gap-1 rounded-xl bg-primary/[0.08] p-1">
+      <div className="mx-4 grid grid-cols-3 gap-1 rounded-xl bg-primary/[0.08] p-1">
         {LINK_KINDS.map((k) => (
           <button
             key={k.value}
@@ -435,7 +435,7 @@ export default function BannersScreen() {
               );
             })}
           </div>
-          <BlockFooter>Tap a banner to edit, reorder or delete it. Switch one off to hide it from Home without losing it.</BlockFooter>
+          <p className="px-5 pb-2 pt-5 text-[13px] leading-snug text-black/45 dark:text-white/50">Tap a banner to edit, reorder or delete it. Switch one off to hide it from Home without losing it.</p>
         </>
       )}
 

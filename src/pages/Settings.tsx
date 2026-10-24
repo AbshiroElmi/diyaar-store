@@ -176,8 +176,7 @@ export default function Settings() {
         confirmLabel="Reset"
         destructive
         onConfirm={() => {
-          resetMockDb();
-          window.location.reload();
+          resetMockDb().then(() => window.location.reload());
         }}
       />
     </div>
