@@ -1,6 +1,6 @@
 /**
  * Mock API. One handler per endpoint, backed by an in-memory database
- * that is saved to localStorage so changes survive a page reload.
+ * that is saved to IndexedDB so changes survive a page reload or app restart.
  */
 
 import { ENDPOINTS as E, type Endpoint } from "../endpoints";
@@ -87,17 +87,50 @@ function createDb(): MockDb {
   };
 }
 
-function loadDb(): MockDb {
-  try {
-    const saved = localStorage.getItem(DB_KEY);
-    if (saved) return JSON.parse(saved);
-  } catch {
-    /* corrupted or unavailable — start fresh */
-  }
-  return createDb();
+// Persistence: IndexedDB, because the demo data (orders, photos as data URLs) outgrows
+// localStorage's ~5 MB and saves there start failing silently. localStorage is only read
+// once, to carry over data saved by older builds.
+
+const IDB_NAME = "portal-mock";
+const IDB_STORE = "db";
+
+let conn: Promise<IDBDatabase> | null = null;
+function idb(): Promise<IDBDatabase> {
+  return (conn ??= new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(IDB_STORE);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  }));
 }
 
-let db = loadDb();
+function legacyDb(): MockDb | null {
+  try {
+    const saved = localStorage.getItem(DB_KEY);
+    return saved ? JSON.parse(saved) : null;
+  } catch {
+    return null; // corrupted or unavailable — start fresh
+  }
+}
+
+let db: MockDb = legacyDb() ?? createDb();
+
+/** Resolves once the saved database has been loaded; the mock transport waits on it. */
+export const mockReady: Promise<void> = (async () => {
+  try {
+    const store = await idb();
+    const saved = await new Promise<MockDb | undefined>((resolve, reject) => {
+      const req = store.transaction(IDB_STORE).objectStore(IDB_STORE).get(DB_KEY);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    if (saved) db = saved;
+    else save(); // first run on IndexedDB: move whatever we have across
+    localStorage.removeItem(DB_KEY);
+  } catch {
+    /* IndexedDB unavailable — keep the in-memory copy */
+  }
+})();
 
 /** Home banners; seeded lazily so demo data saved before banners existed still works. */
 function banners(): Banner[] {
@@ -110,17 +143,25 @@ function banners(): Banner[] {
   return db.banners;
 }
 
-function save() {
-  try {
-    localStorage.setItem(DB_KEY, JSON.stringify(db));
-  } catch {
-    /* storage full or unavailable — keep in memory */
-  }
+let saving: Promise<void> | null = null;
+
+/** Persist the database; several changes in the same tick are written once. Resolves when it's on disk. */
+function save(): Promise<void> {
+  return (saving ??= Promise.resolve().then(async () => {
+    saving = null;
+    try {
+      const tx = (await idb()).transaction(IDB_STORE, "readwrite");
+      tx.objectStore(IDB_STORE).put(db, DB_KEY);
+      await new Promise((resolve) => (tx.oncomplete = tx.onerror = tx.onabort = resolve));
+    } catch {
+      /* storage unavailable — keep in memory */
+    }
+  }));
 }
 
 export function resetMockDb() {
   db = createDb();
-  save();
+  return save();
 }
 
 // ── Helpers ─────────────────────────────────────────────────

@@ -6,7 +6,7 @@
 
 import { env, isMockApi } from "@/lib/env";
 import type { Endpoint } from "./endpoints";
-import { mockHandlers } from "./mock/handlers";
+import { mockHandlers, mockReady } from "./mock/handlers";
 
 export class ApiError extends Error {
   constructor(
@@ -59,6 +59,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 async function callMock<T>(endpoint: Endpoint, params: Params): Promise<T> {
   const handler = mockHandlers[endpoint];
   if (!handler) throw new ApiError(`Mock handler missing for "${endpoint}"`, 404, endpoint);
+  await mockReady;
   await sleep(env.mockLatencyMs * (0.6 + Math.random() * 0.8));
   try {
     // Clone so callers can never mutate the mock database by accident.

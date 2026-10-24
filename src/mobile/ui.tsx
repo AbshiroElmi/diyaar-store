@@ -341,7 +341,7 @@ export function FormSheet({
           type="button"
           disabled={!canSave || saving}
           onClick={onSave}
-          className="mr-2 h-9 min-w-[72px] rounded-full bg-primary px-4 text-[15px] font-bold text-white transition-[opacity,transform] active:scale-95 disabled:opacity-35"
+          className="mr-2 h-9 px-2 text-[17px] font-bold text-primary transition-opacity active:opacity-50 disabled:opacity-35"
         >
           {saving ? "…" : saveLabel}
         </button>

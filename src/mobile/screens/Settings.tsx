@@ -218,8 +218,7 @@ export default function SettingsScreen() {
             icon={RotateCcw}
             danger
             onClick={() => {
-              resetMockDb();
-              window.location.reload();
+              resetMockDb().then(() => window.location.reload());
             }}
           >
             Reset demo data
