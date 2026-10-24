@@ -129,7 +129,7 @@ export function IconTile({ icon: Icon, className, size = "md" }: { icon: LucideI
 }
 
 /** Blinkit-style flat card: white, thin border, almost no shadow. */
-export const CARD = "rounded-2xl border border-black/[0.06] bg-white dark:border-white/10 dark:bg-[#1c1c1d]";
+export const CARD = "rounded-xl border border-black/[0.06] bg-white dark:border-white/10 dark:bg-[#1c1c1d]";
 
 export const BRAND = "#219186";
 

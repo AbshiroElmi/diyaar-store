@@ -122,7 +122,7 @@ export default function HomeScreen() {
                 const count = data.today[p.key];
                 const hot = p.key === "confirming" && count > 0;
                 return (
-                  <button key={p.key} onClick={() => go(`/orders?status=${p.key}`)} className={cn("relative flex flex-col items-center rounded-2xl py-3 transition-transform active:scale-95", p.tint, hot && "ring-2 ring-[#e07b00]")}>
+                  <button key={p.key} onClick={() => go(`/orders?status=${p.key}`)} className={cn("relative flex flex-col items-center rounded-xl py-3 transition-transform active:scale-95", p.tint, hot && "ring-2 ring-[#e07b00]")}>
                     {hot && <span className="absolute -top-2 rounded bg-[#e5383b] px-1.5 text-[9px] font-extrabold uppercase leading-[16px] text-white">New</span>}
                     <p.icon className={cn("h-5 w-5", p.fg)} />
                     <span className="tabular mt-1.5 text-[24px] font-extrabold leading-none text-[#1c1c1e]">{count}</span>
@@ -186,7 +186,7 @@ export default function HomeScreen() {
                   const [, emoji, tint] = categoryLook(c.category_name);
                   return (
                     <button key={c.name} onClick={() => go(`/products?category=${encodeURIComponent(c.category_name)}`)} className="flex flex-col items-center gap-1.5 transition-transform active:scale-95">
-                      <span className={cn("flex aspect-square w-full items-center justify-center rounded-2xl text-[34px]", tint, !c.is_active && "opacity-40 grayscale")}>{emoji}</span>
+                      <span className={cn("flex aspect-square w-full items-center justify-center rounded-xl text-[34px]", tint, !c.is_active && "opacity-40 grayscale")}>{emoji}</span>
                       <span className="line-clamp-2 text-center text-[11px] font-bold leading-tight">{c.category_name}</span>
                     </button>
                   );

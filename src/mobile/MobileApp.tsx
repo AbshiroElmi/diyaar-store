@@ -321,7 +321,7 @@ function NewOrdersBar({ count, visible }: { count: number; visible: boolean }) {
             navigate("/orders?status=confirming");
           }}
           className={cn(
-            "fixed inset-x-3 z-30 flex items-center gap-3 rounded-2xl bg-[#219186] px-4 py-3 text-left text-white shadow-[0_10px_30px_-10px_rgba(33,145,134,0.7)] active:scale-[0.98]",
+            "fixed inset-x-3 z-30 flex items-center gap-3 rounded-xl bg-[#219186] px-4 py-3 text-left text-white shadow-[0_10px_30px_-10px_rgba(33,145,134,0.7)] active:scale-[0.98]",
             mobileTheme === "ios" ? "bottom-[calc(env(safe-area-inset-bottom)+62px)]" : "bottom-[calc(env(safe-area-inset-bottom)+90px)]",
           )}
         >
