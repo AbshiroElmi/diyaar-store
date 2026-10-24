@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 const THEMES: Record<Banner["theme"], { bg: string; text: string; cta: string }> = {
   lime: { bg: "from-[#e4ff7a] via-[#cfff3d] to-[#BEFF00]", text: "text-[#2B330F]", cta: "bg-[#2B330F] text-[#BEFF00]" },
-  teal: { bg: "from-[#3cc9b9] via-[#229085] to-[#176c63]", text: "text-white", cta: "bg-white text-[#176c63]" },
+  teal: { bg: "from-[#2aa898] via-[#219186] to-[#19766c]", text: "text-white", cta: "bg-[#BEFF00] text-[#2B330F]" },
   sunset: { bg: "from-[#ffb36b] via-[#ff8a5c] to-[#ff5e7a]", text: "text-white", cta: "bg-white text-[#e8505b]" },
   violet: { bg: "from-[#a99bff] via-[#7f72ff] to-[#5856d6]", text: "text-white", cta: "bg-white text-[#5856d6]" },
   ocean: { bg: "from-[#7fdcff] via-[#3fb0ff] to-[#007aff]", text: "text-white", cta: "bg-white text-[#007aff]" },
@@ -53,7 +53,7 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
         onScroll={onScroll}
         onTouchStart={() => (paused.current = true)}
         onTouchEnd={() => setTimeout(() => (paused.current = false), 3000)}
-        className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto scroll-smooth pb-4"
+        className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto scroll-smooth pb-2.5"
       >
         {banners.map((b) => {
           const t = THEMES[b.theme];
@@ -62,7 +62,7 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
               <button
                 onClick={() => open(b)}
                 className={cn(
-                  "relative flex h-[148px] w-full overflow-hidden rounded-[26px] bg-gradient-to-br p-5 text-left shadow-[0_10px_30px_-12px_rgba(0,0,0,0.25)] transition-transform active:scale-[0.98]",
+                  "relative flex h-[132px] w-full overflow-hidden rounded-2xl bg-gradient-to-br p-4 text-left transition-transform active:scale-[0.98]",
                   t.bg,
                   t.text,
                 )}
@@ -73,9 +73,9 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
                 <span className="pointer-events-none absolute bottom-3 right-4 select-none text-[64px] leading-none drop-shadow-sm">{b.emoji}</span>
 
                 <span className="relative flex max-w-[68%] flex-col">
-                  <span className="text-[19px] font-bold leading-tight tracking-tight">{b.title}</span>
-                  <span className="mt-1 line-clamp-2 text-[13px] leading-snug opacity-85">{b.subtitle}</span>
-                  <span className={cn("mt-auto inline-flex w-fit items-center gap-0.5 rounded-full px-3 py-1.5 text-[13px] font-semibold", t.cta)}>
+                  <span className="text-[20px] font-extrabold leading-[1.1] tracking-tight">{b.title}</span>
+                  <span className="mt-1 line-clamp-2 text-[12px] font-medium leading-snug opacity-90">{b.subtitle}</span>
+                  <span className={cn("mt-auto inline-flex w-fit items-center gap-0.5 rounded-lg px-3 py-1.5 text-[12px] font-extrabold uppercase tracking-wide", t.cta)}>
                     {b.cta} <ChevronRight className="h-3.5 w-3.5" />
                   </span>
                 </span>

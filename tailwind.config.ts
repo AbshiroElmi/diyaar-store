@@ -5,7 +5,7 @@ import konstaConfig from "konsta/config";
 
 export default konstaConfig({
   konsta: {
-    colors: { primary: "#229085" },
+    colors: { primary: "#219186" },
   },
   darkMode: ["class"],
   content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],

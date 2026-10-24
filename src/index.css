@@ -17,7 +17,7 @@
     --popover-foreground: 220 20% 10%;
 
     /* Deep Teal - Trust & Reliability */
-    --primary: 174 62% 35%;
+    --primary: 174 63% 35%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 200 15% 94%;
@@ -27,14 +27,14 @@
     --muted-foreground: 220 10% 45%;
 
     --accent: 174 45% 92%;
-    --accent-foreground: 174 62% 25%;
+    --accent-foreground: 174 63% 25%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 174 62% 35%;
+    --ring: 174 63% 35%;
 
     --radius: 0.875rem;
 
@@ -47,18 +47,18 @@
     --info-foreground: 0 0% 100%;
 
     /* Auth page specific */
-    --auth-gradient-start: 174 62% 35%;
+    --auth-gradient-start: 174 63% 35%;
     --auth-gradient-end: 199 89% 48%;
 
     /* Sidebar */
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 220 20% 30%;
-    --sidebar-primary: 174 62% 35%;
+    --sidebar-primary: 174 63% 35%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 174 45% 95%;
-    --sidebar-accent-foreground: 174 62% 25%;
+    --sidebar-accent-foreground: 174 63% 25%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 174 62% 35%;
+    --sidebar-ring: 174 63% 35%;
   }
 
   .dark {

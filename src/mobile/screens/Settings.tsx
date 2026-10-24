@@ -51,7 +51,7 @@ export default function SettingsScreen() {
             <ListItem media={<IconTile icon={BellRing} className="bg-[#ff3b30]" />} title="Push notifications" after={<Toggle checked={s.notifications.new_order_push} onChange={n("new_order_push")} />} />
             <ListItem media={<IconTile icon={MessageSquare} className="bg-[#34c759]" />} title="SMS for new orders" after={<Toggle checked={s.notifications.new_order_sms} onChange={n("new_order_sms")} />} />
             <ListItem media={<IconTile icon={Star} className="bg-[#ffcc00]" />} title="Review alerts" after={<Toggle checked={s.notifications.review_alerts} onChange={n("review_alerts")} />} />
-            <ListItem media={<IconTile icon={Wallet} className="bg-[#229085]" />} title="Payout alerts" after={<Toggle checked={s.notifications.payout_alerts} onChange={n("payout_alerts")} />} />
+            <ListItem media={<IconTile icon={Wallet} className="bg-[#219186]" />} title="Payout alerts" after={<Toggle checked={s.notifications.payout_alerts} onChange={n("payout_alerts")} />} />
             <ListItem media={<IconTile icon={Mail} className="bg-[#007aff]" />} title="Daily summary email" after={<Toggle checked={s.notifications.daily_summary_email} onChange={n("daily_summary_email")} />} />
           </List>
 

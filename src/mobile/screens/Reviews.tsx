@@ -84,7 +84,7 @@ export default function ReviewsScreen() {
         <Loading />
       ) : (
         <>
-          <div className="mx-4 mt-4 flex items-center gap-5 rounded-2xl bg-white p-5 dark:bg-[#1c1c1d]">
+          <div className="mx-4 mt-4 flex items-center gap-5 rounded-2xl border border-black/[0.06] bg-white p-5 dark:bg-[#1c1c1d]">
             <div className="text-center">
               <p className="tabular text-[44px] font-bold leading-none tracking-tight">{s.average.toFixed(1)}</p>
               <Stars value={s.average} className="mt-2" />
@@ -124,7 +124,7 @@ export default function ReviewsScreen() {
           ) : (
             <div className="space-y-2 px-4 pt-2">
               {rows.map((r) => (
-                <div key={r.name} className="rounded-2xl bg-white p-4 dark:bg-[#1c1c1d]">
+                <div key={r.name} className="rounded-2xl border border-black/[0.06] bg-white p-4 dark:bg-[#1c1c1d]">
                   <div className="flex items-center gap-3">
                     <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-[14px] font-semibold text-primary">{initials(r.customer_name)}</span>
                     <div className="flex-1">

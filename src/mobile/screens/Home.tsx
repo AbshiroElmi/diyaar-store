@@ -1,111 +1,103 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
+import { useTheme } from "next-themes";
 import { Area, AreaChart, ResponsiveContainer, XAxis } from "recharts";
-import { ArrowDownRight, ArrowUpRight, BarChart3, Bell, ChefHat, ChevronRight, Headphones, Megaphone, PackageCheck, PackagePlus, ReceiptText, ShoppingBag, Star } from "lucide-react";
-import { Toggle } from "konsta/react";
+import { BarChart3, Bell, ChefHat, ChevronDown, ChevronRight, Clock, Headphones, Megaphone, PackageCheck, PackagePlus, ReceiptText, Search, ShoppingBag, Star } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@/contexts/AuthContext";
-import { useBanners, useDashboard, useNotifications, useSetStoreOpen, useStore } from "@/hooks/queries";
-import type { Kpi as KpiData } from "@/api";
+import { useBanners, useCategories, useDashboard, useNotifications, useProducts, useSetStoreOpen, useStore } from "@/hooks/queries";
 import { formatMoney, formatNumber, initials, timeAgo } from "@/lib/format";
-import { haptic } from "@/lib/native";
+import { haptic, setStatusBarTheme } from "@/lib/native";
 import { cn } from "@/lib/utils";
 import { BannerCarousel } from "../BannerCarousel";
-import { ErrorBlock, Loading, Screen } from "../ui";
+import { CARD, categoryLook, ErrorBlock, Kpi, Loading, ProductArt, Screen, SectionTitle } from "../ui";
 
 const PIPELINE = [
-  { key: "confirming", label: "New", icon: ReceiptText, bg: "bg-[#fff1e0]", fg: "text-[#ff8a00]" },
-  { key: "accepted", label: "Accepted", icon: PackageCheck, bg: "bg-[#e6f1ff]", fg: "text-[#007aff]" },
-  { key: "preparing", label: "Cooking", icon: ChefHat, bg: "bg-[#efedff]", fg: "text-[#5856d6]" },
-  { key: "ready", label: "Ready", icon: ShoppingBag, bg: "bg-[#e5f8ec]", fg: "text-[#28a745]" },
+  { key: "confirming", label: "New", icon: ReceiptText, tint: "bg-[#fff4e0]", fg: "text-[#e07b00]" },
+  { key: "accepted", label: "Accepted", icon: PackageCheck, tint: "bg-[#e8f1ff]", fg: "text-[#1f6fe5]" },
+  { key: "preparing", label: "Cooking", icon: ChefHat, tint: "bg-[#f0eeff]", fg: "text-[#5b4ee0]" },
+  { key: "ready", label: "Ready", icon: ShoppingBag, tint: "bg-[#e8f7ee]", fg: "text-[#1a9d4b]" },
 ] as const;
 
 const QUICK = [
-  { label: "Add item", icon: PackagePlus, href: "/products/new", bg: "bg-[#e5f6f3]", fg: "text-[#229085]" },
-  { label: "Promo", icon: Megaphone, href: "/promotions", bg: "bg-[#ffe9ee]", fg: "text-[#ff2d55]" },
-  { label: "Reports", icon: BarChart3, href: "/reports", bg: "bg-[#e6f1ff]", fg: "text-[#007aff]" },
-  { label: "Help", icon: Headphones, href: "/support", bg: "bg-[#f3eaff]", fg: "text-[#af52de]" },
+  { label: "Add item", icon: PackagePlus, href: "/products/new" },
+  { label: "Offers", icon: Megaphone, href: "/promotions" },
+  { label: "Reports", icon: BarChart3, href: "/reports" },
+  { label: "Help", icon: Headphones, href: "/support" },
 ];
-
-function greeting() {
-  const h = new Date().getHours();
-  return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
-}
-
-function Delta({ kpi }: { kpi: KpiData }) {
-  const d = kpi.previous ? ((kpi.value - kpi.previous) / kpi.previous) * 100 : 0;
-  const up = d >= 0;
-  return (
-    <span className={cn("inline-flex items-center rounded-full px-1.5 py-0.5 text-[11px] font-semibold", up ? "bg-[#e5f8ec] text-[#28a745]" : "bg-[#ffeceb] text-[#ff3b30]")}>
-      {up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-      {Math.abs(d).toFixed(0)}%
-    </span>
-  );
-}
-
-const card = "rounded-[24px] bg-white shadow-[0_2px_14px_-6px_rgba(0,0,0,0.08)] dark:bg-[#1c1c1d]";
 
 export default function HomeScreen() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { user } = useAuth();
+  const { resolvedTheme } = useTheme();
   const { data, isLoading, error, refetch } = useDashboard();
   const { data: banners } = useBanners();
+  const { data: categories } = useCategories();
   const { data: store } = useStore();
+  const { data: products } = useProducts();
+  const categoryOf = (id: string) => products?.data.find((x) => x.name === id)?.category ?? "";
   const { data: notifications } = useNotifications();
   const setOpen = useSetStoreOpen();
-  const firstName = user?.full_name.split(" ")[0] ?? "";
   const go = (href: string) => {
     haptic.tap();
     navigate(href);
   };
 
+  // White status-bar icons on the brand header; restore when leaving Home.
+  useEffect(() => {
+    setStatusBarTheme(true);
+    return () => setStatusBarTheme(resolvedTheme === "dark");
+  }, [resolvedTheme]);
+
+  const open = !!store?.is_open;
+
   return (
     <Screen title="Home" bare tabbar onRefresh={() => qc.invalidateQueries()}>
-      {/* ── Header ─────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-b-[32px] bg-gradient-to-b from-[#d9f7f1] via-[#eafaf6] to-transparent pb-4 pt-[calc(env(safe-area-inset-top)+12px)] dark:from-[#103a35] dark:via-[#0b2724]">
-        <span className="pointer-events-none absolute -right-10 -top-14 h-48 w-48 rounded-full bg-[#BEFF00]/30 blur-2xl" />
-        <span className="pointer-events-none absolute -left-16 top-10 h-40 w-40 rounded-full bg-[#2bb5a7]/20 blur-2xl" />
-
-        <div className="relative flex items-center gap-3 px-5">
-          <button onClick={() => go("/store")} className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#2bb5a7] to-[#176c63] text-[16px] font-bold text-white shadow-md shadow-[#229085]/30">
+      {/* ── Brand header ───────────────────────────────── */}
+      <div className="bg-[#219186] px-4 pb-4 pt-[calc(env(safe-area-inset-top)+10px)] text-white">
+        <div className="flex items-start gap-3">
+          <button onClick={() => go("/store")} className="min-w-0 flex-1 text-left">
+            <p className="text-[12px] font-bold uppercase tracking-wider text-white/75">Diyaar Store</p>
+            <p className="mt-0.5 truncate text-[22px] font-extrabold leading-tight tracking-tight">{open ? (store?.busy_mode ? "Busy right now" : "Open for orders") : "Store is closed"}</p>
+            <p className="mt-0.5 flex items-center gap-1 text-[13px] font-medium text-white/85">
+              <span className="truncate">{store?.store_name}</span>
+              <ChevronDown className="h-4 w-4 shrink-0" />
+            </p>
+          </button>
+          <button onClick={() => go("/notifications")} className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15" aria-label="Notifications">
+            <Bell className="h-5 w-5" />
+            {!!notifications?.unread && <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-[#BEFF00] ring-2 ring-[#219186]" />}
+          </button>
+          <button onClick={() => go("/store")} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[13px] font-extrabold text-[#219186]">
             {store ? initials(store.store_name) : ""}
           </button>
-          <div className="min-w-0 flex-1">
-            <p className="text-[14px] text-black/55 dark:text-white/60">
-              {greeting()}
-              {firstName ? `, ${firstName}` : ""} 👋
-            </p>
-            <p className="truncate text-[20px] font-bold tracking-tight">{store?.store_name ?? " "}</p>
-          </div>
-          <button onClick={() => go("/notifications")} className="relative flex h-11 w-11 items-center justify-center rounded-full bg-white/80 shadow-sm backdrop-blur dark:bg-white/10" aria-label="Notifications">
-            <Bell className="h-[22px] w-[22px]" />
-            {!!notifications?.unread && (
-              <span className="tabular absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-[#ff3b30] px-1 text-[10px] font-bold text-white dark:border-[#0b2724]">
-                {notifications.unread > 9 ? "9+" : notifications.unread}
-              </span>
-            )}
+        </div>
+
+        {/* Prep time · rating · online switch */}
+        <div className="mt-3 flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/15 px-2.5 py-1.5 text-[13px] font-bold">
+            <Clock className="h-4 w-4" /> {store?.preparation_time ?? "–"} min prep
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/15 px-2.5 py-1.5 text-[13px] font-bold">
+            <Star className="h-4 w-4 fill-[#BEFF00] text-[#BEFF00]" /> {store?.rating.toFixed(1) ?? "–"}
+          </span>
+          <button
+            onClick={() => {
+              haptic.press();
+              setOpen.mutate(!open);
+            }}
+            className={cn("ml-auto inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-[13px] font-extrabold transition-colors", open ? "bg-[#BEFF00] text-[#2B330F]" : "bg-white text-[#e5383b]")}
+          >
+            <span className={cn("h-2 w-2 rounded-full", open ? "bg-[#2B330F]" : "bg-[#e5383b]")} />
+            {open ? "ONLINE" : "OFFLINE"}
           </button>
         </div>
 
-        {/* Open / closed */}
-        <div className="relative mx-4 mt-4 flex items-center gap-3 rounded-[22px] bg-white/85 px-4 py-3 shadow-sm backdrop-blur dark:bg-white/10">
-          <span className="relative flex h-3 w-3">
-            {!!store?.is_open && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#34c759] opacity-60" />}
-            <span className={cn("relative h-3 w-3 rounded-full", store?.is_open ? "bg-[#34c759]" : "bg-black/25 dark:bg-white/30")} />
-          </span>
-          <div className="flex-1">
-            <p className="text-[15px] font-semibold">{store?.is_open ? "You're open" : "You're closed"}</p>
-            <p className="text-[12px] text-black/50 dark:text-white/50">{store?.is_open ? (store.busy_mode ? "Busy mode is on" : "Customers can order now") : "Turn on to start getting orders"}</p>
-          </div>
-          <Toggle
-            checked={!!store?.is_open}
-            onChange={() => {
-              haptic.press();
-              setOpen.mutate(!store?.is_open);
-            }}
-          />
-        </div>
+        {/* Search */}
+        <button onClick={() => go("/orders?tab=history")} className="mt-3 flex h-11 w-full items-center gap-2.5 rounded-xl bg-white px-3.5 text-left text-[15px] text-black/45 shadow-sm">
+          <Search className="h-5 w-5 text-black/60" />
+          Search orders, customers…
+        </button>
       </div>
 
       {error ? (
@@ -113,151 +105,137 @@ export default function HomeScreen() {
       ) : isLoading || !data ? (
         <Loading />
       ) : (
-        <div className="space-y-6 pt-1">
-          {/* ── Banners ─────────────────────────── */}
+        <div className="space-y-6 pt-4">
+          {/* ── Offer banners ─────────────────────────── */}
           {!!banners?.length && <BannerCarousel banners={banners} />}
 
-          {/* ── Quick actions ───────────────────── */}
-          <div className="grid grid-cols-4 gap-2 px-4">
-            {QUICK.map((q) => (
-              <button key={q.label} onClick={() => go(q.href)} className="flex flex-col items-center gap-1.5 transition-transform active:scale-95">
-                <span className={cn("flex h-14 w-14 items-center justify-center rounded-[20px]", q.bg, q.fg)}>
-                  <q.icon className="h-6 w-6" strokeWidth={2} />
-                </span>
-                <span className="text-[12px] font-medium text-black/70 dark:text-white/75">{q.label}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* ── Live orders ─────────────────────── */}
+          {/* ── Live orders ───────────────────────────── */}
           <section>
-            <div className="flex items-end justify-between px-5 pb-2.5">
-              <p className="text-[19px] font-bold tracking-tight">Live orders</p>
-              <button onClick={() => go("/orders")} className="flex items-center text-[14px] font-semibold text-primary">
-                See all <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="no-scrollbar flex gap-3 overflow-x-auto px-4 pb-1">
+            <SectionTitle action="See all" onAction={() => go("/orders")}>
+              Live orders
+            </SectionTitle>
+            <div className="grid grid-cols-4 gap-2 px-4">
               {PIPELINE.map((p) => {
                 const count = data.today[p.key];
                 const hot = p.key === "confirming" && count > 0;
                 return (
-                  <button
-                    key={p.key}
-                    onClick={() => go(`/orders?status=${p.key}`)}
-                    className={cn("flex min-w-[104px] flex-1 flex-col rounded-[22px] p-3.5 text-left transition-transform active:scale-95", p.bg, hot && "ring-2 ring-[#ff8a00] ring-offset-2 ring-offset-[#efeff4] dark:ring-offset-black")}
-                  >
-                    <span className={cn("flex h-9 w-9 items-center justify-center rounded-full bg-white/80", p.fg)}>
-                      <p.icon className="h-[18px] w-[18px]" />
-                    </span>
-                    <span className="tabular mt-3 text-[26px] font-bold leading-none text-[#1c1c1e]">{count}</span>
-                    <span className={cn("mt-1 text-[13px] font-semibold", p.fg)}>{p.label}</span>
+                  <button key={p.key} onClick={() => go(`/orders?status=${p.key}`)} className={cn("relative flex flex-col items-center rounded-2xl py-3 transition-transform active:scale-95", p.tint, hot && "ring-2 ring-[#e07b00]")}>
+                    {hot && <span className="absolute -top-2 rounded bg-[#e5383b] px-1.5 text-[9px] font-extrabold uppercase leading-[16px] text-white">New</span>}
+                    <p.icon className={cn("h-5 w-5", p.fg)} />
+                    <span className="tabular mt-1.5 text-[24px] font-extrabold leading-none text-[#1c1c1e]">{count}</span>
+                    <span className={cn("mt-1 text-[11px] font-bold", p.fg)}>{p.label}</span>
                   </button>
                 );
               })}
             </div>
           </section>
 
-          {/* ── Today ───────────────────────────── */}
-          <section className="px-4">
-            <p className="px-1 pb-2.5 text-[19px] font-bold tracking-tight">Today</p>
-            <div className={cn(card, "grid grid-cols-2")}>
-              {[
-                { label: "Sales", value: formatMoney(data.kpis.revenue.value), kpi: data.kpis.revenue },
-                { label: "Orders", value: formatNumber(data.kpis.orders.value), kpi: data.kpis.orders },
-                { label: "Avg. order", value: formatMoney(data.kpis.avg_order_value.value), kpi: data.kpis.avg_order_value },
-                { label: "Rating", value: data.kpis.rating.value.toFixed(1), kpi: null },
-              ].map((s, i) => (
-                <div key={s.label} className={cn("p-4", i % 2 === 0 && "border-r border-black/5 dark:border-white/10", i < 2 && "border-b border-black/5 dark:border-white/10")}>
-                  <p className="text-[13px] text-black/50 dark:text-white/50">{s.label}</p>
-                  <p className="tabular mt-0.5 flex items-center gap-1 text-[22px] font-bold tracking-tight">
-                    {s.value}
-                    {!s.kpi && <Star className="h-4 w-4 fill-[#ffb800] text-[#ffb800]" />}
-                  </p>
-                  <div className="mt-1">{s.kpi ? <Delta kpi={s.kpi} /> : <span className="text-[11px] text-black/45 dark:text-white/45">{data.today.cancelled} cancelled</span>}</div>
-                </div>
-              ))}
+          {/* ── Today ─────────────────────────────────── */}
+          <section>
+            <SectionTitle action="Reports" onAction={() => go("/reports")}>
+              Today's business
+            </SectionTitle>
+            <div className="grid grid-cols-2 gap-2 px-4">
+              <Kpi label="Sales" value={formatMoney(data.kpis.revenue.value)} current={data.kpis.revenue.value} previous={data.kpis.revenue.previous} hint="vs yesterday" />
+              <Kpi label="Orders" value={formatNumber(data.kpis.orders.value)} current={data.kpis.orders.value} previous={data.kpis.orders.previous} hint="vs yesterday" />
             </div>
-          </section>
-
-          {/* ── Week chart ──────────────────────── */}
-          <section className="px-4">
-            <button onClick={() => go("/reports")} className={cn(card, "block w-full p-4 text-left")}>
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-[13px] text-black/50 dark:text-white/50">Sales · last 7 days</p>
-                  <p className="tabular text-[24px] font-bold tracking-tight">{formatMoney(data.trend.reduce((s, d) => s + d.revenue, 0))}</p>
-                </div>
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/5 dark:bg-white/10">
-                  <ChevronRight className="h-4 w-4" />
-                </span>
+            <button onClick={() => go("/reports")} className={cn(CARD, "mx-4 mt-2 block w-[calc(100%-2rem)] p-3.5 text-left")}>
+              <div className="flex items-center justify-between">
+                <p className="text-[12px] font-semibold uppercase tracking-wide text-black/45 dark:text-white/50">Last 7 days</p>
+                <ChevronRight className="h-4 w-4 text-black/30" />
               </div>
-              <div className="mt-3 h-28">
+              <p className="tabular text-[22px] font-extrabold tracking-tight">{formatMoney(data.trend.reduce((s, d) => s + d.revenue, 0))}</p>
+              <div className="mt-2 h-20">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={data.trend} margin={{ top: 4, left: 0, right: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="home-rev" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#2bb5a7" stopOpacity={0.4} />
-                        <stop offset="100%" stopColor="#2bb5a7" stopOpacity={0} />
+                        <stop offset="0%" stopColor="#219186" stopOpacity={0.3} />
+                        <stop offset="100%" stopColor="#219186" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <XAxis dataKey="date" tickFormatter={(d) => format(new Date(d), "EEE")} tickLine={false} axisLine={false} fontSize={11} stroke="#a1a1a6" interval={0} padding={{ left: 14, right: 14 }} />
-                    <Area type="monotone" dataKey="revenue" stroke="#229085" strokeWidth={3} fill="url(#home-rev)" dot={false} activeDot={false} />
+                    <XAxis dataKey="date" tickFormatter={(d) => format(new Date(d), "EEE")} tickLine={false} axisLine={false} fontSize={10} stroke="#9a9a9f" interval={0} padding={{ left: 12, right: 12 }} />
+                    <Area type="monotone" dataKey="revenue" stroke="#219186" strokeWidth={2.5} fill="url(#home-rev)" dot={false} activeDot={false} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             </button>
           </section>
 
-          {/* ── Recent orders ───────────────────── */}
-          <section className="px-4">
-            <div className="flex items-end justify-between px-1 pb-2.5">
-              <p className="text-[19px] font-bold tracking-tight">Recent orders</p>
-              <button onClick={() => go("/orders?tab=history")} className="flex items-center text-[14px] font-semibold text-primary">
-                History <ChevronRight className="h-4 w-4" />
+          {/* ── Quick actions ─────────────────────────── */}
+          <div className="grid grid-cols-4 gap-2 px-4">
+            {QUICK.map((q) => (
+              <button key={q.label} onClick={() => go(q.href)} className={cn(CARD, "flex flex-col items-center gap-1.5 py-3 transition-transform active:scale-95")}>
+                <q.icon className="h-6 w-6 text-[#219186]" strokeWidth={2.2} />
+                <span className="text-[12px] font-bold">{q.label}</span>
               </button>
+            ))}
+          </div>
+
+          {/* ── Your menu (category tiles) ────────────── */}
+          {!!categories?.length && (
+            <section>
+              <SectionTitle action="Manage" onAction={() => go("/categories")}>
+                Your menu
+              </SectionTitle>
+              <div className="grid grid-cols-4 gap-x-2 gap-y-3 px-4">
+                {categories.map((c) => {
+                  const [, emoji, tint] = categoryLook(c.category_name);
+                  return (
+                    <button key={c.name} onClick={() => go(`/products?category=${encodeURIComponent(c.category_name)}`)} className="flex flex-col items-center gap-1.5 transition-transform active:scale-95">
+                      <span className={cn("flex aspect-square w-full items-center justify-center rounded-2xl text-[34px]", tint, !c.is_active && "opacity-40 grayscale")}>{emoji}</span>
+                      <span className="line-clamp-2 text-center text-[11px] font-bold leading-tight">{c.category_name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {/* ── Best sellers ──────────────────────────── */}
+          <section>
+            <SectionTitle action="See all" onAction={() => go("/products")}>
+              Best sellers this week
+            </SectionTitle>
+            <div className="no-scrollbar flex gap-2.5 overflow-x-auto px-4 pb-1">
+              {data.top_products.map((p, i) => (
+                <button key={p.product} onClick={() => go(`/products/${p.product}`)} className={cn(CARD, "relative w-[132px] shrink-0 p-2.5 text-left")}>
+                  {i === 0 && <span className="absolute left-4 top-4 z-10 rounded-md bg-[#BEFF00] px-1.5 text-[10px] font-extrabold uppercase leading-[18px] text-[#2B330F]">#1</span>}
+                  <ProductArt category={categoryOf(p.product)} className="h-[110px] w-full rounded-xl" emojiClassName="text-[52px]" />
+                  <p className="mt-2 line-clamp-2 h-9 text-[13px] font-bold leading-tight">{p.product_name}</p>
+                  <p className="mt-1 text-[11px] font-semibold text-black/45 dark:text-white/50">{p.quantity} sold</p>
+                  <p className="tabular text-[14px] font-extrabold">{formatMoney(p.revenue)}</p>
+                </button>
+              ))}
             </div>
-            <div className={cn(card, "divide-y divide-black/5 overflow-hidden dark:divide-white/10")}>
+          </section>
+
+          {/* ── Recent orders ─────────────────────────── */}
+          <section>
+            <SectionTitle action="History" onAction={() => go("/orders?tab=history")}>
+              Recent orders
+            </SectionTitle>
+            <div className={cn(CARD, "mx-4 divide-y divide-black/[0.06] overflow-hidden dark:divide-white/10")}>
               {data.recent_orders.slice(0, 5).map((o) => {
                 const pipe = PIPELINE.find((p) => p.key === o.status);
                 return (
-                  <button key={o.name} onClick={() => go(`/orders/${o.name}`)} className="flex w-full items-center gap-3 px-4 py-3 text-left active:bg-black/5 dark:active:bg-white/5">
-                    <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[14px] font-semibold", pipe ? cn(pipe.bg, pipe.fg) : "bg-black/5 text-black/50 dark:bg-white/10 dark:text-white/60")}>
-                      {initials(o.customer_name)}
-                    </span>
+                  <button key={o.name} onClick={() => go(`/orders/${o.name}`)} className="flex w-full items-center gap-3 px-3.5 py-3 text-left active:bg-black/5">
+                    <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[13px] font-extrabold", pipe ? cn(pipe.tint, pipe.fg) : "bg-black/5 text-black/50")}>{initials(o.customer_name)}</span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[15px] font-semibold">{o.customer_name}</span>
-                      <span className="block text-[12px] text-black/45 dark:text-white/45">
+                      <span className="block truncate text-[15px] font-bold">{o.customer_name}</span>
+                      <span className="block text-[12px] text-black/45 dark:text-white/50">
                         {o.item_count} item{o.item_count > 1 ? "s" : ""} · {timeAgo(o.creation)}
                       </span>
                     </span>
                     <span className="text-right">
-                      <span className="tabular block text-[15px] font-semibold">{formatMoney(o.grand_total)}</span>
-                      <span className={cn("block text-[12px] font-medium", pipe?.fg ?? "text-black/40 dark:text-white/45")}>{pipe?.label ?? (o.status === "cancelled" || o.status === "rejected" ? "Cancelled" : "Done")}</span>
+                      <span className="tabular block text-[15px] font-extrabold">{formatMoney(o.grand_total)}</span>
+                      <span className={cn("block text-[11px] font-bold uppercase", pipe?.fg ?? "text-black/40")}>{pipe?.label ?? "Done"}</span>
                     </span>
                   </button>
                 );
               })}
             </div>
           </section>
-
-          {/* ── Latest review ───────────────────── */}
-          {data.recent_reviews[0] && (
-            <section className="px-4">
-              <button onClick={() => go("/reviews")} className={cn(card, "flex w-full gap-3 p-4 text-left")}>
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fff6d6] text-[20px]">⭐</span>
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-center justify-between">
-                    <span className="text-[15px] font-semibold">{data.recent_reviews[0].customer_name}</span>
-                    <span className="flex items-center gap-0.5 text-[13px] font-semibold text-[#ffb800]">
-                      {data.recent_reviews[0].rating} <Star className="h-3.5 w-3.5 fill-current" />
-                    </span>
-                  </span>
-                  <span className="mt-0.5 line-clamp-2 block text-[14px] text-black/60 dark:text-white/65">“{data.recent_reviews[0].comment}”</span>
-                </span>
-              </button>
-            </section>
-          )}
         </div>
       )}
     </Screen>

@@ -52,7 +52,7 @@ export function Screen({ title, subtitle, back, large, right, subnavbar, tabbar,
       )}
       {onRefresh ? <PullToRefresh onRefresh={onRefresh}>{children}</PullToRefresh> : children}
       {footer}
-      <div className={tabbar ? "h-[calc(5.5rem+env(safe-area-inset-bottom))]" : "h-[calc(1.5rem+env(safe-area-inset-bottom))]"} />
+      <div className={tabbar ? "h-[calc(9rem+env(safe-area-inset-bottom))]" : "h-[calc(1.5rem+env(safe-area-inset-bottom))]"} />
     </Page>
   );
 }
@@ -117,22 +117,42 @@ export function IconTile({ icon: Icon, className, size = "md" }: { icon: LucideI
   );
 }
 
+/** Blinkit-style flat card: white, thin border, almost no shadow. */
+export const CARD = "rounded-2xl border border-black/[0.06] bg-white dark:border-white/10 dark:bg-[#1c1c1d]";
+
+export const BRAND = "#219186";
+
+export function SectionTitle({ children, action, onAction }: { children: ReactNode; action?: string; onAction?: () => void }) {
+  return (
+    <div className="flex items-end justify-between px-4 pb-2.5">
+      <p className="text-[18px] font-extrabold tracking-tight">{children}</p>
+      {action && (
+        <button onClick={onAction} className="text-[14px] font-bold text-primary">
+          {action}
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function Kpi({ label, value, current, previous, invert, hint, className }: { label: string; value: string; current?: number; previous?: number; invert?: boolean; hint?: string; className?: string }) {
   const has = current !== undefined && previous !== undefined;
   const delta = has ? (previous ? ((current! - previous) / previous) * 100 : 0) : 0;
   const good = invert ? delta < 0 : delta >= 0;
   return (
-    <div className={cn("rounded-[22px] bg-white p-4 shadow-[0_2px_14px_-6px_rgba(0,0,0,0.08)] dark:bg-[#1c1c1d]", className)}>
-      <p className="text-[13px] text-black/55 dark:text-white/55">{label}</p>
-      <p className="tabular mt-1 text-[22px] font-semibold leading-tight tracking-tight">{value}</p>
+    <div className={cn(CARD, "p-3.5", className)}>
+      <p className="text-[12px] font-semibold uppercase tracking-wide text-black/45 dark:text-white/50">{label}</p>
+      <p className="tabular mt-1 text-[22px] font-extrabold leading-tight tracking-tight">{value}</p>
       {has ? (
-        <p className={cn("mt-1 flex items-center gap-0.5 text-xs font-medium", good ? "text-success" : "text-destructive")}>
-          {delta >= 0 ? <ArrowUpRight className="h-3.5 w-3.5" /> : <ArrowDownRight className="h-3.5 w-3.5" />}
-          {Math.abs(delta).toFixed(1)}%
-          <span className="ml-1 font-normal text-black/45 dark:text-white/45">{hint ?? "vs before"}</span>
+        <p className="mt-1.5 flex items-center gap-1 text-[11px] text-black/45 dark:text-white/45">
+          <span className={cn("inline-flex items-center rounded-md px-1.5 py-0.5 font-bold", good ? "bg-[#e8f7ee] text-[#1a9d4b]" : "bg-[#ffecec] text-[#e5383b]")}>
+            {delta >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+            {Math.abs(delta).toFixed(0)}%
+          </span>
+          {hint ?? "vs before"}
         </p>
       ) : (
-        hint && <p className="mt-1 text-xs text-black/45 dark:text-white/45">{hint}</p>
+        hint && <p className="mt-1.5 text-[11px] text-black/45 dark:text-white/45">{hint}</p>
       )}
     </div>
   );
@@ -190,12 +210,12 @@ export function ChipBar<T extends string>({ value, onChange, items }: { value: T
               onChange(it.value);
             }}
             className={cn(
-              "flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[14px] font-medium transition-colors",
-              active ? "bg-primary text-white" : "bg-black/5 text-black/70 dark:bg-white/10 dark:text-white/80",
+              "flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-[13px] font-bold transition-colors",
+              active ? "border-primary bg-primary/10 text-primary" : "border-black/10 bg-white text-black/70 dark:border-white/15 dark:bg-white/5 dark:text-white/80",
             )}
           >
             {it.label}
-            {!!it.count && <span className={cn("tabular rounded-full px-1.5 text-[11px] leading-[18px]", active ? "bg-white/25" : "bg-black/10 dark:bg-white/15")}>{it.count}</span>}
+            {!!it.count && <span className={cn("tabular rounded-md px-1.5 text-[11px] leading-[18px]", active ? "bg-primary text-white" : "bg-black/[0.07] dark:bg-white/15")}>{it.count}</span>}
           </button>
         );
       })}
@@ -204,7 +224,7 @@ export function ChipBar<T extends string>({ value, onChange, items }: { value: T
 }
 
 /** Thumbnail for products (photo or coloured initials). */
-const THUMB = ["bg-[#34c759]", "bg-[#ff9500]", "bg-[#5856d6]", "bg-[#ff2d55]", "bg-[#007aff]", "bg-[#229085]"];
+const THUMB = ["bg-[#34c759]", "bg-[#ff9500]", "bg-[#5856d6]", "bg-[#ff2d55]", "bg-[#007aff]", "bg-[#219186]"];
 export function Thumb({ id, label, image, className }: { id: string; label: string; image?: string; className?: string }) {
   if (image) return <img src={image} alt="" className={cn("h-12 w-12 rounded-xl object-cover", className)} />;
   const color = THUMB[id.charCodeAt(id.length - 1) % THUMB.length];
@@ -252,5 +272,29 @@ export function FormSheet({
       </Toolbar>
       <div className="no-scrollbar max-h-[calc(92dvh-44px)] overflow-y-auto pb-[calc(2rem+env(safe-area-inset-bottom))]">{children}</div>
     </Sheet>
+  );
+}
+
+// ── Category look (emoji + soft tint), Blinkit-style ────────
+
+const CATEGORY_LOOK: Array<[RegExp, string, string]> = [
+  [/breakfast|morning/i, "🍳", "bg-[#fff6db]"],
+  [/grill|bbq|meat|kebab/i, "🍖", "bg-[#ffece6]"],
+  [/rice|pasta|biryani/i, "🍚", "bg-[#f1f6e6]"],
+  [/sandwich|wrap|burger/i, "🌯", "bg-[#fff1e3]"],
+  [/juice|drink|shake|coffee/i, "🧃", "bg-[#e8f6ff]"],
+  [/dessert|sweet|cake/i, "🍰", "bg-[#fdeef6]"],
+];
+
+export const categoryLook = (name: string): [RegExp, string, string] => CATEGORY_LOOK.find(([re]) => re.test(name)) ?? [/./, "🍽️", "bg-[#eef3f2]"];
+
+/** Product picture: the photo when there is one, otherwise the category emoji on a soft tile. */
+export function ProductArt({ category, image, className, emojiClassName }: { category: string; image?: string; className?: string; emojiClassName?: string }) {
+  if (image) return <img src={image} alt="" className={cn("object-cover", className)} />;
+  const [, emoji, tint] = categoryLook(category);
+  return (
+    <span className={cn("flex items-center justify-center", tint, className)}>
+      <span className={cn("drop-shadow-sm", emojiClassName)}>{emoji}</span>
+    </span>
   );
 }

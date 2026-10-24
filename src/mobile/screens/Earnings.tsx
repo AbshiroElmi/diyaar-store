@@ -26,7 +26,7 @@ export default function EarningsScreen() {
       ) : (
         <>
           {/* Balance card */}
-          <div className="relative mx-4 mt-2 overflow-hidden rounded-3xl bg-gradient-to-br from-[#2bb5a7] via-[#229085] to-[#155e57] p-5 text-white shadow-lg shadow-[#229085]/25">
+          <div className="relative mx-4 mt-2 overflow-hidden rounded-3xl bg-gradient-to-br from-[#2bb5a7] via-[#219186] to-[#155e57] p-5 text-white shadow-lg shadow-[#219186]/25">
             <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10" />
             <div className="pointer-events-none absolute -bottom-16 right-10 h-32 w-32 rounded-full bg-white/5" />
             <p className="relative flex items-center gap-2 text-[15px] opacity-90">

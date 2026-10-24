@@ -40,7 +40,7 @@ export default function SupportScreen() {
           { label: "WhatsApp", icon: MessageCircle, color: "bg-[#25d366]", href: "https://wa.me/252610000000" },
           { label: "New ticket", icon: Headphones, color: "bg-[#007aff]", onClick: () => setCreating(true) },
         ].map((a) => (
-          <a key={a.label} href={a.href} onClick={a.onClick} target={a.href?.startsWith("http") ? "_blank" : undefined} rel="noreferrer" className="flex flex-col items-center gap-2 rounded-2xl bg-white py-4 text-[13px] font-medium dark:bg-[#1c1c1d]">
+          <a key={a.label} href={a.href} onClick={a.onClick} target={a.href?.startsWith("http") ? "_blank" : undefined} rel="noreferrer" className="flex flex-col items-center gap-2 rounded-2xl border border-black/[0.06] bg-white py-4 text-[13px] font-medium dark:bg-[#1c1c1d]">
             <IconTile icon={a.icon} className={a.color} size="lg" />
             {a.label}
           </a>

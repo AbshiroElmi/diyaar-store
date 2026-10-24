@@ -30,17 +30,17 @@ function LiveCard({ order, onReject }: { order: Order; onReject: () => void }) {
   const next = order.status === "ready" && isPickup(order) ? { status: "completed" as OrderStatus, label: "Picked up" } : NEXT[order.status];
 
   return (
-    <div className={cn("mx-4 mb-3 overflow-hidden rounded-2xl bg-white dark:bg-[#1c1c1d]", isNew && "ring-2 ring-[#ff9500]")}>
+    <div className={cn("mx-4 mb-3 overflow-hidden rounded-2xl border border-black/[0.06] bg-white dark:bg-[#1c1c1d]", isNew && "ring-2 ring-[#ff9500]")}>
       <button onClick={() => navigate(`/orders/${order.name}`)} className="block w-full p-4 text-left active:bg-black/5 dark:active:bg-white/5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[17px] font-semibold">{order.customer_name}</p>
+            <p className="text-[17px] font-extrabold">{order.customer_name}</p>
             <p className="text-[13px] text-black/50 dark:text-white/50">
               {order.name} · {isPickup(order) ? "Pickup" : "Delivery"}
             </p>
           </div>
           <div className="text-right">
-            <p className="tabular text-[17px] font-semibold">{formatMoney(order.grand_total)}</p>
+            <p className="tabular text-[17px] font-extrabold">{formatMoney(order.grand_total)}</p>
             <p className={cn("text-[13px]", isNew && mins >= 3 ? "font-semibold text-[#ff3b30]" : "text-black/50 dark:text-white/50")}>{mins < 1 ? "now" : `${mins} min`}</p>
           </div>
         </div>

@@ -15,12 +15,12 @@ const PERIODS: Array<{ value: Period; label: string; hint: string }> = [
   { value: "quarter", label: "90 days", hint: "vs before" },
 ];
 const PAY = { mobile_money: "Mobile money", cash: "Cash", card: "Card", wallet: "Wallet" } as const;
-const PAY_COLORS = ["bg-[#229085]", "bg-[#007aff]", "bg-[#ff9500]", "bg-[#af52de]"];
+const PAY_COLORS = ["bg-[#219186]", "bg-[#007aff]", "bg-[#ff9500]", "bg-[#af52de]"];
 const tooltip = { borderRadius: 12, border: "none", boxShadow: "0 4px 20px rgba(0,0,0,.12)", fontSize: 12 };
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="mx-4 mt-2 rounded-2xl bg-white p-4 dark:bg-[#1c1c1d]">
+    <div className="mx-4 mt-2 rounded-2xl border border-black/[0.06] bg-white p-4 dark:bg-[#1c1c1d]">
       <p className="text-[15px] font-semibold">{title}</p>
       <div className="mt-3 h-44">{children}</div>
     </div>
@@ -72,7 +72,7 @@ export default function ReportsScreen() {
                 <Tooltip contentStyle={tooltip} labelFormatter={(d) => format(new Date(d), "EEE, d MMM")} formatter={(v: number, n) => (n === "revenue" ? [formatMoney(v), "Sales"] : [v, "Orders"])} />
                 <YAxis yAxisId={0} hide />
                 <YAxis yAxisId={1} hide orientation="right" />
-                <Bar dataKey="revenue" yAxisId={0} fill="#229085" radius={[6, 6, 0, 0]} maxBarSize={22} />
+                <Bar dataKey="revenue" yAxisId={0} fill="#219186" radius={[6, 6, 0, 0]} maxBarSize={22} />
                 <Line dataKey="orders" stroke="#ff9500" strokeWidth={2} dot={false} type="monotone" yAxisId={1} />
               </ComposedChart>
             </ResponsiveContainer>
@@ -89,7 +89,7 @@ export default function ReportsScreen() {
           </ChartCard>
 
           <BlockTitle>Payment methods</BlockTitle>
-          <div className="mx-4 rounded-2xl bg-white p-4 dark:bg-[#1c1c1d]">
+          <div className="mx-4 rounded-2xl border border-black/[0.06] bg-white p-4 dark:bg-[#1c1c1d]">
             {(() => {
               const total = data.by_payment.reduce((s, p) => s + p.revenue, 0) || 1;
               return (

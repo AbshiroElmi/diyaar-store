@@ -90,7 +90,7 @@ const MENU: Array<{ title: string; items: MenuEntry[] }> = [
   {
     title: "Store",
     items: [
-      { href: "/store", label: "Store Profile", icon: Store, tint: "bg-[#229085]" },
+      { href: "/store", label: "Store Profile", icon: Store, tint: "bg-[#219186]" },
       { href: "/hours", label: "Opening Hours", icon: Clock, tint: "bg-[#34c759]" },
       { href: "/team", label: "Team", icon: Users, tint: "bg-[#5ac8fa]" },
     ],
@@ -262,6 +262,47 @@ function NewOrderAlert() {
   return null;
 }
 
+// ── Sticky "new orders" bar (like Blinkit's cart bar) ───────
+
+function NewOrdersBar({ count, visible }: { count: number; visible: boolean }) {
+  const navigate = useNavigate();
+  return (
+    <AnimatePresence>
+      {visible && count > 0 && (
+        <motion.button
+          key="new-orders-bar"
+          initial={{ y: 80, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 80, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 420, damping: 32 }}
+          onClick={() => {
+            haptic.press();
+            navigate("/orders?status=confirming");
+          }}
+          className={cn(
+            "fixed inset-x-3 z-30 flex items-center gap-3 rounded-2xl bg-[#219186] px-4 py-3 text-left text-white shadow-[0_10px_30px_-10px_rgba(33,145,134,0.7)] active:scale-[0.98]",
+            mobileTheme === "ios" ? "bottom-[calc(env(safe-area-inset-bottom)+62px)]" : "bottom-[calc(env(safe-area-inset-bottom)+90px)]",
+          )}
+        >
+          <span className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-white/15">
+            <ReceiptText className="h-5 w-5" />
+            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 animate-bounce items-center justify-center rounded-full bg-[#BEFF00] px-1 text-[11px] font-extrabold text-[#2B330F]">{count}</span>
+          </span>
+          <span className="flex-1 leading-tight">
+            <span className="block text-[15px] font-extrabold">
+              {count} new order{count > 1 ? "s" : ""}
+            </span>
+            <span className="block text-[12px] font-medium text-white/80">Customers are waiting</span>
+          </span>
+          <span className="flex items-center gap-1 text-[15px] font-extrabold">
+            Accept <span aria-hidden>→</span>
+          </span>
+        </motion.button>
+      )}
+    </AnimatePresence>
+  );
+}
+
 // ── Shell ───────────────────────────────────────────────────
 
 export default function MobileApp() {
@@ -350,6 +391,7 @@ export default function MobileApp() {
         })}
       </Tabbar>
 
+      <NewOrdersBar count={counts?.confirming ?? 0} visible={showTabbar && !menuOpen && !location.pathname.startsWith("/orders")} />
       <MenuSheet opened={menuOpen} onClose={() => setMenuOpen(false)} />
       <NewOrderAlert />
     </KonstaApp>

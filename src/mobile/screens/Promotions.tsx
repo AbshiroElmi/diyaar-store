@@ -13,7 +13,7 @@ import { ChipBar, Empty, ErrorBlock, FormSheet, Loading, Screen } from "../ui";
 const TYPES: Array<{ value: PromotionType; label: string; icon: typeof Tag; color: string }> = [
   { value: "percentage", label: "% off", icon: BadgePercent, color: "from-[#ff2d55] to-[#ff6482]" },
   { value: "fixed", label: "$ off", icon: Tag, color: "from-[#5856d6] to-[#7d7aff]" },
-  { value: "free_delivery", label: "Free delivery", icon: Truck, color: "from-[#229085] to-[#2bb5a7]" },
+  { value: "free_delivery", label: "Free delivery", icon: Truck, color: "from-[#219186] to-[#2bb5a7]" },
   { value: "bogo", label: "Buy 1 get 1", icon: Gift, color: "from-[#ff9500] to-[#ffb340]" },
 ];
 
@@ -129,7 +129,7 @@ export default function PromotionsScreen() {
           {rows.map((p) => {
             const t = TYPES.find((x) => x.value === p.type)!;
             return (
-              <button key={p.name} onClick={() => setSelected(p)} className="block w-full overflow-hidden rounded-2xl bg-white text-left dark:bg-[#1c1c1d]">
+              <button key={p.name} onClick={() => setSelected(p)} className="block w-full overflow-hidden rounded-2xl border border-black/[0.06] bg-white text-left dark:bg-[#1c1c1d]">
                 <div className={cn("relative bg-gradient-to-br p-4 text-white", t.color, p.status === "ended" && "grayscale")}>
                   <t.icon className="absolute right-3 top-3 h-14 w-14 opacity-20" />
                   <p className="text-[13px] font-medium opacity-90">{p.title}</p>
