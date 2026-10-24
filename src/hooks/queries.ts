@@ -24,6 +24,7 @@ import {
   type OrderListParams,
   type OrderStatus,
   type Period,
+  type ProductInput,
   type ProductListParams,
 } from "@/api";
 
@@ -179,6 +180,31 @@ export function useSaveProduct() {
     onSuccess: (_, { id }) => {
       invalidate();
       toast.success(id ? "Product updated" : "Product submitted for approval");
+    },
+    onError,
+  });
+}
+
+/** Create many products one by one; partial success is kept and reported. */
+export function useImportProducts() {
+  const invalidate = useCatalogInvalidate();
+  return useMutation({
+    mutationFn: async (rows: ProductInput[]) => {
+      let added = 0;
+      for (const row of rows) {
+        try {
+          await productsService.create(row);
+          added++;
+        } catch {
+          // keep going; the count tells the owner how many made it
+        }
+      }
+      return { added, failed: rows.length - added };
+    },
+    onSuccess: ({ added, failed }) => {
+      invalidate();
+      if (failed) toast.warning(`${added} items imported, ${failed} failed`);
+      else toast.success(`${added} items imported for approval`);
     },
     onError,
   });
