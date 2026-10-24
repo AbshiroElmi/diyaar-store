@@ -6,9 +6,9 @@
 import { useRef, useState, type ComponentProps, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { Actions as KActions, Block, Link as KLink, Navbar, NavbarBackLink, Page, Preloader, Sheet as KSheet, Toolbar, useTheme } from "konsta/react";
+import { Actions as KActions, ActionsButton, Block, Link as KLink, Navbar, NavbarBackLink, Page, Preloader, Sheet as KSheet, Toolbar, useTheme } from "konsta/react";
 import type { LucideIcon } from "lucide-react";
-import { AlertTriangle, ArrowDownRight, ArrowUpRight, RotateCw, X } from "lucide-react";
+import { AlertTriangle, ArrowDownRight, ArrowUpRight, Check, RotateCw, X } from "lucide-react";
 import { haptic } from "@/lib/native";
 import { cn } from "@/lib/utils";
 
@@ -258,6 +258,24 @@ export function Sheet({ className, ...props }: ComponentProps<typeof KSheet>) {
 
 export function Actions({ className, ...props }: ComponentProps<typeof KActions>) {
   return toRoot(<KActions {...props} className={cn(props.opened && "kb-lift-actions", className)} />);
+}
+
+/** Action-sheet row: tinted icon tile + label, left-aligned; `danger` turns it red, `selected` adds a check. */
+export function ActionItem({ icon: Icon, children, onClick, danger, selected }: { icon: LucideIcon; children: ReactNode; onClick: () => void; danger?: boolean; selected?: boolean }) {
+  return (
+    <ActionsButton
+      onClick={onClick}
+      fontSizeIos="text-[17px]"
+      fontSizeMaterial="text-[16px]"
+      className={cn("!h-[60px] !justify-start gap-3.5 font-semibold", danger ? "!text-[#ff3b30]" : "!text-[#1c1c1e] dark:!text-white")}
+    >
+      <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl", danger ? "bg-[#ff3b30]/10 text-[#ff3b30]" : "bg-primary/10 text-primary")}>
+        <Icon className="h-[19px] w-[19px]" strokeWidth={2.2} />
+      </span>
+      <span className="min-w-0 flex-1 truncate text-left">{children}</span>
+      {selected && <Check className="h-5 w-5 shrink-0 text-primary" strokeWidth={2.75} />}
+    </ActionsButton>
+  );
 }
 
 // ── Form sheet (Close · Title · Save) ───────────────────────

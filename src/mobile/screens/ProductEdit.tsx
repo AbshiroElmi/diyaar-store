@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Camera, Check, ChevronDown, Trash2 } from "lucide-react";
-import { ActionsButton, ActionsGroup, ActionsLabel, BlockFooter, BlockTitle, Link as KLink, List, ListInput, ListItem, Toggle } from "konsta/react";
+import { ActionsGroup, ActionsLabel, BlockFooter, BlockTitle, Link as KLink, List, ListInput, ListItem, Toggle } from "konsta/react";
 import { useCategories, useDeleteProduct, useProducts, useSaveProduct } from "@/hooks/queries";
 import { haptic } from "@/lib/native";
 import { readPhoto } from "@/lib/photo";
 import { cn } from "@/lib/utils";
-import { Actions, Loading, ProductArt, Screen, Sheet } from "../ui";
+import { ActionItem, Actions, Loading, ProductArt, Screen, Sheet } from "../ui";
 
 interface Form {
   product_name: string;
@@ -214,15 +214,16 @@ export default function ProductEditScreen() {
           <Actions opened={confirmDelete} onBackdropClick={() => setConfirmDelete(false)}>
             <ActionsGroup>
               <ActionsLabel>“{product?.product_name}” will be removed from your menu.</ActionsLabel>
-              <ActionsButton
-                className="!text-[#ff3b30]"
+              <ActionItem
+                icon={Trash2}
+                danger
                 onClick={() => {
                   setConfirmDelete(false);
                   if (id) remove.mutate(id, { onSuccess: () => navigate(-1) });
                 }}
               >
-                Delete
-              </ActionsButton>
+                Delete product
+              </ActionItem>
             </ActionsGroup>
           </Actions>
         </>

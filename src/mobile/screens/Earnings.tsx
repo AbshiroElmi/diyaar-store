@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { ArrowDownLeft, ArrowUpRight, Landmark, Wallet } from "lucide-react";
-import { ActionsButton, ActionsGroup, ActionsLabel, BlockTitle, List, ListItem, Segmented, SegmentedButton } from "konsta/react";
+import { ActionsGroup, ActionsLabel, BlockTitle, List, ListItem, Segmented, SegmentedButton } from "konsta/react";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { useEarnings, useRequestPayout } from "@/hooks/queries";
 import { formatDate, formatDateTime, formatMoney } from "@/lib/format";
 import { haptic } from "@/lib/native";
 import { cn } from "@/lib/utils";
-import { Actions, ErrorBlock, Kpi, Loading, Screen } from "../ui";
+import { ActionItem, Actions, ErrorBlock, Kpi, Loading, Screen } from "../ui";
 
 export default function EarningsScreen() {
   const { data, isLoading, error, refetch } = useEarnings();
@@ -115,8 +115,8 @@ export default function EarningsScreen() {
               <ActionsLabel>
                 Withdraw {formatMoney(s.available_balance)} to {data.account.bank_name}? It usually arrives within 24 hours.
               </ActionsLabel>
-              <ActionsButton
-                bold
+              <ActionItem
+                icon={Landmark}
                 onClick={() => {
                   setConfirm(false);
                   haptic.success();
@@ -124,7 +124,7 @@ export default function EarningsScreen() {
                 }}
               >
                 Withdraw {formatMoney(s.available_balance)}
-              </ActionsButton>
+              </ActionItem>
             </ActionsGroup>
           </Actions>
         </>

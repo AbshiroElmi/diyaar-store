@@ -1,15 +1,15 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertCircle, Camera, CheckCircle2, Download, FileDown, FileUp, FolderPlus, FolderTree, Plus } from "lucide-react";
+import { AlertCircle, ArrowDown, ArrowUp, Camera, CheckCircle2, Download, FileDown, FileUp, FolderPlus, FolderTree, Package, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { ActionsButton, ActionsGroup, ActionsLabel, BlockFooter, Link as KLink, List, ListInput, ListItem, Toggle } from "konsta/react";
+import { ActionsGroup, ActionsLabel, BlockFooter, Link as KLink, List, ListInput, ListItem, Toggle } from "konsta/react";
 import { useCategories, useDeleteCategory, useImportCategories, useSaveCategory } from "@/hooks/queries";
 import type { Category } from "@/api";
 import { categoriesToCsv, categoryTemplateCsv, readCategoriesCsv, saveCsv, type CategoryImportRow } from "@/lib/csv";
 import { haptic } from "@/lib/native";
 import { readPhoto } from "@/lib/photo";
 import { cn } from "@/lib/utils";
-import { Actions, CARD, Empty, ErrorBlock, FormSheet, Loading, ProductArt, Screen } from "../ui";
+import { ActionItem, Actions, CARD, Empty, ErrorBlock, FormSheet, Loading, ProductArt, Screen } from "../ui";
 
 export default function CategoriesScreen() {
   const navigate = useNavigate();
@@ -174,18 +174,18 @@ export default function CategoriesScreen() {
       <Actions opened={menuOpen} onBackdropClick={() => setMenuOpen(false)}>
         <ActionsGroup>
           <ActionsLabel>Categories</ActionsLabel>
-          <ActionsButton onClick={pick(() => open("new"))}>
-            <span className="flex items-center gap-3"><FolderPlus className="h-5 w-5 text-primary" /> Add category</span>
-          </ActionsButton>
-          <ActionsButton onClick={pick(() => csvRef.current?.click())}>
-            <span className="flex items-center gap-3"><FileUp className="h-5 w-5 text-primary" /> Import from CSV</span>
-          </ActionsButton>
-          <ActionsButton onClick={pick(exportCsv)}>
-            <span className="flex items-center gap-3"><FileDown className="h-5 w-5 text-primary" /> Export CSV{data ? ` (${data.length})` : ""}</span>
-          </ActionsButton>
-          <ActionsButton onClick={pick(() => saveCsv("categories-template.csv", categoryTemplateCsv()))}>
-            <span className="flex items-center gap-3"><Download className="h-5 w-5 text-black/45 dark:text-white/50" /> Download CSV template</span>
-          </ActionsButton>
+          <ActionItem icon={FolderPlus} onClick={pick(() => open("new"))}>
+            Add category
+          </ActionItem>
+          <ActionItem icon={FileUp} onClick={pick(() => csvRef.current?.click())}>
+            Import from CSV
+          </ActionItem>
+          <ActionItem icon={FileDown} onClick={pick(exportCsv)}>
+            Export CSV{data ? ` (${data.length})` : ""}
+          </ActionItem>
+          <ActionItem icon={Download} onClick={pick(() => saveCsv("categories-template.csv", categoryTemplateCsv()))}>
+            Download CSV template
+          </ActionItem>
         </ActionsGroup>
       </Actions>
 
@@ -242,13 +242,21 @@ export default function CategoriesScreen() {
       <Actions opened={!!selected} onBackdropClick={() => setSelected(null)}>
         <ActionsGroup>
           <ActionsLabel>{selected?.category_name}</ActionsLabel>
-          <ActionsButton onClick={() => (navigate("/products"), setSelected(null))}>View products</ActionsButton>
-          <ActionsButton onClick={() => (selected && open(selected), setSelected(null))}>Edit photo & name</ActionsButton>
-          <ActionsButton onClick={() => (selected && move(selected, -1), setSelected(null))}>Move up</ActionsButton>
-          <ActionsButton onClick={() => (selected && move(selected, 1), setSelected(null))}>Move down</ActionsButton>
-          <ActionsButton className="!text-[#ff3b30]" onClick={() => (selected && remove.mutate(selected.name), setSelected(null))}>
+          <ActionItem icon={Package} onClick={() => (selected && navigate(`/products?category=${encodeURIComponent(selected.category_name)}`), setSelected(null))}>
+            View products
+          </ActionItem>
+          <ActionItem icon={Pencil} onClick={() => (selected && open(selected), setSelected(null))}>
+            Edit photo & name
+          </ActionItem>
+          <ActionItem icon={ArrowUp} onClick={() => (selected && move(selected, -1), setSelected(null))}>
+            Move up
+          </ActionItem>
+          <ActionItem icon={ArrowDown} onClick={() => (selected && move(selected, 1), setSelected(null))}>
+            Move down
+          </ActionItem>
+          <ActionItem icon={Trash2} danger onClick={() => (selected && remove.mutate(selected.name), setSelected(null))}>
             Delete
-          </ActionsButton>
+          </ActionItem>
         </ActionsGroup>
       </Actions>
     </Screen>

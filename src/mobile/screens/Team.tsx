@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Plus, ShieldCheck, Users } from "lucide-react";
-import { ActionsButton, ActionsGroup, ActionsLabel, BlockFooter, Link as KLink, List, ListInput, ListItem, Segmented, SegmentedButton } from "konsta/react";
+import { Plus, ShieldCheck, UserCheck, UserMinus, UserRound, Users, UserX } from "lucide-react";
+import { ActionsGroup, ActionsLabel, BlockFooter, Link as KLink, List, ListInput, ListItem, Segmented, SegmentedButton } from "konsta/react";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { useInviteMember, useRemoveMember, useTeam, useUpdateMember } from "@/hooks/queries";
 import type { TeamMember, TeamRole } from "@/api";
 import { initials, timeAgo } from "@/lib/format";
-import { Actions, Empty, ErrorBlock, FormSheet, Loading, Screen } from "../ui";
+import { ActionItem, Actions, Empty, ErrorBlock, FormSheet, Loading, Screen } from "../ui";
 
 const ROLE_HELP: Record<TeamRole, string> = {
   Owner: "Everything, including payouts and team",
@@ -104,16 +104,24 @@ export default function TeamScreen() {
           <ActionsLabel>
             {selected?.full_name} · {selected?.role}
           </ActionsLabel>
-          {selected?.role === "Staff" && <ActionsButton onClick={() => (update.mutate({ id: selected.name, data: { role: "Manager" } }), setSelected(null))}>Make manager</ActionsButton>}
-          {selected?.role === "Manager" && <ActionsButton onClick={() => (update.mutate({ id: selected.name, data: { role: "Staff" } }), setSelected(null))}>Change to staff</ActionsButton>}
-          {selected && (
-            <ActionsButton onClick={() => (update.mutate({ id: selected.name, data: { status: selected.status === "disabled" ? "active" : "disabled" } }), setSelected(null))}>
-              {selected.status === "disabled" ? "Enable access" : "Disable access"}
-            </ActionsButton>
+          {selected?.role === "Staff" && (
+            <ActionItem icon={ShieldCheck} onClick={() => (update.mutate({ id: selected.name, data: { role: "Manager" } }), setSelected(null))}>
+              Make manager
+            </ActionItem>
           )}
-          <ActionsButton className="!text-[#ff3b30]" onClick={() => (selected && remove.mutate(selected.name), setSelected(null))}>
+          {selected?.role === "Manager" && (
+            <ActionItem icon={UserRound} onClick={() => (update.mutate({ id: selected.name, data: { role: "Staff" } }), setSelected(null))}>
+              Change to staff
+            </ActionItem>
+          )}
+          {selected && (
+            <ActionItem icon={selected.status === "disabled" ? UserCheck : UserX} onClick={() => (update.mutate({ id: selected.name, data: { status: selected.status === "disabled" ? "active" : "disabled" } }), setSelected(null))}>
+              {selected.status === "disabled" ? "Enable access" : "Disable access"}
+            </ActionItem>
+          )}
+          <ActionItem icon={UserMinus} danger onClick={() => (selected && remove.mutate(selected.name), setSelected(null))}>
             Remove from team
-          </ActionsButton>
+          </ActionItem>
         </ActionsGroup>
       </Actions>
     </Screen>

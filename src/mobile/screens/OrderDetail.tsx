@@ -1,16 +1,21 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { Bike, CreditCard, MapPin, MessageSquare, Phone, Store, User } from "lucide-react";
-import { ActionsButton, ActionsGroup, ActionsLabel, BlockTitle, Button, List, ListItem, Toolbar } from "konsta/react";
+import { Bike, Clock, CreditCard, Flame, MapPin, MapPinOff, MessageSquare, PackageX, Phone, Store, User, type LucideIcon } from "lucide-react";
+import { ActionsGroup, ActionsLabel, BlockTitle, Button, List, ListItem, Toolbar } from "konsta/react";
 import { StatusBadge, statusLabel } from "@/components/shared/StatusBadge";
 import { useOrder, useUpdateOrderStatus } from "@/hooks/queries";
 import type { Order, OrderStatus } from "@/api";
 import { formatDateTime, formatMoney, formatTime } from "@/lib/format";
 import { haptic } from "@/lib/native";
 import { cn } from "@/lib/utils";
-import { Actions, ErrorBlock, IconTile, Loading, Screen } from "../ui";
+import { ActionItem, Actions, ErrorBlock, IconTile, Loading, Screen } from "../ui";
 
-const REASONS = ["Item out of stock", "Kitchen too busy", "Closing soon", "Delivery area too far"];
+const REASONS: Array<[string, LucideIcon]> = [
+  ["Item out of stock", PackageX],
+  ["Kitchen too busy", Flame],
+  ["Closing soon", Clock],
+  ["Delivery area too far", MapPinOff],
+];
 const PAYMENT: Record<Order["payment_method"], string> = { cash: "Cash on delivery", card: "Card", wallet: "Diyaar wallet", mobile_money: "Mobile money (EVC)" };
 const isPickup = (o: Order) => o.delivery_type.includes("pickup");
 
@@ -21,18 +26,19 @@ export function RejectSheet({ order, onClose }: { order: Order | null; onClose: 
     <Actions opened={!!order} onBackdropClick={onClose}>
       <ActionsGroup>
         <ActionsLabel>Why are you rejecting {order?.name}? The customer will be refunded.</ActionsLabel>
-        {REASONS.map((r) => (
-          <ActionsButton
+        {REASONS.map(([r, icon]) => (
+          <ActionItem
             key={r}
+            icon={icon}
+            danger
             onClick={() => {
               haptic.warning();
               if (order) update.mutate({ id: order.name, status: "rejected", reason: r });
               onClose();
             }}
-            className="!text-[#ff3b30]"
           >
             {r}
-          </ActionsButton>
+          </ActionItem>
         ))}
       </ActionsGroup>
     </Actions>

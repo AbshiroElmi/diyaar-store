@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { addDays, format } from "date-fns";
-import { BadgePercent, Gift, Megaphone, Plus, Tag, Truck } from "lucide-react";
-import { ActionsButton, ActionsGroup, ActionsLabel, BlockTitle, Link as KLink, List, ListInput } from "konsta/react";
+import { BadgePercent, CircleStop, Gift, Megaphone, Pause, Play, Plus, Tag, Trash2, Truck } from "lucide-react";
+import { ActionsGroup, ActionsLabel, BlockTitle, Link as KLink, List, ListInput } from "konsta/react";
 import { toast } from "sonner";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { useDeletePromotion, usePromotions, useSavePromotion } from "@/hooks/queries";
 import type { Promotion, PromotionType } from "@/api";
 import { formatDate, formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { Actions, ChipBar, Empty, ErrorBlock, FormSheet, Loading, Screen } from "../ui";
+import { ActionItem, Actions, ChipBar, Empty, ErrorBlock, FormSheet, Loading, Screen } from "../ui";
 
 const TYPES: Array<{ value: PromotionType; label: string; icon: typeof Tag; color: string }> = [
   { value: "percentage", label: "% off", icon: BadgePercent, color: "from-[#ff2d55] to-[#ff6482]" },
@@ -168,12 +168,24 @@ export default function PromotionsScreen() {
           <ActionsLabel>
             {selected?.title} · {selected && formatMoney(selected.revenue)} in sales
           </ActionsLabel>
-          {selected?.status === "active" && <ActionsButton onClick={() => (save.mutate({ id: selected.name, data: { status: "paused" } }), setSelected(null))}>Pause</ActionsButton>}
-          {selected?.status === "paused" && <ActionsButton onClick={() => (save.mutate({ id: selected.name, data: { status: "active" } }), setSelected(null))}>Resume</ActionsButton>}
-          {selected && selected.status !== "ended" && <ActionsButton onClick={() => (save.mutate({ id: selected.name, data: { status: "ended", ends_at: new Date().toISOString() } }), setSelected(null))}>End now</ActionsButton>}
-          <ActionsButton className="!text-[#ff3b30]" onClick={() => (selected && remove.mutate(selected.name), setSelected(null))}>
+          {selected?.status === "active" && (
+            <ActionItem icon={Pause} onClick={() => (save.mutate({ id: selected.name, data: { status: "paused" } }), setSelected(null))}>
+              Pause
+            </ActionItem>
+          )}
+          {selected?.status === "paused" && (
+            <ActionItem icon={Play} onClick={() => (save.mutate({ id: selected.name, data: { status: "active" } }), setSelected(null))}>
+              Resume
+            </ActionItem>
+          )}
+          {selected && selected.status !== "ended" && (
+            <ActionItem icon={CircleStop} onClick={() => (save.mutate({ id: selected.name, data: { status: "ended", ends_at: new Date().toISOString() } }), setSelected(null))}>
+              End now
+            </ActionItem>
+          )}
+          <ActionItem icon={Trash2} danger onClick={() => (selected && remove.mutate(selected.name), setSelected(null))}>
             Delete
-          </ActionsButton>
+          </ActionItem>
         </ActionsGroup>
       </Actions>
     </Screen>

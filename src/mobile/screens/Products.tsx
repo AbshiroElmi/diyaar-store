@@ -1,7 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AlertCircle, CheckCircle2, Download, FileDown, FileUp, Package, PackagePlus, Plus, TrendingUp } from "lucide-react";
-import { ActionsButton, ActionsGroup, ActionsLabel, Fab, Searchbar } from "konsta/react";
+import { ActionsGroup, ActionsLabel, Fab, Searchbar } from "konsta/react";
 import { toast } from "sonner";
 import { useCategories, useImportProducts, useProducts, useToggleProduct } from "@/hooks/queries";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -10,7 +10,7 @@ import { productsToCsv, productTemplateCsv, readProductsCsv, saveCsv, type Impor
 import { formatMoney } from "@/lib/format";
 import { haptic } from "@/lib/native";
 import { cn } from "@/lib/utils";
-import { Actions, CARD, Empty, ErrorBlock, FormSheet, Loading, ProductArt, Screen } from "../ui";
+import { ActionItem, Actions, CARD, Empty, ErrorBlock, FormSheet, Loading, ProductArt, Screen } from "../ui";
 
 function ProductCard({ p }: { p: Product }) {
   const navigate = useNavigate();
@@ -184,18 +184,18 @@ export default function ProductsScreen() {
       <Actions opened={menuOpen} onBackdropClick={() => setMenuOpen(false)}>
         <ActionsGroup>
           <ActionsLabel>Menu items</ActionsLabel>
-          <ActionsButton onClick={pick(() => navigate("/products/new"))}>
-            <span className="flex items-center gap-3"><PackagePlus className="h-5 w-5 text-primary" /> Add item</span>
-          </ActionsButton>
-          <ActionsButton onClick={pick(() => fileRef.current?.click())}>
-            <span className="flex items-center gap-3"><FileUp className="h-5 w-5 text-primary" /> Import from CSV</span>
-          </ActionsButton>
-          <ActionsButton onClick={pick(exportCsv)}>
-            <span className="flex items-center gap-3"><FileDown className="h-5 w-5 text-primary" /> Export CSV{all ? ` (${all.total})` : ""}</span>
-          </ActionsButton>
-          <ActionsButton onClick={pick(() => saveCsv("menu-items-template.csv", productTemplateCsv(categories ?? [])))}>
-            <span className="flex items-center gap-3"><Download className="h-5 w-5 text-black/45 dark:text-white/50" /> Download CSV template</span>
-          </ActionsButton>
+          <ActionItem icon={PackagePlus} onClick={pick(() => navigate("/products/new"))}>
+            Add item
+          </ActionItem>
+          <ActionItem icon={FileUp} onClick={pick(() => fileRef.current?.click())}>
+            Import from CSV
+          </ActionItem>
+          <ActionItem icon={FileDown} onClick={pick(exportCsv)}>
+            Export CSV{all ? ` (${all.total})` : ""}
+          </ActionItem>
+          <ActionItem icon={Download} onClick={pick(() => saveCsv("menu-items-template.csv", productTemplateCsv(categories ?? [])))}>
+            Download CSV template
+          </ActionItem>
         </ActionsGroup>
       </Actions>
 

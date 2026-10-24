@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
-import { Bell, BellRing, Database, Globe, LogOut, Mail, MessageSquare, Moon, Printer, Star, Timer, Volume2, Wallet, Zap } from "lucide-react";
-import { ActionsButton, ActionsGroup, ActionsLabel, BlockFooter, BlockTitle, List, ListItem, Toggle } from "konsta/react";
+import { Bell, BellRing, Database, Globe, LogOut, Mail, MessageSquare, Moon, Printer, RotateCcw, Star, Sun, SunMoon, Timer, Volume2, Wallet, Zap } from "lucide-react";
+import { ActionsGroup, ActionsLabel, BlockFooter, BlockTitle, List, ListItem, Toggle } from "konsta/react";
 import { resetMockDb } from "@/api/mock/handlers";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettings, useUpdateSettings } from "@/hooks/queries";
 import type { StoreSettings } from "@/api";
 import { env, isMockApi } from "@/lib/env";
-import { Actions, IconTile, Loading, Screen } from "../ui";
+import { ActionItem, Actions, IconTile, Loading, Screen } from "../ui";
 
 const LANG = { en: "English", so: "Soomaali", ar: "العربية" } as const;
 
@@ -77,9 +77,9 @@ export default function SettingsScreen() {
         <ActionsGroup>
           <ActionsLabel>Accept new orders within</ActionsLabel>
           {[3, 5, 8, 10].map((m) => (
-            <ActionsButton key={m} bold={s?.orders.accept_timeout_minutes === m} onClick={() => (o("accept_timeout_minutes", m), setSheet(null))}>
+            <ActionItem key={m} icon={Timer} selected={s?.orders.accept_timeout_minutes === m} onClick={() => (o("accept_timeout_minutes", m), setSheet(null))}>
               {m} minutes
-            </ActionsButton>
+            </ActionItem>
           ))}
         </ActionsGroup>
       </Actions>
@@ -88,9 +88,9 @@ export default function SettingsScreen() {
         <ActionsGroup>
           <ActionsLabel>Language</ActionsLabel>
           {(Object.keys(LANG) as Array<keyof typeof LANG>).map((l) => (
-            <ActionsButton key={l} bold={s?.language === l} onClick={() => (s && commit({ ...s, language: l }), setSheet(null))}>
+            <ActionItem key={l} icon={Globe} selected={s?.language === l} onClick={() => (s && commit({ ...s, language: l }), setSheet(null))}>
               {LANG[l]}
-            </ActionsButton>
+            </ActionItem>
           ))}
         </ActionsGroup>
       </Actions>
@@ -98,14 +98,16 @@ export default function SettingsScreen() {
       <Actions opened={sheet === "theme"} onBackdropClick={() => setSheet(null)}>
         <ActionsGroup>
           <ActionsLabel>Appearance</ActionsLabel>
-          {[
-            ["light", "Light"],
-            ["dark", "Dark"],
-            ["system", "Automatic"],
-          ].map(([v, label]) => (
-            <ActionsButton key={v} bold={theme === v} onClick={() => (setTheme(v), setSheet(null))}>
+          {(
+            [
+              ["light", "Light", Sun],
+              ["dark", "Dark", Moon],
+              ["system", "Automatic", SunMoon],
+            ] as const
+          ).map(([v, label, icon]) => (
+            <ActionItem key={v} icon={icon} selected={theme === v} onClick={() => (setTheme(v), setSheet(null))}>
               {label}
-            </ActionsButton>
+            </ActionItem>
           ))}
         </ActionsGroup>
       </Actions>
@@ -113,15 +115,16 @@ export default function SettingsScreen() {
       <Actions opened={sheet === "reset"} onBackdropClick={() => setSheet(null)}>
         <ActionsGroup>
           <ActionsLabel>All demo changes will be lost.</ActionsLabel>
-          <ActionsButton
-            className="!text-[#ff3b30]"
+          <ActionItem
+            icon={RotateCcw}
+            danger
             onClick={() => {
               resetMockDb();
               window.location.reload();
             }}
           >
             Reset demo data
-          </ActionsButton>
+          </ActionItem>
         </ActionsGroup>
       </Actions>
     </Screen>
