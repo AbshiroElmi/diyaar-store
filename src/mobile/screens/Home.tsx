@@ -4,7 +4,6 @@ import { format } from "date-fns";
 import { useTheme } from "next-themes";
 import { Area, AreaChart, ResponsiveContainer, XAxis } from "recharts";
 import { BarChart3, Bell, ChefHat, ChevronDown, ChevronRight, Clock, Headphones, Megaphone, PackageCheck, PackagePlus, ReceiptText, Search, ShoppingBag, Star } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
 import { useBanners, useCategories, useDashboard, useNotifications, useProducts, useSetStoreOpen, useStore } from "@/hooks/queries";
 import { formatMoney, formatNumber, initials, timeAgo } from "@/lib/format";
 import { haptic, setStatusBarTheme } from "@/lib/native";
@@ -28,7 +27,6 @@ const QUICK = [
 
 export default function HomeScreen() {
   const navigate = useNavigate();
-  const qc = useQueryClient();
   const { resolvedTheme } = useTheme();
   const { data, isLoading, error, refetch } = useDashboard();
   const { data: banners } = useBanners();
@@ -52,9 +50,11 @@ export default function HomeScreen() {
   const open = !!store?.is_open;
 
   return (
-    <Screen title="Home" bare tabbar onRefresh={() => qc.invalidateQueries()}>
+    <Screen title="Home" bare tabbar>
       {/* ── Brand header ───────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-b-[28px] bg-gradient-to-br from-[#3fd0bd] via-[#219186] to-[#0f4f48] px-4 pb-5 shadow-[0_12px_30px_-14px_rgba(33,145,134,0.55)] pt-[calc(env(safe-area-inset-top)+10px)] text-white">
+      <div className="relative overflow-hidden bg-gradient-to-br from-[#3fd0bd] via-[#219186] to-[#0f4f48] px-4 pb-14 pt-[calc(env(safe-area-inset-top)+10px)] text-white">
+        {/* bottom of the header fades into the page */}
+        <span className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent via-[#f7f9f9]/70 to-[#f7f9f9] dark:via-black/70 dark:to-black" />
         {/* soft glows on the gradient */}
         <span className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-[#BEFF00]/20 blur-3xl" />
         <span className="pointer-events-none absolute -bottom-24 -left-16 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
@@ -97,7 +97,7 @@ export default function HomeScreen() {
         </div>
 
         {/* Search */}
-        <button onClick={() => go("/orders?tab=history")} className="relative mt-3 flex h-11 w-full items-center gap-2.5 rounded-xl bg-white px-3.5 text-left text-[15px] text-black/45 shadow-sm">
+        <button onClick={() => go("/orders?tab=history")} className="relative z-10 mt-3 flex h-11 w-full items-center gap-2.5 rounded-xl bg-white px-3.5 text-left text-[15px] text-black/45 shadow-[0_6px_20px_-8px_rgba(15,79,72,0.35)]">
           <Search className="h-5 w-5 text-black/60" />
           Search orders, customers…
         </button>
@@ -108,7 +108,7 @@ export default function HomeScreen() {
       ) : isLoading || !data ? (
         <Loading />
       ) : (
-        <div className="space-y-6 pt-4">
+        <div className="-mt-8 space-y-6">
           {/* ── Offer banners ─────────────────────────── */}
           {!!banners?.length && <BannerCarousel banners={banners} />}
 

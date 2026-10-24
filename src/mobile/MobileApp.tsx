@@ -168,9 +168,49 @@ function MenuSheet({ opened, onClose }: { opened: boolean; onClose: () => void }
     navigate(href);
   };
 
+  // Swipe-to-dismiss: track drag on the handle pill only
+  const dragStart = useRef<number | null>(null);
+  const handlePointerDown = (e: React.PointerEvent) => {
+    dragStart.current = e.clientY;
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  };
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (dragStart.current === null) return;
+    if (e.clientY - dragStart.current > 60) {
+      dragStart.current = null;
+      haptic.tap();
+      onClose();
+    }
+  };
+  const handlePointerUp = () => { dragStart.current = null; };
+
+  // Close on any tap outside the sheet panel
+  const sheetRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!opened) return;
+    const handler = (e: TouchEvent) => {
+      if (sheetRef.current && !sheetRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    // 50 ms delay so the tap that opened the sheet doesn't immediately close it
+    const timer = setTimeout(() => document.addEventListener("touchstart", handler, { passive: true }), 50);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("touchstart", handler);
+    };
+  }, [opened, onClose]);
+
   return (
     <Sheet opened={opened} onBackdropClick={onClose} className="max-h-[90dvh] w-full overflow-hidden rounded-t-[22px] pb-safe">
-      <div className="flex justify-center pt-2.5">
+      <div ref={sheetRef}>
+      <div
+        className="flex justify-center pt-2.5 pb-2 cursor-grab active:cursor-grabbing touch-none"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+      >
         <span className="h-[5px] w-10 rounded-full bg-black/15 dark:bg-white/20" />
       </div>
       <div className="no-scrollbar max-h-[calc(90dvh-20px)] overflow-y-auto pb-6">
@@ -219,6 +259,7 @@ function MenuSheet({ opened, onClose }: { opened: boolean; onClose: () => void }
             }
           />
         </List>
+      </div>
       </div>
     </Sheet>
   );

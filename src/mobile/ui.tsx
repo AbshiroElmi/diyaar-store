@@ -37,7 +37,7 @@ export function Screen({ title, subtitle, back, large, right, subnavbar, tabbar,
   const navigate = useNavigate();
   const ios = useIsIos();
   return (
-    <Page className="no-scrollbar" colors={{ bgIos: "bg-[#f7f9f9] dark:bg-black", bgMaterial: "bg-[#f7f9f9] dark:bg-[#111]" }}>
+    <Page className={cn("no-scrollbar", !onRefresh && "overscroll-y-none")} colors={{ bgIos: "bg-[#f7f9f9] dark:bg-black", bgMaterial: "bg-[#f7f9f9] dark:bg-[#111]" }}>
       {!bare && (
       <Navbar
         title={title}
