@@ -74,7 +74,6 @@ function LiveCard({ order, onReject }: { order: Order; onReject: () => void }) {
           </>
         ) : next ? (
           <Button
-            tonal={order.status === "accepted"}
             className={cn("flex-1", order.status === "preparing" && "!bg-[#34c759]")}
             disabled={update.isPending}
             onClick={() => {
@@ -187,7 +186,7 @@ function History() {
           ))}
           {data.total > page * 30 && (
             <div className="px-4 pt-4">
-              <Button tonal large disabled={isFetching} onClick={() => setPage((p) => p + 1)}>
+              <Button large disabled={isFetching} onClick={() => setPage((p) => p + 1)}>
                 {isFetching ? "Loading…" : "Load more"}
               </Button>
             </div>

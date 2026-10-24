@@ -145,7 +145,7 @@ export default function ReviewsScreen() {
                       </div>
                     </div>
                   ) : (
-                    <Button rounded small tonal className="mt-3 !w-auto px-4" onClick={() => setReplying(r)}>
+                    <Button rounded small className="mt-3 !w-auto px-4" onClick={() => setReplying(r)}>
                       <MessageSquareText className="mr-1.5 h-4 w-4" /> Reply
                     </Button>
                   )}
