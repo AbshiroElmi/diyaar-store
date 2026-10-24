@@ -124,6 +124,8 @@ export interface Order {
   notes?: string;
   order_items: OrderItem[];
   item_count: number;
+  /** Delivery driver assigned by the store (Driver.name). */
+  driver?: string;
   driver_name?: string;
   driver_phone?: string;
   cancel_reason?: string;
@@ -337,6 +339,22 @@ export interface TeamMember {
   role: TeamRole;
   status: "active" | "invited" | "disabled";
   last_active?: string;
+}
+
+// ── Delivery drivers ────────────────────────────────────────
+
+export type DriverVehicle = "motorbike" | "car" | "bicycle";
+
+export interface Driver {
+  name: string;
+  full_name: string;
+  phone: string;
+  vehicle: DriverVehicle;
+  /** Off-duty drivers stay on the list but can't be assigned. */
+  is_active: 0 | 1;
+  /** Orders currently with this driver (ready or picked up). */
+  active_orders: number;
+  deliveries_today: number;
 }
 
 // ── Notifications ───────────────────────────────────────────

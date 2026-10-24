@@ -1,6 +1,16 @@
 import { api } from "../client";
 import { ENDPOINTS } from "../endpoints";
-import type { AppNotification, StoreSettings, SupportTicket, TeamMember, TicketStatus } from "../types";
+import type { AppNotification, Driver, Order, StoreSettings, SupportTicket, TeamMember, TicketStatus } from "../types";
+
+export const driversService = {
+  list: () => api.get<{ success: boolean; drivers: Driver[] }>(ENDPOINTS.getDrivers).then((r) => r.drivers),
+  create: (data: Pick<Driver, "full_name" | "phone" | "vehicle">) => api.post<{ success: boolean; driver: Driver }>(ENDPOINTS.createDriver, data).then((r) => r.driver),
+  update: (driverId: string, data: Partial<Driver>) =>
+    api.post<{ success: boolean; driver: Driver }>(ENDPOINTS.updateDriver, { driver_id: driverId, ...data }).then((r) => r.driver),
+  remove: (driverId: string) => api.post<{ success: boolean }>(ENDPOINTS.deleteDriver, { driver_id: driverId }),
+  assign: (orderId: string, driverId: string) =>
+    api.post<{ success: boolean; order: Order }>(ENDPOINTS.assignDriver, { order_number: orderId, driver_id: driverId }).then((r) => r.order),
+};
 
 export const teamService = {
   list: () => api.get<{ success: boolean; members: TeamMember[] }>(ENDPOINTS.getTeam).then((r) => r.members),

@@ -1,15 +1,16 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Bike, Check, ChefHat, Clock, History as HistoryIcon, Inbox, LayoutGrid, PackageCheck, Search, StickyNote, Store, X } from "lucide-react";
+import { Bike, Check, ChefHat, Clock, History as HistoryIcon, Inbox, LayoutGrid, PackageCheck, Phone, Search, StickyNote, Store, UserPlus, X } from "lucide-react";
 import { Button, Link as KLink, List, ListItem } from "konsta/react";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { useOrderCounts, useOrders, useUpdateOrderStatus } from "@/hooks/queries";
 import { useDebounce } from "@/hooks/use-debounce";
 import type { Order, OrderStatus } from "@/api";
-import { formatMoney, formatDay, formatTime } from "@/lib/format";
+import { formatMoney, formatDay, formatTime, initials } from "@/lib/format";
 import { haptic } from "@/lib/native";
 import { cn } from "@/lib/utils";
 import { Empty, ErrorBlock, Loading, Screen, SearchField } from "../ui";
+import { AssignDriverSheet } from "../AssignDriverSheet";
 import { RejectSheet } from "./OrderDetail";
 
 type Stage = "confirming" | "accepted" | "preparing" | "ready";
@@ -31,7 +32,7 @@ const NEXT: Partial<Record<OrderStatus, { status: OrderStatus; label: string; ic
 };
 
 /** Ticket-style card: order number + timer on top, perforated edge, customer and items, one main action. */
-function Ticket({ order, onReject }: { order: Order; onReject: () => void }) {
+function Ticket({ order, onReject, onAssign }: { order: Order; onReject: () => void; onAssign: (o: Order) => void }) {
   const navigate = useNavigate();
   const update = useUpdateOrderStatus();
   const stage = STAGES.find((x) => x.key === order.status) ?? STAGES[1];
@@ -41,7 +42,8 @@ function Ticket({ order, onReject }: { order: Order; onReject: () => void }) {
   const items = order.order_items;
   const advance = (status: OrderStatus) => {
     haptic.press();
-    update.mutate({ id: order.name, status });
+    // Delivery orders go straight to picking a driver once they're ready.
+    update.mutate({ id: order.name, status }, { onSuccess: (o) => status === "ready" && !isPickup(o) && onAssign(o) });
   };
 
   return (
@@ -114,9 +116,36 @@ function Ticket({ order, onReject }: { order: Order; onReject: () => void }) {
           >
             <next.icon className="h-[18px] w-[18px]" /> {next.label}
           </button>
+        ) : order.status === "ready" && !isPickup(order) && !order.driver ? (
+          <button
+            onClick={() => {
+              haptic.tap();
+              onAssign(order);
+            }}
+            className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#1a9d4b] text-[15px] font-bold text-white transition-transform active:scale-[0.98]"
+          >
+            <UserPlus className="h-[18px] w-[18px]" /> Assign driver
+          </button>
+        ) : order.driver_name ? (
+          <div className="flex h-11 flex-1 items-center gap-2.5 rounded-xl bg-[#34c759]/10 pl-2 pr-1.5">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-[12px] font-extrabold text-[#1a9d4b] dark:bg-black/30">{initials(order.driver_name)}</span>
+            <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-[#14803c] dark:text-[#5fd88a]">
+              {order.driver_name} {order.status === "ready" ? "is collecting it" : "is on the way"}
+            </span>
+            {order.driver_phone && (
+              <a href={`tel:${order.driver_phone}`} aria-label="Call driver" className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-[#1a9d4b] dark:bg-black/30">
+                <Phone className="h-4 w-4" />
+              </a>
+            )}
+            {order.status === "ready" && (
+              <button onClick={() => onAssign(order)} className="h-8 rounded-lg bg-white px-2.5 text-[13px] font-bold text-[#1a9d4b] dark:bg-black/30">
+                Change
+              </button>
+            )}
+          </div>
         ) : (
           <p className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-black/[0.035] text-[14px] font-medium text-black/55 dark:bg-white/[0.06] dark:text-white/60">
-            <Bike className="h-4 w-4" /> {order.driver_name ? `${order.driver_name} is on the way` : "Waiting for a driver…"}
+            <Bike className="h-4 w-4" /> Waiting for the customer
           </p>
         )}
       </div>
@@ -157,6 +186,7 @@ function StageTabs({ value, onChange, counts }: { value: Stage; onChange: (s: St
 function Board({ stage }: { stage: Stage }) {
   const { data, isLoading, error, refetch } = useOrders({ status: stage, page_size: 100 });
   const [rejecting, setRejecting] = useState<Order | null>(null);
+  const [assigning, setAssigning] = useState<Order | null>(null);
   const info = STAGES.find((x) => x.key === stage)!;
 
   return (
@@ -168,9 +198,10 @@ function Board({ stage }: { stage: Stage }) {
       ) : !data?.data.length ? (
         <Empty icon={Inbox} title="All caught up" text={info.empty} />
       ) : (
-        data.data.map((o) => <Ticket key={o.name} order={o} onReject={() => setRejecting(o)} />)
+        data.data.map((o) => <Ticket key={o.name} order={o} onReject={() => setRejecting(o)} onAssign={setAssigning} />)
       )}
       <RejectSheet order={rejecting} onClose={() => setRejecting(null)} />
+      <AssignDriverSheet order={assigning} onClose={() => setAssigning(null)} />
     </div>
   );
 }

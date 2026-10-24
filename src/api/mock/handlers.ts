@@ -6,6 +6,7 @@
 import { ENDPOINTS as E, type Endpoint } from "../endpoints";
 import type {
   Banner,
+  Driver,
   AppNotification,
   Category,
   DashboardData,
@@ -55,6 +56,7 @@ interface MockDb {
   tickets: SupportTicket[];
   settings: StoreSettings;
   banners?: Banner[];
+  drivers?: Array<Omit<Driver, "active_orders" | "deliveries_today">>;
   seq: number;
   lastIncomingAt: number;
 }
@@ -131,6 +133,27 @@ export const mockReady: Promise<void> = (async () => {
     /* IndexedDB unavailable — keep the in-memory copy */
   }
 })();
+
+/** Delivery drivers; seeded lazily like banners. */
+function drivers() {
+  db.drivers ??= [
+    { name: "DRV-1", full_name: "Abdikarim Mohamed", phone: "+252617771234", vehicle: "motorbike", is_active: 1 },
+    { name: "DRV-2", full_name: "Said Omar", phone: "+252615552310", vehicle: "motorbike", is_active: 1 },
+    { name: "DRV-3", full_name: "Mahad Farah", phone: "+252619034477", vehicle: "car", is_active: 1 },
+    { name: "DRV-4", full_name: "Guled Ali", phone: "+252612228890", vehicle: "bicycle", is_active: 0 },
+  ];
+  return db.drivers;
+}
+
+const withStats = (d: Omit<Driver, "active_orders" | "deliveries_today">): Driver => {
+  const today = new Date().toDateString();
+  const mine = db.orders.filter((o) => o.driver === d.name);
+  return {
+    ...d,
+    active_orders: mine.filter((o) => o.status === "ready" || o.status === "picked_up").length,
+    deliveries_today: mine.filter((o) => (o.status === "delivered" || o.status === "completed") && new Date(o.creation).toDateString() === today).length,
+  };
+};
 
 /** Home banners; seeded lazily so demo data saved before banners existed still works. */
 function banners(): Banner[] {
@@ -475,10 +498,6 @@ export const mockHandlers: Partial<Record<Endpoint, Handler>> = {
       order.cancel_reason = reject_reason;
       order.payment_status = order.payment_status === "paid" ? "refunded" : order.payment_status;
     }
-    if (status === "ready" && !order.delivery_type.includes("pickup")) {
-      order.driver_name = "Abdikarim M.";
-      order.driver_phone = "+252617771234";
-    }
     order.timeline.push({ status, timestamp: new Date().toISOString(), actor_type: "store", note: status === "rejected" ? reject_reason : undefined });
     db.notifications.forEach((n) => {
       if (n.link?.endsWith(order.name)) n.read = true;
@@ -655,6 +674,43 @@ export const mockHandlers: Partial<Record<Endpoint, Handler>> = {
     db.promotions = db.promotions.filter((p) => p.name !== promotion_id);
     save();
     return { success: true };
+  },
+
+  // Delivery drivers
+  [E.getDrivers]: () => ({ success: true, drivers: drivers().map(withStats) }),
+  [E.createDriver]: ({ full_name, phone, vehicle }: Pick<Driver, "full_name" | "phone" | "vehicle">) => {
+    if (!full_name?.trim()) fail("Driver name is required");
+    if (!phone?.trim()) fail("Phone number is required");
+    const driver = { name: nextId("DRV"), full_name: full_name.trim(), phone: phone.trim(), vehicle: vehicle ?? "motorbike", is_active: 1 as const };
+    drivers().push(driver);
+    save();
+    return { success: true, driver: withStats(driver) };
+  },
+  [E.updateDriver]: ({ driver_id, ...changes }: { driver_id: string } & Partial<Driver>) => {
+    const driver = drivers().find((d) => d.name === driver_id) ?? fail("Driver not found");
+    const { active_orders: _a, deliveries_today: _d, ...rest } = changes;
+    Object.assign(driver, rest);
+    db.orders.forEach((o) => {
+      if (o.driver === driver.name) Object.assign(o, { driver_name: driver.full_name, driver_phone: driver.phone });
+    });
+    save();
+    return { success: true, driver: withStats(driver) };
+  },
+  [E.deleteDriver]: ({ driver_id }: { driver_id: string }) => {
+    if (db.orders.some((o) => o.driver === driver_id && (o.status === "ready" || o.status === "picked_up"))) fail("This driver has an order on the way — reassign it first");
+    db.drivers = drivers().filter((d) => d.name !== driver_id);
+    save();
+    return { success: true };
+  },
+  [E.assignDriver]: ({ order_number, driver_id }: { order_number: string; driver_id: string }) => {
+    const order = db.orders.find((o) => o.name === order_number) ?? fail("Order not found");
+    const driver = drivers().find((d) => d.name === driver_id) ?? fail("Driver not found");
+    if (!driver.is_active) fail(`${driver.full_name} is off duty`);
+    if (order.status !== "ready") fail("Mark the order as ready first");
+    Object.assign(order, { driver: driver.name, driver_name: driver.full_name, driver_phone: driver.phone });
+    order.timeline.push({ status: order.status, timestamp: new Date().toISOString(), actor_type: "store", note: `Assigned to ${driver.full_name}` });
+    save();
+    return { success: true, order };
   },
 
   // Team

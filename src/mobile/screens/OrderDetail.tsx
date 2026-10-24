@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { Bike, Clock, CreditCard, Flame, MapPin, MapPinOff, MessageSquare, PackageX, Phone, Store, User, type LucideIcon } from "lucide-react";
+import { Bike, Clock, CreditCard, Flame, MapPin, MapPinOff, MessageSquare, PackageX, Phone, Store, User, UserPlus, type LucideIcon } from "lucide-react";
 import { ActionsGroup, ActionsLabel, BlockTitle, Button, List, ListItem, Toolbar } from "konsta/react";
 import { StatusBadge, statusLabel } from "@/components/shared/StatusBadge";
 import { useOrder, useUpdateOrderStatus } from "@/hooks/queries";
@@ -8,6 +8,7 @@ import type { Order, OrderStatus } from "@/api";
 import { formatDateTime, formatMoney, formatTime } from "@/lib/format";
 import { haptic } from "@/lib/native";
 import { cn } from "@/lib/utils";
+import { AssignDriverSheet } from "../AssignDriverSheet";
 import { ActionItem, Actions, ErrorBlock, IconTile, Loading, Screen } from "../ui";
 
 const REASONS: Array<[string, LucideIcon]> = [
@@ -45,11 +46,12 @@ export function RejectSheet({ order, onClose }: { order: Order | null; onClose: 
   );
 }
 
-function ActionBar({ order, onReject }: { order: Order; onReject: () => void }) {
+function ActionBar({ order, onReject, onAssign }: { order: Order; onReject: () => void; onAssign: () => void }) {
   const update = useUpdateOrderStatus();
   const run = (status: OrderStatus) => {
     haptic.press();
-    update.mutate({ id: order.name, status });
+    // Delivery orders go straight to picking a driver once they're ready.
+    update.mutate({ id: order.name, status }, { onSuccess: (o) => status === "ready" && !isPickup(o) && onAssign() });
   };
   let content: React.ReactNode = null;
   if (order.status === "confirming")
@@ -81,6 +83,12 @@ function ActionBar({ order, onReject }: { order: Order; onReject: () => void }) 
         Picked up by customer
       </Button>
     );
+  else if (order.status === "ready" && !order.driver)
+    content = (
+      <Button large className="!bg-[#1a9d4b]" onClick={onAssign}>
+        <UserPlus className="mr-1.5 h-5 w-5" /> Assign driver
+      </Button>
+    );
   if (!content) return null;
   return (
     <Toolbar className="fixed bottom-0 left-0 z-20 !h-auto" innerClassName="!h-auto gap-2 !px-4 !py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
@@ -93,6 +101,7 @@ export default function OrderDetailScreen() {
   const { id } = useParams();
   const { data: order, isLoading, error, refetch } = useOrder(id ?? null);
   const [rejecting, setRejecting] = useState(false);
+  const [assigning, setAssigning] = useState(false);
 
   return (
     <Screen title={id} subtitle={order ? statusLabel(order.status) : undefined} back footer={order && <div className="h-24" />}>
@@ -150,6 +159,7 @@ export default function OrderDetailScreen() {
               <BlockTitle>Driver</BlockTitle>
               <List strong inset dividers>
                 <ListItem link href={`tel:${order.driver_phone}`} media={<IconTile icon={Bike} className="bg-primary" />} title={order.driver_name} after="Call" />
+                {order.status === "ready" && <ListItem link media={<IconTile icon={UserPlus} className="bg-[#1a9d4b]" />} title="Change driver" onClick={() => setAssigning(true)} />}
               </List>
             </>
           )}
@@ -180,7 +190,8 @@ export default function OrderDetailScreen() {
             </div>
           </List>
 
-          <ActionBar order={order} onReject={() => setRejecting(true)} />
+          <ActionBar order={order} onReject={() => setRejecting(true)} onAssign={() => setAssigning(true)} />
+              <AssignDriverSheet order={assigning ? order : null} onClose={() => setAssigning(false)} />
           <RejectSheet order={rejecting ? order : null} onClose={() => setRejecting(false)} />
         </>
       )}

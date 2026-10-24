@@ -64,6 +64,11 @@ export const ENDPOINTS = {
   deletePromotion: "delete_store_promotion", // planned
 
   // Team
+  getDrivers: "get_store_drivers", // planned
+  createDriver: "create_store_driver", // planned
+  updateDriver: "update_store_driver", // planned
+  deleteDriver: "delete_store_driver", // planned
+  assignDriver: "assign_order_driver", // planned
   getTeam: "get_store_team", // planned
   inviteMember: "invite_store_member", // planned
   updateMember: "update_store_member", // planned

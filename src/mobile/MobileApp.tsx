@@ -9,6 +9,7 @@ import {
   Clock,
   // FolderTree, // Categories hidden for now
   GalleryHorizontal,
+  Bike,
   Headphones,
   LayoutGrid,
   LogOut,
@@ -40,6 +41,7 @@ import ReportsScreen from "./screens/Reports";
 import ReviewsScreen from "./screens/Reviews";
 import PromotionsScreen from "./screens/Promotions";
 import BannersScreen from "./screens/Banners";
+import DriversScreen from "./screens/Drivers";
 // Categories hidden for now — products only.
 // import CategoriesScreen from "./screens/Categories";
 import StoreProfileScreen from "./screens/StoreProfile";
@@ -97,6 +99,7 @@ const MENU: Array<{ title: string; items: MenuEntry[] }> = [
       { href: "/store", label: "Store Profile", icon: Store, tint: "bg-[#219186]" },
       { href: "/hours", label: "Opening Hours", icon: Clock, tint: "bg-[#34c759]" },
       { href: "/team", label: "Team", icon: Users, tint: "bg-[#5ac8fa]" },
+      { href: "/drivers", label: "Delivery drivers", icon: Bike, tint: "bg-[#ff9500]" },
     ],
   },
   {
@@ -388,6 +391,7 @@ export default function MobileApp() {
         <Route path="store" element={<StoreProfileScreen />} />
         <Route path="hours" element={<HoursScreen />} />
         <Route path="team" element={<TeamScreen />} />
+        <Route path="drivers" element={<DriversScreen />} />
         <Route path="notifications" element={<NotificationsScreen />} />
         <Route path="support" element={<SupportScreen />} />
         <Route path="support/:id" element={<TicketScreen />} />

@@ -36,7 +36,8 @@ export default function HomeScreen() {
   // const categories = allCategories?.filter((c) => c.is_active);
   const { data: store } = useStore();
   const { data: products } = useProducts();
-  const categoryOf = (id: string) => products?.data.find((x) => x.name === id)?.category ?? "";
+  // Best sellers come from past orders; show each product's current name and photo.
+  const productOf = (id: string) => products?.data.find((x) => x.name === id);
   const { data: notifications } = useNotifications();
   const setOpen = useSetStoreOpen();
   const go = (href: string) => {
@@ -285,15 +286,18 @@ export default function HomeScreen() {
               Best sellers this week
             </SectionTitle>
             <div className="no-scrollbar flex gap-2.5 overflow-x-auto px-4 pb-1">
-              {data.top_products.map((p, i) => (
+              {data.top_products.map((p, i) => {
+                const current = productOf(p.product);
+                return (
                 <button key={p.product} onClick={() => go(`/products/${p.product}`)} className={cn(CARD, "relative w-[132px] shrink-0 p-2.5 text-left")}>
                   {i === 0 && <span className="absolute left-4 top-4 z-10 rounded-md bg-[#BEFF00] px-1.5 text-[10px] font-extrabold uppercase leading-[18px] text-[#2B330F]">#1</span>}
-                  <ProductArt category={categoryOf(p.product)} className="h-[110px] w-full rounded-xl" emojiClassName="text-[52px]" />
-                  <p className="mt-2 line-clamp-2 h-9 text-[13px] font-bold leading-tight">{p.product_name}</p>
+                  <ProductArt category={current?.category ?? ""} image={current?.image} className="h-[110px] w-full rounded-xl" emojiClassName="text-[52px]" />
+                  <p className="mt-2 line-clamp-2 h-9 text-[13px] font-bold leading-tight">{current?.product_name ?? p.product_name}</p>
                   <p className="mt-1 text-[11px] font-semibold text-black/45 dark:text-white/50">{p.quantity} sold</p>
                   <p className="tabular text-[14px] font-extrabold">{formatMoney(p.revenue)}</p>
                 </button>
-              ))}
+                );
+              })}
             </div>
           </section>
 

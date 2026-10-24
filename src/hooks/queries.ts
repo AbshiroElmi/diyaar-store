@@ -21,7 +21,9 @@ import {
   storeService,
   supportService,
   teamService,
+  driversService,
   type Banner,
+  type Driver,
   type OrderListParams,
   type OrderStatus,
   type Period,
@@ -44,6 +46,7 @@ export const qk = {
   earnings: ["earnings"] as const,
   promotions: ["promotions"] as const,
   team: ["team"] as const,
+  drivers: ["drivers"] as const,
   notifications: ["notifications"] as const,
   tickets: ["tickets"] as const,
   settings: ["settings"] as const,
@@ -195,6 +198,7 @@ function useCatalogInvalidate() {
   return () => {
     qc.invalidateQueries({ queryKey: ["products"] });
     qc.invalidateQueries({ queryKey: qk.categories });
+    qc.invalidateQueries({ queryKey: qk.dashboard });
   };
 }
 
@@ -379,6 +383,51 @@ export function useDeletePromotion() {
 }
 
 // ── Team ────────────────────────────────────────────────────
+
+// ── Delivery drivers ────────────────────────────────────────
+
+export const useDrivers = () => useQuery({ queryKey: qk.drivers, queryFn: driversService.list });
+
+export function useSaveDriver() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data, silent: _ }: { id?: string; data: Partial<Driver>; silent?: boolean }) =>
+      id ? driversService.update(id, data) : driversService.create(data as Pick<Driver, "full_name" | "phone" | "vehicle">),
+    onSuccess: (_, { id, silent }) => {
+      qc.invalidateQueries({ queryKey: qk.drivers });
+      qc.invalidateQueries({ queryKey: ["orders"] });
+      if (!silent) toast.success(id ? "Driver updated" : "Driver added");
+    },
+    onError,
+  });
+}
+
+export function useDeleteDriver() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: driversService.remove,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: qk.drivers });
+      toast.success("Driver removed");
+    },
+    onError,
+  });
+}
+
+export function useAssignDriver() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ orderId, driverId }: { orderId: string; driverId: string }) => driversService.assign(orderId, driverId),
+    onSuccess: (order) => {
+      qc.setQueryData(qk.order(order.name), order);
+      qc.invalidateQueries({ queryKey: ["orders"] });
+      qc.invalidateQueries({ queryKey: qk.drivers });
+      haptic.success();
+      toast.success(`${order.driver_name} is taking ${order.name}`);
+    },
+    onError,
+  });
+}
 
 export const useTeam = () => useQuery({ queryKey: qk.team, queryFn: teamService.list });
 
