@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { CornerDownRight, MessageSquareText, Star } from "lucide-react";
-import { Button, Link as KLink, Sheet, Toolbar } from "konsta/react";
+import { Button, Link as KLink, Toolbar } from "konsta/react";
 import { useReplyReview, useReviews } from "@/hooks/queries";
 import type { Review } from "@/api";
 import { formatDate, initials, timeAgo } from "@/lib/format";
 import { haptic } from "@/lib/native";
 import { cn } from "@/lib/utils";
-import { ChipBar, Empty, ErrorBlock, Loading, Screen } from "../ui";
+import { ChipBar, Empty, ErrorBlock, Loading, Screen, Sheet } from "../ui";
 
 const QUICK = ["Thank you so much! We're glad you enjoyed it 🙏", "Thanks for the feedback — we'll share it with the kitchen.", "Sorry about this. Please contact us so we can make it right."];
 

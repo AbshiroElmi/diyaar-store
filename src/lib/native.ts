@@ -60,4 +60,20 @@ export function initNativeShell() {
   if (!isNative) return;
   document.documentElement.classList.add("native", `native-${platform}`);
   safe(() => Keyboard.setAccessoryBarVisible({ isVisible: false }));
+
+  // Track the keyboard so fixed sheets can sit above it and the tab bar can step aside.
+  // Android already shrinks the viewport, so only iOS needs the lift.
+  const root = document.documentElement;
+  Keyboard.addListener("keyboardWillShow", ({ keyboardHeight }) => {
+    root.classList.add("kb-open");
+    if (platform === "ios") root.style.setProperty("--kb", `${keyboardHeight}px`);
+  });
+  Keyboard.addListener("keyboardDidShow", () => {
+    const el = document.activeElement as HTMLElement | null;
+    if (el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) el.scrollIntoView({ block: "center", behavior: "smooth" });
+  });
+  Keyboard.addListener("keyboardWillHide", () => {
+    root.classList.remove("kb-open");
+    root.style.setProperty("--kb", "0px");
+  });
 }

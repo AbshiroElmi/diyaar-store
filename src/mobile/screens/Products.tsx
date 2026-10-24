@@ -1,7 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AlertCircle, CheckCircle2, Download, FileDown, FileUp, Package, PackagePlus, Plus, TrendingUp } from "lucide-react";
-import { Actions, ActionsButton, ActionsGroup, ActionsLabel, Fab, Searchbar } from "konsta/react";
+import { ActionsButton, ActionsGroup, ActionsLabel, Fab, Searchbar } from "konsta/react";
 import { toast } from "sonner";
 import { useCategories, useImportProducts, useProducts, useToggleProduct } from "@/hooks/queries";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -10,7 +10,7 @@ import { productsToCsv, productTemplateCsv, readProductsCsv, saveCsv, type Impor
 import { formatMoney } from "@/lib/format";
 import { haptic } from "@/lib/native";
 import { cn } from "@/lib/utils";
-import { CARD, Empty, ErrorBlock, FormSheet, Loading, ProductArt, Screen } from "../ui";
+import { Actions, CARD, Empty, ErrorBlock, FormSheet, Loading, ProductArt, Screen } from "../ui";
 
 function ProductCard({ p }: { p: Product }) {
   const navigate = useNavigate();
@@ -170,7 +170,7 @@ export default function ProductsScreen() {
       </div>
 
       <Fab
-        className="fixed right-4 z-20 bottom-[calc(9.5rem+env(safe-area-inset-bottom))]"
+        className="hide-on-kb fixed right-4 z-20 bottom-[calc(9.5rem+env(safe-area-inset-bottom))]"
         icon={<Plus className="h-6 w-6" />}
         text="Add item"
         onClick={() => {

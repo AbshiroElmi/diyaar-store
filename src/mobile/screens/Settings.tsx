@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { Bell, BellRing, Database, Globe, LogOut, Mail, MessageSquare, Moon, Printer, Star, Timer, Volume2, Wallet, Zap } from "lucide-react";
-import { Actions, ActionsButton, ActionsGroup, ActionsLabel, BlockFooter, BlockTitle, List, ListItem, Toggle } from "konsta/react";
+import { ActionsButton, ActionsGroup, ActionsLabel, BlockFooter, BlockTitle, List, ListItem, Toggle } from "konsta/react";
 import { resetMockDb } from "@/api/mock/handlers";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettings, useUpdateSettings } from "@/hooks/queries";
 import type { StoreSettings } from "@/api";
 import { env, isMockApi } from "@/lib/env";
-import { IconTile, Loading, Screen } from "../ui";
+import { Actions, IconTile, Loading, Screen } from "../ui";
 
 const LANG = { en: "English", so: "Soomaali", ar: "العربية" } as const;
 

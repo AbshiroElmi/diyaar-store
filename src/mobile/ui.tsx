@@ -3,9 +3,10 @@
  * Built on Konsta UI so they render as iOS or Material depending on the device.
  */
 
-import { useRef, useState, type ReactNode } from "react";
+import { useRef, useState, type ComponentProps, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { Block, Link as KLink, Navbar, NavbarBackLink, Page, Preloader, Sheet, Toolbar, useTheme } from "konsta/react";
+import { Actions as KActions, Block, Link as KLink, Navbar, NavbarBackLink, Page, Preloader, Sheet as KSheet, Toolbar, useTheme } from "konsta/react";
 import type { LucideIcon } from "lucide-react";
 import { AlertTriangle, ArrowDownRight, ArrowUpRight, RotateCw } from "lucide-react";
 import { haptic } from "@/lib/native";
@@ -248,6 +249,20 @@ export function Thumb({ id, label, image, className }: { id: string; label: stri
 // ── Form sheet (Cancel · Title · Save) ──────────────────────
 
 
+// ── Overlays ────────────────────────────────────────────────
+// Sheets render at the app root (above the tab bar, outside the page transition)
+// and ride up with the iOS keyboard via the --kb variable set in lib/native.
+
+const toRoot = (node: ReactNode) => createPortal(node, document.querySelector(".k-portal") ?? document.body);
+
+export function Sheet({ className, ...props }: ComponentProps<typeof KSheet>) {
+  return toRoot(<KSheet {...props} className={cn(props.opened && "kb-lift-sheet", className)} />);
+}
+
+export function Actions({ className, ...props }: ComponentProps<typeof KActions>) {
+  return toRoot(<KActions {...props} className={cn(props.opened && "kb-lift-actions", className)} />);
+}
+
 export function FormSheet({
   opened,
   onClose,
@@ -268,7 +283,7 @@ export function FormSheet({
   children: ReactNode;
 }) {
   return (
-    <Sheet opened={opened} onBackdropClick={onClose} className="max-h-[92dvh] w-full overflow-hidden rounded-t-[22px]">
+    <Sheet opened={opened} onBackdropClick={onClose} className="max-h-[calc(92dvh-var(--kb,0px))] w-full overflow-hidden rounded-t-[22px]">
       <Toolbar top className="rounded-t-[22px]">
         <KLink toolbar onClick={onClose}>
           Cancel
@@ -278,7 +293,7 @@ export function FormSheet({
           {saving ? "…" : saveLabel}
         </KLink>
       </Toolbar>
-      <div className="no-scrollbar max-h-[calc(92dvh-44px)] overflow-y-auto pb-[calc(2rem+env(safe-area-inset-bottom))]">{children}</div>
+      <div className="no-scrollbar max-h-[calc(92dvh-44px-var(--kb,0px))] overflow-y-auto pb-[calc(2rem+env(safe-area-inset-bottom))]">{children}</div>
     </Sheet>
   );
 }

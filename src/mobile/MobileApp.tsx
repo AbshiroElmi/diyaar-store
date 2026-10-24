@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Route, Routes, useLocation, useNavigate, useNavigationType } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { App as KonstaApp, Icon, List, ListItem, Sheet, Tabbar, TabbarLink } from "konsta/react";
+import { App as KonstaApp, Icon, List, ListItem, Tabbar, TabbarLink } from "konsta/react";
 import { useTheme } from "next-themes";
 import {
   BarChart3,
@@ -28,7 +28,7 @@ import { useNotifications, useOrderCounts, useReviews, useSettings, useStore } f
 import { haptic, platform, registerBackButton } from "@/lib/native";
 import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { IconTile } from "./ui";
+import { IconTile, Sheet } from "./ui";
 import HomeScreen from "./screens/Home";
 import OrdersScreen from "./screens/Orders";
 import OrderDetailScreen from "./screens/OrderDetail";
@@ -321,7 +321,7 @@ function NewOrdersBar({ count, visible }: { count: number; visible: boolean }) {
             navigate("/orders?status=confirming");
           }}
           className={cn(
-            "fixed inset-x-3 z-30 flex items-center gap-3 rounded-xl bg-[#219186] px-4 py-3 text-left text-white shadow-[0_10px_30px_-10px_rgba(33,145,134,0.7)] active:scale-[0.98]",
+            "hide-on-kb fixed inset-x-3 z-30 flex items-center gap-3 rounded-xl bg-[#219186] px-4 py-3 text-left text-white shadow-[0_10px_30px_-10px_rgba(33,145,134,0.7)] active:scale-[0.98]",
             mobileTheme === "ios" ? "bottom-[calc(env(safe-area-inset-bottom)+62px)]" : "bottom-[calc(env(safe-area-inset-bottom)+90px)]",
           )}
         >
@@ -393,7 +393,7 @@ export default function MobileApp() {
       <Tabbar
         labels
         icons
-        className={cn("fixed bottom-0 left-0 z-20 transition-transform duration-300", !showTabbar && "translate-y-full")}
+        className={cn("hide-on-kb fixed bottom-0 left-0 z-20 transition-[transform,opacity] duration-300", !showTabbar && "translate-y-full")}
       >
         {TAB_ORDER.map((key) => {
           if (key === "menu") {
