@@ -13,7 +13,7 @@ export const productsService = {
 
 export const categoriesService = {
   list: () => api.get<{ success: boolean; categories: Category[] }>(ENDPOINTS.getCategories).then((r) => r.categories),
-  create: (data: { category_name: string; description?: string }) =>
+  create: (data: { category_name: string; description?: string; image?: string }) =>
     api.post<{ success: boolean; category: Category }>(ENDPOINTS.createCategory, data).then((r) => r.category),
   update: (categoryId: string, data: Partial<Category>) =>
     api.post<{ success: boolean; category: Category }>(ENDPOINTS.updateCategory, { category_id: categoryId, ...data }).then((r) => r.category),

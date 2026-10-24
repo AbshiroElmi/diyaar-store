@@ -9,7 +9,7 @@ import { formatMoney, formatNumber, initials, timeAgo } from "@/lib/format";
 import { haptic, setStatusBarTheme } from "@/lib/native";
 import { cn } from "@/lib/utils";
 import { BannerCarousel } from "../BannerCarousel";
-import { CARD, categoryLook, ErrorBlock, Kpi, Loading, ProductArt, Screen, SectionTitle } from "../ui";
+import { CARD, ErrorBlock, Kpi, Loading, ProductArt, Screen, SectionTitle } from "../ui";
 
 const PIPELINE = [
   { key: "confirming", label: "New", icon: ReceiptText, tint: "bg-[#fff4e0]", fg: "text-[#e07b00]" },
@@ -265,10 +265,9 @@ export default function HomeScreen() {
               </SectionTitle>
               <div className="grid grid-cols-4 gap-x-2 gap-y-3 px-4">
                 {categories.map((c) => {
-                  const [, emoji, tint] = categoryLook(c.category_name);
                   return (
                     <button key={c.name} onClick={() => go(`/products?category=${encodeURIComponent(c.category_name)}`)} className="flex flex-col items-center gap-1.5 transition-transform active:scale-95">
-                      <span className={cn("flex aspect-square w-full items-center justify-center rounded-xl text-[34px]", tint)}>{emoji}</span>
+                      <ProductArt category={c.category_name} image={c.image} className="aspect-square w-full rounded-xl" emojiClassName="text-[34px]" />
                       <span className="line-clamp-2 text-center text-[11px] font-bold leading-tight">{c.category_name}</span>
                     </button>
                   );

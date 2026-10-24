@@ -476,10 +476,10 @@ export const mockHandlers: Partial<Record<Endpoint, Handler>> = {
 
   // Categories
   [E.getCategories]: () => ({ success: true, categories: [...db.categories].sort((a, b) => a.sort_order - b.sort_order) }),
-  [E.createCategory]: ({ category_name, description }: { category_name: string; description?: string }) => {
+  [E.createCategory]: ({ category_name, description, image }: { category_name: string; description?: string; image?: string }) => {
     if (!category_name?.trim()) fail("Category name is required");
     if (db.categories.some((c) => c.category_name.toLowerCase() === category_name.trim().toLowerCase())) fail("A category with this name already exists");
-    const category: Category = { name: nextId("CAT"), category_name: category_name.trim(), description, is_active: 1, sort_order: db.categories.length + 1, product_count: 0 };
+    const category: Category = { name: nextId("CAT"), category_name: category_name.trim(), description, image, is_active: 1, sort_order: db.categories.length + 1, product_count: 0 };
     db.categories.push(category);
     save();
     return { success: true, category };

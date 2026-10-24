@@ -1,14 +1,16 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Package, Plus, TrendingUp } from "lucide-react";
-import { Fab, Searchbar } from "konsta/react";
-import { useCategories, useProducts, useToggleProduct } from "@/hooks/queries";
+import { AlertCircle, CheckCircle2, Download, FileDown, FileUp, Package, PackagePlus, Plus, TrendingUp } from "lucide-react";
+import { Actions, ActionsButton, ActionsGroup, ActionsLabel, Fab, Searchbar } from "konsta/react";
+import { toast } from "sonner";
+import { useCategories, useImportProducts, useProducts, useToggleProduct } from "@/hooks/queries";
 import { useDebounce } from "@/hooks/use-debounce";
 import type { Product } from "@/api";
+import { productsToCsv, productTemplateCsv, readProductsCsv, saveCsv, type ImportRow } from "@/lib/csv";
 import { formatMoney } from "@/lib/format";
 import { haptic } from "@/lib/native";
 import { cn } from "@/lib/utils";
-import { CARD, categoryLook, Empty, ErrorBlock, Loading, ProductArt, Screen } from "../ui";
+import { CARD, Empty, ErrorBlock, FormSheet, Loading, ProductArt, Screen } from "../ui";
 
 function ProductCard({ p }: { p: Product }) {
   const navigate = useNavigate();
@@ -72,6 +74,40 @@ export default function ProductsScreen() {
   const soldOut = all?.data.filter((p) => !p.is_available).length ?? 0;
   const rail = useMemo(() => [{ name: "all", category_name: "All", product_count: all?.total ?? 0 }, ...(categories ?? [])], [categories, all]);
 
+  // ── Add / import / export menu ──
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [importRows, setImportRows] = useState<ImportRow[] | null>(null);
+  const importer = useImportProducts();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const goodRows = importRows?.filter((r) => r.data) ?? [];
+  const badRows = importRows?.filter((r) => r.error) ?? [];
+
+  const pick = (fn: () => void) => () => {
+    haptic.tap();
+    setMenuOpen(false);
+    fn();
+  };
+  const exportCsv = async () => {
+    if (!all?.data.length) return toast.error("No items to export yet");
+    try {
+      await saveCsv(`menu-items-${new Date().toISOString().slice(0, 10)}.csv`, productsToCsv(all.data));
+    } catch (err) {
+      if (!/cancel/i.test(String((err as Error)?.message))) toast.error("Couldn't export the file");
+    }
+  };
+  const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      const rows = readProductsCsv(await file.text(), categories ?? []);
+      if (!rows.length) return toast.error("No items found in that file");
+      setImportRows(rows);
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  };
+
   const setCategory = (c: string) => {
     haptic.tap();
     setParams(c === "all" ? {} : { category: c }, { replace: true });
@@ -100,11 +136,10 @@ export default function ProductsScreen() {
         <nav ref={railRef} style={{ top: railTop }} className="sticky w-[78px] shrink-0 self-start border-r border-black/[0.06] bg-white pb-28 dark:border-white/10 dark:bg-[#111]">
           {rail.map((c) => {
             const active = (c.name === "all" ? "all" : c.category_name) === category;
-            const [, emoji, tint] = c.name === "all" ? [null, "🍽️", "bg-[#eef3f2]"] : categoryLook(c.category_name);
             return (
               <button key={c.name} onClick={() => setCategory(c.name === "all" ? "all" : c.category_name)} className="relative flex w-full flex-col items-center gap-1 px-1.5 py-2.5">
                 {active && <span className="absolute right-0 top-2 h-[calc(100%-16px)] w-1 rounded-l-full bg-primary" />}
-                <span className={cn("flex h-12 w-12 items-center justify-center rounded-xl text-[24px] transition-transform", tint, active && "scale-110 ring-2 ring-primary/30")}>{emoji}</span>
+                <ProductArt category={c.name === "all" ? "" : c.category_name} image={"image" in c ? c.image : undefined} className={cn("h-12 w-12 rounded-xl transition-transform", active && "scale-110 ring-2 ring-primary/30")} emojiClassName="text-[24px]" />
                 <span className={cn("line-clamp-2 text-center text-[10.5px] leading-tight", active ? "font-extrabold text-primary" : "font-semibold text-black/60 dark:text-white/60")}>{c.category_name}</span>
               </button>
             );
@@ -138,8 +173,87 @@ export default function ProductsScreen() {
         className="fixed right-4 z-20 bottom-[calc(9.5rem+env(safe-area-inset-bottom))]"
         icon={<Plus className="h-6 w-6" />}
         text="Add item"
-        onClick={() => navigate("/products/new")}
+        onClick={() => {
+          haptic.tap();
+          setMenuOpen(true);
+        }}
       />
+
+      <input ref={fileRef} type="file" accept=".csv,text/csv,text/comma-separated-values" className="hidden" onChange={onFile} />
+
+      <Actions opened={menuOpen} onBackdropClick={() => setMenuOpen(false)}>
+        <ActionsGroup>
+          <ActionsLabel>Menu items</ActionsLabel>
+          <ActionsButton onClick={pick(() => navigate("/products/new"))}>
+            <span className="flex items-center gap-3"><PackagePlus className="h-5 w-5 text-primary" /> Add item</span>
+          </ActionsButton>
+          <ActionsButton onClick={pick(() => fileRef.current?.click())}>
+            <span className="flex items-center gap-3"><FileUp className="h-5 w-5 text-primary" /> Import from CSV</span>
+          </ActionsButton>
+          <ActionsButton onClick={pick(exportCsv)}>
+            <span className="flex items-center gap-3"><FileDown className="h-5 w-5 text-primary" /> Export CSV{all ? ` (${all.total})` : ""}</span>
+          </ActionsButton>
+          <ActionsButton onClick={pick(() => saveCsv("menu-items-template.csv", productTemplateCsv(categories ?? [])))}>
+            <span className="flex items-center gap-3"><Download className="h-5 w-5 text-black/45 dark:text-white/50" /> Download CSV template</span>
+          </ActionsButton>
+        </ActionsGroup>
+        <ActionsGroup>
+          <ActionsButton bold onClick={() => setMenuOpen(false)}>
+            Cancel
+          </ActionsButton>
+        </ActionsGroup>
+      </Actions>
+
+      <FormSheet
+        opened={!!importRows}
+        onClose={() => setImportRows(null)}
+        title="Import items"
+        saveLabel={`Import ${goodRows.length}`}
+        saving={importer.isPending}
+        canSave={goodRows.length > 0}
+        onSave={() => importer.mutate(goodRows.map((r) => r.data!), { onSuccess: () => setImportRows(null) })}
+      >
+        <div className="space-y-3 p-4">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-xl bg-primary/10 p-3">
+              <p className="flex items-center gap-1.5 text-[12px] font-bold text-primary"><CheckCircle2 className="h-4 w-4" /> Ready</p>
+              <p className="tabular mt-1 text-[24px] font-extrabold leading-none">{goodRows.length}</p>
+            </div>
+            <div className={cn("rounded-xl p-3", badRows.length ? "bg-[#ff3b30]/10" : "bg-black/[0.04] dark:bg-white/10")}>
+              <p className={cn("flex items-center gap-1.5 text-[12px] font-bold", badRows.length ? "text-[#ff3b30]" : "text-black/45 dark:text-white/50")}><AlertCircle className="h-4 w-4" /> Skipped</p>
+              <p className="tabular mt-1 text-[24px] font-extrabold leading-none">{badRows.length}</p>
+            </div>
+          </div>
+
+          {!!badRows.length && (
+            <div className={cn(CARD, "divide-y divide-black/[0.06] dark:divide-white/10")}>
+              {badRows.map((r) => (
+                <p key={r.line} className="flex gap-2 px-3 py-2 text-[13px]">
+                  <span className="shrink-0 font-bold text-black/40 dark:text-white/40">Row {r.line}</span>
+                  <span className="text-[#ff3b30]">{r.error}</span>
+                </p>
+              ))}
+            </div>
+          )}
+
+          {!!goodRows.length && (
+            <div className={cn(CARD, "divide-y divide-black/[0.06] dark:divide-white/10")}>
+              {goodRows.map(({ line, data: d }) => (
+                <div key={line} className="flex items-center gap-3 px-3 py-2.5">
+                  <ProductArt category={d!.category} className="h-10 w-10 shrink-0 rounded-lg" emojiClassName="text-[20px]" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[14px] font-bold">{d!.product_name}</p>
+                    <p className="truncate text-[12px] text-black/45 dark:text-white/50">{d!.category}{d!.is_available ? "" : " · sold out"}</p>
+                  </div>
+                  <p className="tabular text-[14px] font-extrabold">{formatMoney(d!.discount_price ?? d!.price)}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <p className="px-1 text-[12px] text-black/45 dark:text-white/50">New items are reviewed by Diyaar before customers can see them. Photos can be added to each item afterwards.</p>
+        </div>
+      </FormSheet>
     </Screen>
   );
 }

@@ -4,30 +4,9 @@ import { Camera, Check, ChevronDown, Trash2 } from "lucide-react";
 import { Actions, ActionsButton, ActionsGroup, ActionsLabel, BlockFooter, BlockTitle, Link as KLink, List, ListInput, ListItem, Sheet, Toggle } from "konsta/react";
 import { useCategories, useDeleteProduct, useProducts, useSaveProduct } from "@/hooks/queries";
 import { haptic } from "@/lib/native";
+import { readPhoto } from "@/lib/photo";
 import { cn } from "@/lib/utils";
-import { categoryLook, Loading, ProductArt, Screen } from "../ui";
-
-/** Shrink a picked photo to a square-ish JPEG so it stays light to store and upload. */
-function readPhoto(file: File, max = 800): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      const scale = Math.min(1, max / Math.max(img.width, img.height));
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.round(img.width * scale);
-      canvas.height = Math.round(img.height * scale);
-      canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
-      URL.revokeObjectURL(url);
-      resolve(canvas.toDataURL("image/jpeg", 0.8));
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error("Couldn't read that photo"));
-    };
-    img.src = url;
-  });
-}
+import { Loading, ProductArt, Screen } from "../ui";
 
 interface Form {
   product_name: string;
@@ -162,7 +141,7 @@ export default function ProductEditScreen() {
                 haptic.tap();
                 setPickingCategory(true);
               }}
-              media={<span className={cn("flex h-9 w-9 items-center justify-center rounded-xl text-[20px]", categoryLook(form.category)[2])}>{categoryLook(form.category)[1]}</span>}
+              media={<ProductArt category={form.category} image={categories?.find((c) => c.category_name === form.category)?.image} className="h-9 w-9 rounded-xl" emojiClassName="text-[20px]" />}
               header="Category"
               title={form.category || "Choose a category"}
               after={<ChevronDown className="h-5 w-5 text-black/35 dark:text-white/35" />}
@@ -203,7 +182,6 @@ export default function ProductEditScreen() {
             <p className="px-5 pb-3 pt-3 text-center text-[17px] font-bold">Choose a category</p>
             <div className="grid grid-cols-3 gap-2.5 px-4">
               {categories?.map((c) => {
-                const [, emoji, tint] = categoryLook(c.category_name);
                 const selected = c.category_name === form.category;
                 return (
                   <button
@@ -219,7 +197,7 @@ export default function ProductEditScreen() {
                       selected ? "border-primary bg-primary/5" : "border-transparent",
                     )}
                   >
-                    <span className={cn("flex aspect-square w-full items-center justify-center rounded-xl text-[36px]", tint, !c.is_active && "opacity-50")}>{emoji}</span>
+                    <ProductArt category={c.category_name} image={c.image} className={cn("aspect-square w-full rounded-xl", !c.is_active && "opacity-50")} emojiClassName="text-[36px]" />
                     <span className="line-clamp-2 text-center text-[12px] font-bold leading-tight">{c.category_name}</span>
                     {!c.is_active && <span className="-mt-1 text-[10px] font-semibold text-black/40 dark:text-white/40">Hidden</span>}
                     {selected && (

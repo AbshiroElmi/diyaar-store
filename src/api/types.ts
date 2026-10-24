@@ -187,6 +187,8 @@ export interface Category {
   name: string;
   category_name: string;
   description?: string;
+  /** Photo URL (or data URL from the device); falls back to the category emoji. */
+  image?: string;
   is_active: 0 | 1;
   sort_order: number;
   product_count: number;
