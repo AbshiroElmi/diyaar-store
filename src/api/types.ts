@@ -405,7 +405,8 @@ export interface Banner {
   link: string;
   theme: "lime" | "teal" | "sunset" | "violet" | "ocean";
   emoji: string;
-  image?: string;
+  /** Owner's photo; when set it fills the card instead of the colour + emoji. null clears it. */
+  image?: string | null;
   /** Hidden banners stay saved but don't show on Home. */
   is_active?: 0 | 1;
   sort_order?: number;

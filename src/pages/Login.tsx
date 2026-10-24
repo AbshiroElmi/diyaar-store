@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { LogoMark } from "@/components/shared/Logo";
 import storeHero from "@/assets/store-hero.jpg";
 import loginBgVideo from "@/assets/login-bg.mp4";
+import { useLoginMedia } from "@/lib/login-media";
 import { MOCK_OTP } from "@/api/mock/handlers";
 import { useAuth } from "@/contexts/AuthContext";
 import { isMockApi } from "@/lib/env";
@@ -18,6 +19,7 @@ const RESEND_SECONDS = 30;
 
 export default function LoginPage() {
   const { requestOtp, verifyOtp } = useAuth();
+  const { media: customBg, ready: bgReady } = useLoginMedia();
   const { resolvedTheme } = useTheme();
   const [step, setStep] = useState<"phone" | "otp">("phone");
   const [phone, setPhone] = useState(isMockApi ? "613187029" : "");
@@ -84,17 +86,24 @@ export default function LoginPage() {
           maskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
         }}
       >
-        {/* Looping clear video background */}
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          poster={storeHero}
-          className="absolute inset-0 h-full w-full object-cover object-[center_35%]"
-        >
-          <source src={loginBgVideo} type="video/mp4" />
-        </video>
+        {/* Background: the owner's own video/photo (Settings → Login background) or the built-in loop */}
+        {customBg?.kind === "image" ? (
+          <img src={customBg.url} alt="" className="absolute inset-0 h-full w-full object-cover object-[center_35%]" />
+        ) : bgReady ? (
+          <video
+            key={customBg?.url ?? "default"}
+            autoPlay
+            loop
+            muted
+            playsInline
+            poster={customBg ? undefined : storeHero}
+            className="absolute inset-0 h-full w-full object-cover object-[center_35%]"
+          >
+            <source src={customBg?.url ?? loginBgVideo} type={customBg ? undefined : "video/mp4"} />
+          </video>
+        ) : (
+          <img src={storeHero} alt="" className="absolute inset-0 h-full w-full object-cover object-[center_35%]" />
+        )}
 
         {/* Minimal top scrim only for status bar and branding readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-transparent to-black/20 pointer-events-none" />

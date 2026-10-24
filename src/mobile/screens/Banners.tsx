@@ -1,9 +1,11 @@
-import { useState } from "react";
-import { ArrowDown, ArrowUp, Check, Eye, EyeOff, GalleryHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
+import { useRef, useState } from "react";
+import { ArrowDown, ArrowUp, Camera, Check, Eye, EyeOff, GalleryHorizontal, Pencil, Plus, Smile, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { ActionsGroup, ActionsLabel, BlockFooter, Link as KLink, List, ListInput, Toggle } from "konsta/react";
 import { useBanners, useDeleteBanner, useSaveBanner } from "@/hooks/queries";
 import type { Banner } from "@/api";
 import { haptic } from "@/lib/native";
+import { readPhoto } from "@/lib/photo";
 import { cn } from "@/lib/utils";
 import { BANNER_THEMES, BannerCard } from "../BannerCarousel";
 import { ActionItem, Actions, Empty, ErrorBlock, FormSheet, Loading, Screen } from "../ui";
@@ -34,11 +36,27 @@ function BannerEditor({ editing, onClose }: { editing: Banner | "new" | null; on
   const save = useSaveBanner();
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [openedFor, setOpenedFor] = useState<Banner | "new" | null>(null);
+  const [pictureMode, setPictureMode] = useState<"emoji" | "photo">("emoji");
+  const fileRef = useRef<HTMLInputElement>(null);
+  const pickPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      setDraft((d) => ({ ...d, image: undefined }));
+      const image = await readPhoto(file, 1200);
+      setDraft((d) => ({ ...d, image }));
+      haptic.tap();
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  };
 
   // Reset the form each time the sheet opens for a different banner.
   if (editing !== openedFor) {
     setOpenedFor(editing);
-    if (editing) setDraft(editing === "new" ? EMPTY : { title: editing.title, subtitle: editing.subtitle, cta: editing.cta, link: editing.link, theme: editing.theme, emoji: editing.emoji, is_active: editing.is_active ?? 1 });
+    if (editing) setDraft(editing === "new" ? EMPTY : { title: editing.title, subtitle: editing.subtitle, cta: editing.cta, link: editing.link, theme: editing.theme, emoji: editing.emoji, image: editing.image, is_active: editing.is_active ?? 1 });
+    if (editing) setPictureMode(editing !== "new" && editing.image ? "photo" : "emoji");
   }
 
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft((d) => ({ ...d, [k]: v }));
@@ -51,17 +69,21 @@ function BannerEditor({ editing, onClose }: { editing: Banner | "new" | null; on
       title={isNew ? "New banner" : "Edit banner"}
       saveLabel={isNew ? "Add" : "Save"}
       saving={save.isPending}
-      canSave={!!draft.title.trim()}
+      canSave={!!draft.title.trim() && (pictureMode === "emoji" || !!draft.image)}
       onSave={() =>
         save.mutate(
-          { id: isNew || !editing ? undefined : editing.name, data: { ...draft, title: draft.title.trim(), subtitle: draft.subtitle.trim(), cta: draft.cta.trim() } },
+          {
+            id: isNew || !editing ? undefined : editing.name,
+            // Emoji mode clears any photo so the banner goes back to the colour + emoji look.
+            data: { ...draft, image: pictureMode === "photo" ? draft.image ?? null : null, title: draft.title.trim(), subtitle: draft.subtitle.trim(), cta: draft.cta.trim() },
+          },
           { onSuccess: onClose },
         )
       }
     >
       {/* Live preview — exactly what shows on Home */}
       <div className="px-4 pt-4">
-        <BannerCard banner={{ ...draft, title: draft.title || "Your headline", subtitle: draft.subtitle || "A short line that explains the offer" }} className="pointer-events-none shadow-[0_12px_28px_-14px_rgba(0,0,0,0.4)]" />
+        <BannerCard banner={{ ...draft, image: pictureMode === "photo" ? draft.image : undefined, title: draft.title || "Your headline", subtitle: draft.subtitle || "A short line that explains the offer" }} className="pointer-events-none shadow-[0_12px_28px_-14px_rgba(0,0,0,0.4)]" />
       </div>
 
       {isNew && (
@@ -104,6 +126,53 @@ function BannerEditor({ editing, onClose }: { editing: Banner | "new" | null; on
       </div>
 
       <p className="px-5 pb-2 pt-5 text-[13px] font-bold uppercase tracking-wide text-black/45 dark:text-white/50">Picture</p>
+      <div className="mx-4 mb-3 grid grid-cols-2 rounded-xl bg-primary/[0.08] p-1">
+        {(
+          [
+            ["emoji", "Emoji", Smile],
+            ["photo", "Your photo", Camera],
+          ] as const
+        ).map(([mode, label, Icon]) => (
+          <button
+            key={mode}
+            type="button"
+            onClick={() => {
+              haptic.tap();
+              setPictureMode(mode);
+              if (mode === "photo" && !draft.image) fileRef.current?.click();
+            }}
+            className={cn("flex h-9 items-center justify-center gap-1.5 rounded-[10px] text-[14px] font-bold transition-colors", pictureMode === mode ? "bg-white text-primary shadow-sm dark:bg-[#2c2c2e]" : "text-black/50 dark:text-white/55")}
+          >
+            <Icon className="h-4 w-4" /> {label}
+          </button>
+        ))}
+      </div>
+      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={pickPhoto} />
+      {pictureMode === "photo" ? (
+        <div className="flex items-center gap-3 px-4">
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            className="flex h-16 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-primary/40 bg-primary/[0.06] text-primary"
+          >
+            {draft.image ? <img src={draft.image} alt="" className="h-full w-full object-cover" /> : <Camera className="h-6 w-6" />}
+          </button>
+          <div className="min-w-0 flex-1">
+            <p className="text-[14px] font-bold">{draft.image ? "Photo added" : "Add a photo"}</p>
+            <p className="text-[12.5px] text-black/45 dark:text-white/50">A wide photo of your food works best. Text sits on the left.</p>
+            <div className="mt-1 flex gap-3 text-[13px] font-semibold">
+              <button type="button" onClick={() => fileRef.current?.click()} className="text-primary">
+                {draft.image ? "Change" : "Choose photo"}
+              </button>
+              {draft.image && (
+                <button type="button" onClick={() => setDraft((d) => ({ ...d, image: undefined }))} className="text-[#ff3b30]">
+                  Remove
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
       <div className="grid grid-cols-8 gap-1.5 px-4">
         {EMOJIS.map((e) => (
           <button
@@ -119,6 +188,7 @@ function BannerEditor({ editing, onClose }: { editing: Banner | "new" | null; on
           </button>
         ))}
       </div>
+      )}
 
       <p className="px-5 pt-5 text-[13px] font-bold uppercase tracking-wide text-black/45 dark:text-white/50">Text</p>
       <List strongIos insetIos className="!mt-2">

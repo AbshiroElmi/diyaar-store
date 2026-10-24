@@ -16,24 +16,35 @@ export const BANNER_THEMES: Record<Banner["theme"], { bg: string; text: string; 
 const AUTO_MS = 4500;
 
 /** One banner tile — used by the Home carousel and the banner editor's live preview. */
-export function BannerCard({ banner: b, onClick, className }: { banner: Pick<Banner, "title" | "subtitle" | "cta" | "theme" | "emoji">; onClick?: () => void; className?: string }) {
+export function BannerCard({ banner: b, onClick, className }: { banner: Pick<Banner, "title" | "subtitle" | "cta" | "theme" | "emoji" | "image">; onClick?: () => void; className?: string }) {
   const t = BANNER_THEMES[b.theme];
+  const photo = !!b.image;
   return (
     <button
       type="button"
       onClick={onClick}
-      className={cn("relative flex h-[132px] w-full overflow-hidden rounded-2xl bg-gradient-to-br p-4 text-left transition-transform active:scale-[0.98]", t.bg, t.text, className)}
+      className={cn("relative flex h-[132px] w-full overflow-hidden rounded-2xl bg-gradient-to-br p-4 text-left transition-transform active:scale-[0.98]", t.bg, photo ? "text-white" : t.text, className)}
     >
-      {/* soft decorative bubbles */}
-      <span className="pointer-events-none absolute -right-8 -top-10 h-36 w-36 rounded-full bg-white/20" />
-      <span className="pointer-events-none absolute -bottom-12 right-16 h-28 w-28 rounded-full bg-white/10" />
-      <span className="pointer-events-none absolute bottom-3 right-4 select-none text-[64px] leading-none drop-shadow-sm">{b.emoji}</span>
+      {photo ? (
+        <>
+          {/* owner's photo fills the card; a dark fade on the left keeps the text readable */}
+          <img src={b.image ?? undefined} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-cover" />
+          <span className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/70 via-black/35 to-transparent" />
+        </>
+      ) : (
+        <>
+          {/* soft decorative bubbles */}
+          <span className="pointer-events-none absolute -right-8 -top-10 h-36 w-36 rounded-full bg-white/20" />
+          <span className="pointer-events-none absolute -bottom-12 right-16 h-28 w-28 rounded-full bg-white/10" />
+          <span className="pointer-events-none absolute bottom-3 right-4 select-none text-[64px] leading-none drop-shadow-sm">{b.emoji}</span>
+        </>
+      )}
 
       <span className="relative flex max-w-[68%] flex-col">
         <span className="line-clamp-2 text-[20px] font-extrabold leading-[1.1] tracking-tight">{b.title}</span>
         <span className="mt-1 line-clamp-2 text-[12px] font-medium leading-snug opacity-90">{b.subtitle}</span>
         {b.cta && (
-          <span className={cn("mt-auto inline-flex w-fit items-center gap-0.5 rounded-lg px-3 py-1.5 text-[12px] font-extrabold uppercase tracking-wide", t.cta)}>
+          <span className={cn("mt-auto inline-flex w-fit items-center gap-0.5 rounded-lg px-3 py-1.5 text-[12px] font-extrabold uppercase tracking-wide", photo ? "bg-white text-black" : t.cta)}>
             {b.cta} <ChevronRight className="h-3.5 w-3.5" />
           </span>
         )}

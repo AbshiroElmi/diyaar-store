@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { useTheme } from "next-themes";
 import { Area, AreaChart, ResponsiveContainer, XAxis } from "recharts";
-import { BarChart3, Bell, ChefHat, ChevronDown, ChevronRight, Clock, Headphones, Megaphone, PackageCheck, PackagePlus, ReceiptText, Search, ShoppingBag, Star } from "lucide-react";
+import { BarChart3, Bell, ChefHat, ChevronDown, ChevronRight, Clock, Headphones, ImagePlus, Megaphone, PackageCheck, PackagePlus, Pencil, ReceiptText, Search, ShoppingBag, Star } from "lucide-react";
 import { useBanners, /* useCategories, */ useDashboard, useNotifications, useProducts, useSetStoreOpen, useStore } from "@/hooks/queries";
 import { formatMoney, formatNumber, initials, timeAgo } from "@/lib/format";
 import { haptic, setStatusBarTheme } from "@/lib/native";
@@ -194,7 +194,20 @@ export default function HomeScreen() {
       ) : (
         <div className="-mt-8 space-y-6">
           {/* ── Offer banners ─────────────────────────── */}
-          {!!banners?.length && <BannerCarousel banners={banners} />}
+          {!!banners?.length ? (
+            <div>
+              <BannerCarousel banners={banners} />
+              <div className="-mt-4 flex justify-end px-4">
+                <button onClick={() => go("/banners")} className="flex items-center gap-1 text-[12px] font-bold text-primary">
+                  <Pencil className="h-3 w-3" /> Edit banners
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button onClick={() => go("/banners")} className="mx-4 flex h-[88px] w-[calc(100%-2rem)] items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-primary/40 bg-white/80 text-[15px] font-bold text-primary dark:bg-white/5">
+              <ImagePlus className="h-5 w-5" /> Add a banner to your Home
+            </button>
+          )}
 
           {/* ── Live orders ───────────────────────────── */}
           <section>
