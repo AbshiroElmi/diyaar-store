@@ -221,7 +221,14 @@ function MenuSheet({ opened, onClose }: { opened: boolean; onClose: () => void }
         <span className="h-[5px] w-10 rounded-full bg-black/15 dark:bg-white/20" />
       </div>
       <div className="no-scrollbar max-h-[calc(90dvh-20px)] overflow-y-auto pb-6">
-        <List strong inset dividers className="!mt-4 !mb-2">
+        <List
+          strong
+          inset
+          dividers
+          className="!mt-4 !mb-2"
+          // light teal card so the store stands out from the menu rows
+          colors={{ strongBgIos: "bg-[#219186]/10 dark:bg-[#3fd0bd]/15", strongBgMaterial: "bg-[#219186]/10 dark:bg-[#3fd0bd]/15" }}
+        >
           <ListItem
             link
             chevron
