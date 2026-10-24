@@ -8,12 +8,15 @@ import { LogoMark } from "@/components/shared/Logo";
 import { MOCK_OTP } from "@/api/mock/handlers";
 import { useAuth } from "@/contexts/AuthContext";
 import { isMockApi } from "@/lib/env";
+import { setStatusBarTheme } from "@/lib/native";
+import { useTheme } from "next-themes";
 
 const OTP_LENGTH = 6;
 const RESEND_SECONDS = 30;
 
 export default function LoginPage() {
   const { requestOtp, verifyOtp } = useAuth();
+  const { resolvedTheme } = useTheme();
   const [step, setStep] = useState<"phone" | "otp">("phone");
   const [phone, setPhone] = useState(isMockApi ? "615550107" : "");
   const [otp, setOtp] = useState("");
@@ -23,6 +26,11 @@ export default function LoginPage() {
   const otpRef = useRef<HTMLInputElement>(null);
 
   const fullPhone = `+252${phone.replace(/\D/g, "").replace(/^252/, "").replace(/^0/, "")}`;
+
+  useEffect(() => {
+    setStatusBarTheme(true);
+    return () => setStatusBarTheme(resolvedTheme === "dark");
+  }, [resolvedTheme]);
 
   useEffect(() => {
     if (!resendIn) return;
@@ -67,13 +75,16 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-dvh flex-col items-center bg-background">
-      <div className="pt-safe relative w-full overflow-hidden bg-[#BEFF00] pb-20 text-[#2B330F]">
-        <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/25" />
-        <div className="pointer-events-none absolute -bottom-24 -left-10 h-56 w-56 rounded-full bg-[#2B330F]/5" />
+      <div className="pt-safe relative w-full overflow-hidden bg-gradient-to-br from-[#3fd0bd] via-[#219186] to-[#0f4f48] pb-24 text-white">
+        {/* bottom of the header fades into the page */}
+        <span className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent via-background/70 to-background dark:via-black/70 dark:to-black" />
+        {/* soft glows on the gradient */}
+        <span className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-[#BEFF00]/20 blur-3xl" />
+        <span className="pointer-events-none absolute -bottom-24 -left-16 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
         <div className="relative mx-auto flex max-w-sm flex-col items-center px-6 pt-14 text-center sm:pt-20">
-          <LogoMark className="h-20 w-20 rounded-[1.4rem] shadow-xl shadow-[#2B330F]/25 ring-4 ring-white/70" />
-          <h1 className="mt-5 text-3xl font-bold tracking-tight">Diyaar Store</h1>
-          <p className="mt-1 text-sm font-medium opacity-75">Your orders, menu and earnings — in your pocket</p>
+          <LogoMark className="h-20 w-20 rounded-[1.4rem] shadow-xl shadow-black/25 ring-4 ring-white/20" />
+          <h1 className="mt-5 text-3xl font-extrabold tracking-tight">Diyaar Store</h1>
+          <p className="mt-1 text-sm font-medium text-white/80">Your orders, menu and earnings — in your pocket</p>
         </div>
       </div>
 
