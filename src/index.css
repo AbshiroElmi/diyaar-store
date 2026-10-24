@@ -207,7 +207,7 @@
   color: #219186;
   opacity: 0.9;
 }
-.k-search-teal > :last-child:not(:first-child) {
+.k-search-teal > div > :last-child:not(:first-child) {
   height: 44px;
 }
 /* Give the navbar row that holds it room for the taller field. */

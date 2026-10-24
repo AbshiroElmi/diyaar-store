@@ -1,7 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AlertCircle, CheckCircle2, Download, FileDown, FileUp, Package, PackagePlus, Plus, TrendingUp } from "lucide-react";
-import { ActionsGroup, ActionsLabel, Fab } from "konsta/react";
+import { ActionsGroup, ActionsLabel } from "konsta/react";
 import { toast } from "sonner";
 import { useCategories, useImportProducts, useProducts, useToggleProduct } from "@/hooks/queries";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -161,15 +161,17 @@ export default function ProductsScreen() {
         </div>
       </div>
 
-      <Fab
-        className="hide-on-kb fixed right-4 z-20 bottom-[calc(9.5rem+env(safe-area-inset-bottom))]"
-        icon={<Plus className="h-6 w-6" />}
-        text="Add item"
+      <button
+        type="button"
         onClick={() => {
           haptic.tap();
           setMenuOpen(true);
         }}
-      />
+        className="hide-on-kb fixed right-4 z-20 bottom-[calc(6.5rem+env(safe-area-inset-bottom))] flex h-11 items-center gap-1.5 rounded-xl bg-primary pl-3 pr-4 text-[15px] font-bold text-white shadow-[0_8px_20px_-8px_rgba(33,145,134,0.65)] transition-transform active:scale-95"
+      >
+        <Plus className="h-5 w-5" strokeWidth={2.5} />
+        Add item
+      </button>
 
       <input ref={fileRef} type="file" accept=".csv,text/csv,text/comma-separated-values" className="hidden" onChange={onFile} />
 

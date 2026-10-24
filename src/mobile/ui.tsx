@@ -281,23 +281,25 @@ export function ActionItem({ icon: Icon, children, onClick, danger, selected }: 
 /** Search field: taller, light-teal fill (matches the "In stock" pill), round ✕ instead of "Cancel". */
 export function SearchField({ placeholder, value, onChange }: { placeholder: string; value: string; onChange: (v: string) => void }) {
   return (
-    <Searchbar
-      className="k-search-teal"
-      placeholder={placeholder}
-      value={value}
-      onInput={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
-      onClear={() => onChange("")}
-      disableButton
-      // Konsta types this as string but renders any node; the cast lets us show an icon.
-      disableButtonText={
-        (
-          <span aria-label="Close search" className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/[0.08] text-primary">
-            <X className="h-[18px] w-[18px]" strokeWidth={2.5} />
-          </span>
-        ) as unknown as string
-      }
-      onDisable={() => onChange("")}
-    />
+    // Konsta's Searchbar ignores className, so the styling hook lives on a wrapper.
+    <div className="k-search-teal w-full">
+      <Searchbar
+        placeholder={placeholder}
+        value={value}
+        onInput={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
+        onClear={() => onChange("")}
+        disableButton
+        // Konsta types this as string but renders any node; the cast lets us show an icon.
+        disableButtonText={
+          (
+            <span aria-label="Close search" className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/[0.08] text-primary">
+              <X className="h-[18px] w-[18px]" strokeWidth={2.5} />
+            </span>
+          ) as unknown as string
+        }
+        onDisable={() => onChange("")}
+      />
+    </div>
   );
 }
 
