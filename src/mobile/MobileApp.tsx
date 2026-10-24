@@ -432,7 +432,7 @@ export default function MobileApp() {
         })}
       </Tabbar>
 
-      <NewOrdersBar count={counts?.confirming ?? 0} visible={showTabbar && !menuOpen && !location.pathname.startsWith("/orders")} />
+      <NewOrdersBar count={counts?.confirming ?? 0} visible={location.pathname === "/" && !menuOpen} />
       <MenuSheet opened={menuOpen} onClose={() => setMenuOpen(false)} />
       <NewOrderAlert />
     </KonstaApp>
