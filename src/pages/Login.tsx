@@ -77,7 +77,13 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-dvh flex-col items-center bg-background">
-      <div className="pt-safe relative w-full overflow-hidden pb-28 sm:pb-32 text-white">
+      <div
+        className="pt-safe relative w-full overflow-hidden min-h-[46dvh] sm:min-h-[50dvh] flex flex-col justify-between text-white"
+        style={{
+          WebkitMaskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
+          maskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
+        }}
+      >
         {/* Looping clear video background */}
         <video
           autoPlay
@@ -85,25 +91,25 @@ export default function LoginPage() {
           muted
           playsInline
           poster={storeHero}
-          className="absolute inset-0 h-full w-full object-cover object-[center_40%]"
+          className="absolute inset-0 h-full w-full object-cover object-[center_35%]"
         >
           <source src={loginBgVideo} type="video/mp4" />
         </video>
 
-        {/* Clear, subtle cinematic vignette so text is readable without obscuring video */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/15 to-black/45" />
+        {/* Minimal top scrim only for status bar and branding readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-transparent to-black/20 pointer-events-none" />
 
-        {/* Soft bottom fade into page background */}
-        <span className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent via-background/60 to-background dark:via-black/60 dark:to-black" />
-
-        <div className="relative mx-auto flex max-w-sm flex-col items-center px-6 pt-12 text-center sm:pt-16">
+        <div className="relative mx-auto flex max-w-sm flex-col items-center px-6 pt-10 text-center sm:pt-14">
           <LogoMark className="h-16 w-16 rounded-[1.25rem] shadow-2xl shadow-black/50 ring-2 ring-white/40 backdrop-blur-sm" />
-          <h1 className="mt-4 text-2xl sm:text-3xl font-extrabold tracking-tight drop-shadow-md">Diyaar Store</h1>
-          <p className="mt-1 text-sm font-medium text-white/90 drop-shadow-md">Your orders, menu and earnings — in your pocket</p>
+          <h1 className="mt-3 text-2xl sm:text-3xl font-extrabold tracking-tight drop-shadow-md">Diyaar Store</h1>
+          <p className="mt-0.5 text-xs sm:text-sm font-medium text-white/90 drop-shadow-md">Your orders, menu and earnings — in your pocket</p>
         </div>
+
+        {/* Spacer so video details are fully visible before the card */}
+        <div className="h-10 sm:h-12" />
       </div>
 
-      <Card className="relative -mt-6 sm:-mt-8 w-[calc(100%-2rem)] max-w-sm rounded-3xl p-6 shadow-xl shadow-black/10">
+      <Card className="relative -mt-8 w-[calc(100%-2rem)] max-w-sm rounded-3xl p-6 shadow-2xl shadow-black/15 border-0 bg-card">
         {step === "phone" ? (
           <form onSubmit={sendCode} className="space-y-5">
             <div className="space-y-2">
