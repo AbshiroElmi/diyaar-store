@@ -89,10 +89,10 @@ export default function HomeScreen() {
               haptic.press();
               setOpen.mutate(!open);
             }}
-            className={cn("ml-auto inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-[13px] font-extrabold transition-colors", open ? "bg-[#BEFF00] text-[#2B330F]" : "bg-white text-[#e5383b]")}
+            className="ml-auto inline-flex items-center gap-2 rounded-lg bg-white/15 px-3 py-1.5 text-[13px] font-extrabold text-white transition-colors active:bg-white/25"
           >
-            <span className={cn("h-2 w-2 rounded-full", open ? "bg-[#2B330F]" : "bg-[#e5383b]")} />
-            {open ? "ONLINE" : "OFFLINE"}
+            <span className={cn("h-2 w-2 rounded-full", open ? "bg-[#BEFF00]" : "bg-[#ff4d4f]")} />
+            {open ? "Open" : "Closed"}
           </button>
         </div>
 
