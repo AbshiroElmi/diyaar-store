@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { ArrowLeft, ArrowRight, FlaskConical, Loader2, Phone, ShieldCheck } from "lucide-react";
+import { ChevronLeft, FlaskConical, Loader2, Phone, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -134,7 +134,7 @@ export default function LoginPage() {
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
             <Button type="submit" className="h-11 w-full" disabled={loading || phone.replace(/\D/g, "").length < 7}>
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Send code <ArrowRight className="ml-2 h-4 w-4" /></>}
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Send code </>}
             </Button>
           </form>
         ) : (
@@ -145,8 +145,8 @@ export default function LoginPage() {
             }}
             className="space-y-5"
           >
-            <button type="button" onClick={() => setStep("phone")} className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
-              <ArrowLeft className="mr-1 h-4 w-4" /> Change number
+            <button type="button" onClick={() => setStep("phone")} className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground">
+              <ChevronLeft className="mr-1 h-4 w-4" /> Change number
             </button>
             <div className="space-y-2">
               <Label htmlFor="otp">Enter the code sent to {fullPhone}</Label>
