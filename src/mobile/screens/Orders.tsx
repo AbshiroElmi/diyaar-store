@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Bike, Inbox, Search, Store } from "lucide-react";
-import { Button, List, ListItem, Segmented, SegmentedButton } from "konsta/react";
+import { Bike, Check, ChefHat, Clock, History as HistoryIcon, Inbox, LayoutGrid, PackageCheck, Search, StickyNote, Store, X } from "lucide-react";
+import { Button, Link as KLink, List, ListItem } from "konsta/react";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { useOrderCounts, useOrders, useUpdateOrderStatus } from "@/hooks/queries";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -9,82 +9,113 @@ import type { Order, OrderStatus } from "@/api";
 import { formatMoney, formatDay, formatTime } from "@/lib/format";
 import { haptic } from "@/lib/native";
 import { cn } from "@/lib/utils";
-import { ChipBar, Empty, ErrorBlock, Loading, Screen, SearchField } from "../ui";
+import { Empty, ErrorBlock, Loading, Screen, SearchField } from "../ui";
 import { RejectSheet } from "./OrderDetail";
 
-type LiveFilter = "active" | "confirming" | "accepted" | "preparing" | "ready";
+type Stage = "confirming" | "accepted" | "preparing" | "ready";
+
+/** Kitchen board columns: each stage has its own colour, used for the tab, the ticket edge and its main button. */
+const STAGES: Array<{ key: Stage; label: string; color: string; soft: string; empty: string }> = [
+  { key: "confirming", label: "New", color: "#e07b00", soft: "bg-[#fff4e0]", empty: "No new orders — they'll pop up here with a sound." },
+  { key: "accepted", label: "Accepted", color: "#1f6fe5", soft: "bg-[#e8f1ff]", empty: "Nothing waiting to be cooked." },
+  { key: "preparing", label: "Cooking", color: "#5b4ee0", soft: "bg-[#f0eeff]", empty: "The kitchen is clear." },
+  { key: "ready", label: "Ready", color: "#1a9d4b", soft: "bg-[#e8f7ee]", empty: "No orders waiting for pickup." },
+];
 
 const isPickup = (o: Order) => o.delivery_type.includes("pickup");
 const minutesAgo = (iso: string) => Math.max(0, Math.floor((Date.now() - +new Date(iso)) / 60_000));
 
-const NEXT: Partial<Record<OrderStatus, { status: OrderStatus; label: string }>> = {
-  accepted: { status: "preparing", label: "Start cooking" },
-  preparing: { status: "ready", label: "Mark ready" },
+const NEXT: Partial<Record<OrderStatus, { status: OrderStatus; label: string; icon: typeof Check }>> = {
+  accepted: { status: "preparing", label: "Start cooking", icon: ChefHat },
+  preparing: { status: "ready", label: "Mark ready", icon: PackageCheck },
 };
 
-function LiveCard({ order, onReject }: { order: Order; onReject: () => void }) {
+/** Ticket-style card: order number + timer on top, perforated edge, customer and items, one main action. */
+function Ticket({ order, onReject }: { order: Order; onReject: () => void }) {
   const navigate = useNavigate();
   const update = useUpdateOrderStatus();
+  const stage = STAGES.find((x) => x.key === order.status) ?? STAGES[1];
   const mins = minutesAgo(order.creation);
-  const isNew = order.status === "confirming";
-  const next = order.status === "ready" && isPickup(order) ? { status: "completed" as OrderStatus, label: "Picked up" } : NEXT[order.status];
+  const late = order.status === "confirming" ? mins >= 3 : mins >= 25;
+  const next = order.status === "ready" && isPickup(order) ? { status: "completed" as OrderStatus, label: "Picked up", icon: Check } : NEXT[order.status];
+  const items = order.order_items;
+  const advance = (status: OrderStatus) => {
+    haptic.press();
+    update.mutate({ id: order.name, status });
+  };
 
   return (
-    <div className={cn("mx-4 mb-3 overflow-hidden rounded-xl border border-black/[0.06] bg-white dark:bg-[#1c1c1d]", isNew && "border-[#ff9500]/70 shadow-[0_10px_28px_-10px_rgba(255,149,0,0.45),0_2px_6px_-2px_rgba(255,149,0,0.25)] ring-1 ring-[#ff9500]/40 dark:shadow-[0_10px_28px_-10px_rgba(255,149,0,0.35)]")}>
-      <button onClick={() => navigate(`/orders/${order.name}`)} className="block w-full p-4 text-left active:bg-black/5 dark:active:bg-white/5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-[17px] font-extrabold">{order.customer_name}</p>
-            <p className="text-[13px] text-black/50 dark:text-white/50">
-              {order.name} · {isPickup(order) ? "Pickup" : "Delivery"}
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="tabular text-[17px] font-extrabold">{formatMoney(order.grand_total)}</p>
-            <p className={cn("text-[13px]", isNew && mins >= 3 ? "font-semibold text-[#ff3b30]" : "text-black/50 dark:text-white/50")}>{mins < 1 ? "now" : `${mins} min`}</p>
-          </div>
+    <div className="mx-4 mb-3 overflow-hidden rounded-2xl bg-white shadow-[0_1px_2px_rgba(0,0,0,0.05),0_8px_20px_-12px_rgba(0,0,0,0.18)] dark:bg-[#1c1c1d]">
+      <button onClick={() => navigate(`/orders/${order.name}`)} className="block w-full text-left">
+        {/* ticket head */}
+        <div className={cn("flex items-center gap-2 px-4 py-2.5", stage.soft, "dark:bg-white/[0.06]")}>
+          <span className="tabular text-[15px] font-extrabold" style={{ color: stage.color }}>
+            #{order.name.split("-").pop()}
+          </span>
+          <span className="flex items-center gap-1 text-[12.5px] font-semibold text-black/50 dark:text-white/55">
+            {isPickup(order) ? <Store className="h-3.5 w-3.5" /> : <Bike className="h-3.5 w-3.5" />}
+            {isPickup(order) ? "Pickup" : "Delivery"}
+          </span>
+          <span className={cn("tabular ml-auto flex items-center gap-1 rounded-full px-2 text-[12px] font-bold leading-[22px]", late ? "bg-[#ff3b30] text-white" : "bg-white/80 text-black/60 dark:bg-black/30 dark:text-white/70")}>
+            <Clock className="h-3 w-3" />
+            {mins < 1 ? "now" : `${mins} min`}
+          </span>
         </div>
-        <div className="mt-3 space-y-1">
-          {order.order_items.slice(0, 3).map((it) => (
-            <p key={it.product} className="flex gap-2 text-[15px]">
-              <span className="tabular w-6 font-semibold text-primary">{it.quantity}×</span>
-              <span className="truncate">{it.product_name}</span>
-            </p>
-          ))}
-          {order.order_items.length > 3 && <p className="pl-8 text-[13px] text-black/45 dark:text-white/45">+{order.order_items.length - 3} more</p>}
+        {/* perforation */}
+        <div className="relative h-0">
+          <span className="absolute -left-2 -top-2 h-4 w-4 rounded-full bg-[#f7f9f9] dark:bg-black" />
+          <span className="absolute -right-2 -top-2 h-4 w-4 rounded-full bg-[#f7f9f9] dark:bg-black" />
+          <span className="absolute inset-x-3 top-0 border-t-2 border-dashed border-black/[0.07] dark:border-white/10" />
         </div>
-        {order.notes && <p className="mt-2 rounded-lg bg-[#ff9500]/10 px-2.5 py-1.5 text-[13px] text-[#c76e00]">📝 {order.notes}</p>}
+        {/* body */}
+        <div className="px-4 pb-3 pt-3">
+          <div className="flex items-baseline justify-between gap-3">
+            <p className="truncate text-[16px] font-bold">{order.customer_name}</p>
+            <p className="tabular text-[16px] font-extrabold">{formatMoney(order.grand_total)}</p>
+          </div>
+          <p className="mt-1 line-clamp-2 text-[14px] leading-snug text-black/65 dark:text-white/65">
+            {items.slice(0, 3).map((it, i) => (
+              <span key={it.product}>
+                {i > 0 && <span className="text-black/25 dark:text-white/25"> · </span>}
+                <span className="font-bold text-black dark:text-white">{it.quantity}</span> {it.product_name}
+              </span>
+            ))}
+            {items.length > 3 && <span className="font-semibold text-black/40 dark:text-white/40"> +{items.length - 3} more</span>}
+          </p>
+          {order.notes && (
+            <p className="mt-2 flex items-start gap-1.5 rounded-lg bg-[#ff9500]/10 px-2.5 py-1.5 text-[13px] font-medium text-[#b86400]">
+              <StickyNote className="mt-px h-3.5 w-3.5 shrink-0" /> {order.notes}
+            </p>
+          )}
+        </div>
       </button>
-      <div className="flex gap-2 border-t border-black/5 p-3 dark:border-white/10">
-        {isNew ? (
+
+      {/* action */}
+      <div className="flex gap-2 px-4 pb-4">
+        {order.status === "confirming" ? (
           <>
-            <Button outline className="flex-1 !text-[#ff3b30] !border-[#ff3b30]/40" onClick={onReject}>
-              Reject
-            </Button>
-            <Button
-              className="flex-[2]"
+            <button onClick={onReject} aria-label="Reject" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#ff3b30]/[0.08] text-[#ff3b30] transition-transform active:scale-95">
+              <X className="h-5 w-5" strokeWidth={2.5} />
+            </button>
+            <button
               disabled={update.isPending}
-              onClick={() => {
-                haptic.press();
-                update.mutate({ id: order.name, status: "accepted" });
-              }}
+              onClick={() => advance("accepted")}
+              className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary text-[15px] font-bold text-white transition-transform active:scale-[0.98] disabled:opacity-50"
             >
-              Accept order
-            </Button>
+              <Check className="h-[18px] w-[18px]" strokeWidth={3} /> Accept
+            </button>
           </>
         ) : next ? (
-          <Button
-            className={cn("flex-1", order.status === "preparing" && "!bg-[#34c759]")}
+          <button
             disabled={update.isPending}
-            onClick={() => {
-              haptic.press();
-              update.mutate({ id: order.name, status: next.status });
-            }}
+            onClick={() => advance(next.status)}
+            style={{ backgroundColor: STAGES.find((x) => x.key === next.status)?.color ?? stage.color }}
+            className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl text-[15px] font-bold text-white transition-transform active:scale-[0.98] disabled:opacity-50"
           >
-            {next.label}
-          </Button>
+            <next.icon className="h-[18px] w-[18px]" /> {next.label}
+          </button>
         ) : (
-          <p className="flex flex-1 items-center justify-center gap-2 py-1.5 text-[15px] text-black/55 dark:text-white/55">
+          <p className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-black/[0.035] text-[14px] font-medium text-black/55 dark:bg-white/[0.06] dark:text-white/60">
             <Bike className="h-4 w-4" /> {order.driver_name ? `${order.driver_name} is on the way` : "Waiting for a driver…"}
           </p>
         )}
@@ -93,39 +124,54 @@ function LiveCard({ order, onReject }: { order: Order; onReject: () => void }) {
   );
 }
 
-function Live() {
-  const [params, setParams] = useSearchParams();
-  const filter = (params.get("status") as LiveFilter) || "active";
-  const { data: counts } = useOrderCounts();
-  const { data, isLoading, error, refetch } = useOrders({ status: filter, page_size: 100 });
+/** Stage tabs with big counts; the active one gets its colour and an underline. */
+function StageTabs({ value, onChange, counts }: { value: Stage; onChange: (s: Stage) => void; counts?: Partial<Record<Stage, number>> }) {
+  return (
+    <div className="k-stage-tabs grid w-full grid-cols-4">
+      {STAGES.map((st) => {
+        const active = st.key === value;
+        const n = counts?.[st.key] ?? 0;
+        return (
+          <button
+            key={st.key}
+            type="button"
+            onClick={() => {
+              haptic.tap();
+              onChange(st.key);
+            }}
+            className="relative flex flex-col items-center justify-center pb-2 pt-1"
+          >
+            <span className={cn("tabular text-[22px] font-extrabold leading-none transition-colors", !active && "text-black/30 dark:text-white/30")} style={active ? { color: st.color } : undefined}>
+              {n}
+            </span>
+            <span className={cn("mt-1 text-[11px] font-bold uppercase tracking-wide", active ? "text-black/80 dark:text-white/85" : "text-black/40 dark:text-white/40")}>{st.label}</span>
+            {st.key === "confirming" && n > 0 && !active && <span className="absolute right-[22%] top-0.5 h-2 w-2 rounded-full bg-[#ff3b30]" />}
+            <span className={cn("absolute inset-x-4 bottom-0 h-[3px] rounded-full transition-opacity", active ? "opacity-100" : "opacity-0")} style={{ backgroundColor: st.color }} />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function Board({ stage }: { stage: Stage }) {
+  const { data, isLoading, error, refetch } = useOrders({ status: stage, page_size: 100 });
   const [rejecting, setRejecting] = useState<Order | null>(null);
+  const info = STAGES.find((x) => x.key === stage)!;
 
   return (
-    <>
-      <ChipBar
-        value={filter}
-        onChange={(v) => setParams(v === "active" ? {} : { status: v }, { replace: true })}
-        items={[
-          { value: "active", label: "All", count: counts?.active },
-          { value: "confirming", label: "New", count: counts?.confirming },
-          { value: "accepted", label: "Accepted", count: counts?.accepted },
-          { value: "preparing", label: "Cooking", count: counts?.preparing },
-          { value: "ready", label: "Ready", count: counts?.ready },
-        ]}
-      />
-      <div className="pt-2">
-        {error ? (
-          <ErrorBlock error={error} onRetry={refetch} />
-        ) : isLoading ? (
-          <Loading />
-        ) : !data?.data.length ? (
-          <Empty icon={Inbox} title="All caught up" text="New orders will appear here with a sound." />
-        ) : (
-          data.data.map((o) => <LiveCard key={o.name} order={o} onReject={() => setRejecting(o)} />)
-        )}
-      </div>
+    <div className="pt-3">
+      {error ? (
+        <ErrorBlock error={error} onRetry={refetch} />
+      ) : isLoading ? (
+        <Loading />
+      ) : !data?.data.length ? (
+        <Empty icon={Inbox} title="All caught up" text={info.empty} />
+      ) : (
+        data.data.map((o) => <Ticket key={o.name} order={o} onReject={() => setRejecting(o)} />)
+      )}
       <RejectSheet order={rejecting} onClose={() => setRejecting(null)} />
-    </>
+    </div>
   );
 }
 
@@ -197,26 +243,33 @@ function History() {
 
 export default function OrdersScreen() {
   const [params, setParams] = useSearchParams();
-  const tab = params.get("tab") === "history" ? "history" : "live";
+  const history = params.get("tab") === "history";
+  const raw = params.get("status");
+  const stage: Stage = STAGES.some((x) => x.key === raw) ? (raw as Stage) : "confirming";
   const { data: counts, refetch } = useOrderCounts();
+
+  const toggle = (
+    <KLink
+      navbar
+      iconOnly
+      onClick={() => {
+        haptic.tap();
+        setParams(history ? {} : { tab: "history" }, { replace: true });
+      }}
+    >
+      {history ? <LayoutGrid className="h-6 w-6" /> : <HistoryIcon className="h-6 w-6" />}
+    </KLink>
+  );
 
   return (
     <Screen
-      title="Orders"
+      title={history ? "Order history" : "Orders"}
       tabbar
       onRefresh={refetch}
-      subnavbar={
-        <Segmented strong>
-          <SegmentedButton strong active={tab === "live"} onClick={() => setParams({}, { replace: true })}>
-            Live{counts?.active ? ` (${counts.active})` : ""}
-          </SegmentedButton>
-          <SegmentedButton strong active={tab === "history"} onClick={() => setParams({ tab: "history" }, { replace: true })}>
-            History
-          </SegmentedButton>
-        </Segmented>
-      }
+      right={toggle}
+      subnavbar={history ? undefined : <StageTabs value={stage} counts={counts} onChange={(s) => setParams(s === "confirming" ? {} : { status: s }, { replace: true })} />}
     >
-      {tab === "live" ? <Live /> : <History />}
+      {history ? <History /> : <Board stage={stage} />}
     </Screen>
   );
 }

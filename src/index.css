@@ -214,6 +214,11 @@
 div:has(> .k-search-teal) {
   height: 60px !important;
 }
+/* Orders kitchen-board stage tabs (big counts) need the same room. */
+div:has(> .k-stage-tabs) {
+  height: 58px !important;
+  align-items: stretch !important;
+}
 
 /* Keyboard: --kb is the iOS keyboard height (set in lib/native); sheets ride above it. */
 .kb-lift-sheet {
