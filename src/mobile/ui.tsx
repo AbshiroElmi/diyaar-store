@@ -45,7 +45,18 @@ export function Screen({ title, subtitle, back, large, right, subnavbar, tabbar,
         large={large && ios}
         transparent={large && ios}
         centerTitle={ios}
-        left={back ? <NavbarBackLink showText={ios} text="Back" onClick={() => navigate(-1)} /> : undefined}
+        left={
+          back ? (
+            <NavbarBackLink
+              showText={false}
+              className="pl-2.5 [&_svg]:scale-[0.85] [&_svg]:origin-center"
+              onClick={() => {
+                haptic.tap();
+                navigate(-1);
+              }}
+            />
+          ) : undefined
+        }
         right={right}
         subnavbar={subnavbar}
       />
