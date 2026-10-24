@@ -65,6 +65,32 @@ export default function HomeScreen() {
     return () => io.disconnect();
   }, []);
 
+  // Big header content fades and drifts up in step with the scroll.
+  const heroRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const hero = heroRef.current;
+    let scroller: HTMLElement | null = hero?.parentElement ?? null;
+    while (scroller && !/(auto|scroll)/.test(getComputedStyle(scroller).overflowY)) scroller = scroller.parentElement;
+    if (!hero || !scroller) return;
+    const sc = scroller;
+    let frame = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const p = Math.min(Math.max(sc.scrollTop / 140, 0), 1);
+        hero.style.opacity = String(1 - p);
+        hero.style.transform = `translateY(${p * 24}px) scale(${1 - p * 0.04})`;
+      });
+    };
+    sc.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      sc.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(frame);
+    };
+  }, []);
+
+  const newOrders = data?.today.confirming ?? 0;
+
   return (
     <Screen title="Home" bare tabbar>
       {/* ── Compact sticky header (appears on scroll) ─────── */}
@@ -81,7 +107,17 @@ export default function HomeScreen() {
           </button>
           <button onClick={() => go("/store")} className="min-w-0 flex-1 text-left">
             <p className="truncate text-[15px] font-extrabold leading-tight">{store?.store_name}</p>
-            <p className="truncate text-[12px] font-medium text-white/80">{open ? (store?.busy_mode ? "Busy right now" : "Open for orders") : "Store is closed"}</p>
+            {newOrders > 0 ? (
+              <p className="flex items-center gap-1.5 truncate text-[12px] font-bold text-[#BEFF00]">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#BEFF00] opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-[#BEFF00]" />
+                </span>
+                {newOrders} new {newOrders === 1 ? "order" : "orders"} waiting
+              </p>
+            ) : (
+              <p className="truncate text-[12px] font-medium text-white/80">{open ? (store?.busy_mode ? "Busy right now" : "Open for orders") : "Store is closed"}</p>
+            )}
           </button>
           <button onClick={toggleOpen} className="inline-flex items-center gap-1.5 rounded-lg bg-white/15 px-2.5 py-1.5 text-[12px] font-extrabold active:bg-white/25">
             <span className={cn("h-2 w-2 rounded-full", open ? "bg-[#BEFF00]" : "bg-[#ff4d4f]")} />
@@ -104,6 +140,7 @@ export default function HomeScreen() {
         {/* soft glows on the gradient */}
         <span className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-[#BEFF00]/20 blur-3xl" />
         <span className="pointer-events-none absolute -bottom-24 -left-16 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
+        <div ref={heroRef} className="relative origin-top will-change-transform">
         <div className="relative flex items-start gap-3">
           <button onClick={() => go("/store")} className="min-w-0 flex-1 text-left">
             <p className="text-[12px] font-bold uppercase tracking-wider text-white/75">Diyaar Store</p>
@@ -137,6 +174,8 @@ export default function HomeScreen() {
             <span className={cn("h-2 w-2 rounded-full", open ? "bg-[#BEFF00]" : "bg-[#ff4d4f]")} />
             {open ? "Open" : "Closed"}
           </button>
+        </div>
+
         </div>
 
         {/* Search */}
