@@ -175,6 +175,37 @@
 
 /* ── Mobile app (Konsta) tweaks ── */
 
+/* Search field (SearchField in mobile/ui): taller, light-teal like the "In stock" pill. */
+.k-search-teal input {
+  height: 44px !important;
+  padding-left: 2.5rem !important;
+  border-radius: 12px !important;
+  border: 1px solid rgb(33 145 134 / 0.25);
+  background-color: rgb(33 145 134 / 0.08) !important;
+  font-size: 16px !important;
+}
+.k-search-teal input:focus {
+  border-color: rgb(33 145 134 / 0.6);
+}
+.dark .k-search-teal input {
+  border-color: rgb(63 208 189 / 0.25);
+  background-color: rgb(63 208 189 / 0.12) !important;
+}
+.k-search-teal span:first-child > svg {
+  width: 18px;
+  height: 18px;
+  margin-left: 0.25rem;
+  color: #219186;
+  opacity: 0.9;
+}
+.k-search-teal > :last-child:not(:first-child) {
+  height: 44px;
+}
+/* Give the navbar row that holds it room for the taller field. */
+div:has(> .k-search-teal) {
+  height: 60px !important;
+}
+
 /* Keyboard: --kb is the iOS keyboard height (set in lib/native); sheets ride above it. */
 .kb-lift-sheet {
   top: calc(100% - var(--kb, 0px)) !important;

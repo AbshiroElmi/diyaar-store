@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Bike, Inbox, Search, Store } from "lucide-react";
-import { Button, List, ListItem, Searchbar, Segmented, SegmentedButton } from "konsta/react";
+import { Button, List, ListItem, Segmented, SegmentedButton } from "konsta/react";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { useOrderCounts, useOrders, useUpdateOrderStatus } from "@/hooks/queries";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -9,7 +9,7 @@ import type { Order, OrderStatus } from "@/api";
 import { formatMoney, formatDay, formatTime } from "@/lib/format";
 import { haptic } from "@/lib/native";
 import { cn } from "@/lib/utils";
-import { ChipBar, Empty, ErrorBlock, Loading, Screen } from "../ui";
+import { ChipBar, Empty, ErrorBlock, Loading, Screen, SearchField } from "../ui";
 import { RejectSheet } from "./OrderDetail";
 
 type LiveFilter = "active" | "confirming" | "accepted" | "preparing" | "ready";
@@ -143,18 +143,16 @@ function History() {
 
   return (
     <>
-      <Searchbar
-        placeholder="Order, customer or phone"
-        value={search}
-        onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
-          setSearch(e.target.value);
-          setPage(1);
-        }}
-        onClear={() => setSearch("")}
-        disableButton
-        disableButtonText="Cancel"
-        onDisable={() => setSearch("")}
-      />
+      <div className="px-2 pt-2">
+        <SearchField
+          placeholder="Order, customer or phone"
+          value={search}
+          onChange={(v) => {
+            setSearch(v);
+            setPage(1);
+          }}
+        />
+      </div>
       {isLoading ? (
         <Loading />
       ) : !data?.data.length ? (

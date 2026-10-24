@@ -1,7 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AlertCircle, CheckCircle2, Download, FileDown, FileUp, Package, PackagePlus, Plus, TrendingUp } from "lucide-react";
-import { ActionsGroup, ActionsLabel, Fab, Searchbar } from "konsta/react";
+import { ActionsGroup, ActionsLabel, Fab } from "konsta/react";
 import { toast } from "sonner";
 import { useCategories, useImportProducts, useProducts, useToggleProduct } from "@/hooks/queries";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -10,7 +10,7 @@ import { productsToCsv, productTemplateCsv, readProductsCsv, saveCsv, type Impor
 import { formatMoney } from "@/lib/format";
 import { haptic } from "@/lib/native";
 import { cn } from "@/lib/utils";
-import { ActionItem, Actions, CARD, Empty, ErrorBlock, FormSheet, Loading, ProductArt, Screen } from "../ui";
+import { ActionItem, Actions, CARD, Empty, ErrorBlock, FormSheet, Loading, ProductArt, Screen, SearchField } from "../ui";
 
 function ProductCard({ p }: { p: Product }) {
   const navigate = useNavigate();
@@ -120,15 +120,7 @@ export default function ProductsScreen() {
       tabbar
       onRefresh={refetch}
       subnavbar={
-        <Searchbar
-          placeholder="Search your menu"
-          value={search}
-          onInput={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
-          onClear={() => setSearch("")}
-          disableButton
-          disableButtonText="Cancel"
-          onDisable={() => setSearch("")}
-        />
+        <SearchField placeholder="Search your menu" value={search} onChange={setSearch} />
       }
     >
       <div className="flex">

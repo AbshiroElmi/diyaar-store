@@ -6,7 +6,7 @@
 import { useRef, useState, type ComponentProps, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { Actions as KActions, ActionsButton, Block, Link as KLink, Navbar, NavbarBackLink, Page, Preloader, Sheet as KSheet, Toolbar, useTheme } from "konsta/react";
+import { Actions as KActions, ActionsButton, Block, Link as KLink, Navbar, NavbarBackLink, Page, Preloader, Searchbar, Sheet as KSheet, Toolbar, useTheme } from "konsta/react";
 import type { LucideIcon } from "lucide-react";
 import { AlertTriangle, ArrowDownRight, ArrowUpRight, Check, RotateCw, X } from "lucide-react";
 import { haptic } from "@/lib/native";
@@ -275,6 +275,29 @@ export function ActionItem({ icon: Icon, children, onClick, danger, selected }: 
       <span className="min-w-0 flex-1 truncate text-left">{children}</span>
       {selected && <Check className="h-5 w-5 shrink-0 text-primary" strokeWidth={2.75} />}
     </ActionsButton>
+  );
+}
+
+/** Search field: taller, light-teal fill (matches the "In stock" pill), round ✕ instead of "Cancel". */
+export function SearchField({ placeholder, value, onChange }: { placeholder: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <Searchbar
+      className="k-search-teal"
+      placeholder={placeholder}
+      value={value}
+      onInput={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
+      onClear={() => onChange("")}
+      disableButton
+      // Konsta types this as string but renders any node; the cast lets us show an icon.
+      disableButtonText={
+        (
+          <span aria-label="Close search" className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/[0.08] text-primary">
+            <X className="h-[18px] w-[18px]" strokeWidth={2.5} />
+          </span>
+        ) as unknown as string
+      }
+      onDisable={() => onChange("")}
+    />
   );
 }
 
