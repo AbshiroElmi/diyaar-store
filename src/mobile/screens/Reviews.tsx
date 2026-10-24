@@ -6,7 +6,7 @@ import type { Review } from "@/api";
 import { formatDate, initials, timeAgo } from "@/lib/format";
 import { haptic } from "@/lib/native";
 import { cn } from "@/lib/utils";
-import { ChipBar, Empty, ErrorBlock, Loading, Screen, Sheet } from "../ui";
+import { ChipBar, Empty, ErrorBlock, Loading, Screen, Sheet, SheetClose } from "../ui";
 
 const QUICK = ["Thank you so much! We're glad you enjoyed it 🙏", "Thanks for the feedback — we'll share it with the kitchen.", "Sorry about this. Please contact us so we can make it right."];
 
@@ -26,9 +26,7 @@ function ReplySheet({ review, onClose }: { review: Review | null; onClose: () =>
   return (
     <Sheet opened={!!review} onBackdropClick={onClose} className="w-full rounded-t-[22px] pb-safe">
       <Toolbar top className="rounded-t-[22px]">
-        <KLink toolbar onClick={onClose}>
-          Cancel
-        </KLink>
+        <SheetClose onClick={onClose} />
         <span className="font-semibold">Reply</span>
         <KLink
           toolbar

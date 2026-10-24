@@ -35,11 +35,6 @@ export function RejectSheet({ order, onClose }: { order: Order | null; onClose: 
           </ActionsButton>
         ))}
       </ActionsGroup>
-      <ActionsGroup>
-        <ActionsButton onClick={onClose} bold>
-          Cancel
-        </ActionsButton>
-      </ActionsGroup>
     </Actions>
   );
 }

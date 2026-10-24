@@ -190,6 +190,13 @@ export function useImportProducts() {
   const invalidate = useCatalogInvalidate();
   return useMutation({
     mutationFn: async (rows: ProductInput[]) => {
+      // Create any categories the file mentions that don't exist yet.
+      const existing = new Set((await categoriesService.list()).map((c) => c.category_name.toLowerCase()));
+      for (const name of new Set(rows.map((r) => r.category))) {
+        if (existing.has(name.toLowerCase())) continue;
+        await categoriesService.create({ category_name: name }).catch(() => undefined);
+        existing.add(name.toLowerCase());
+      }
       let added = 0;
       for (const row of rows) {
         try {
@@ -205,6 +212,31 @@ export function useImportProducts() {
       invalidate();
       if (failed) toast.warning(`${added} items imported, ${failed} failed`);
       else toast.success(`${added} items imported for approval`);
+    },
+    onError,
+  });
+}
+
+export function useImportCategories() {
+  const invalidate = useCatalogInvalidate();
+  return useMutation({
+    mutationFn: async (rows: Array<{ category_name: string; description: string; is_active: 0 | 1 }>) => {
+      let added = 0;
+      for (const { is_active, ...row } of rows) {
+        try {
+          const created = await categoriesService.create(row);
+          if (!is_active) await categoriesService.update(created.name, { is_active: 0 });
+          added++;
+        } catch {
+          // keep going; the count tells the owner how many made it
+        }
+      }
+      return { added, failed: rows.length - added };
+    },
+    onSuccess: ({ added, failed }) => {
+      invalidate();
+      if (failed) toast.warning(`${added} categories imported, ${failed} failed`);
+      else toast.success(`${added} categories imported`);
     },
     onError,
   });

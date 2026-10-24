@@ -175,11 +175,6 @@ export default function PromotionsScreen() {
             Delete
           </ActionsButton>
         </ActionsGroup>
-        <ActionsGroup>
-          <ActionsButton bold onClick={() => setSelected(null)}>
-            Cancel
-          </ActionsButton>
-        </ActionsGroup>
       </Actions>
     </Screen>
   );

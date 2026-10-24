@@ -197,11 +197,6 @@ export default function ProductsScreen() {
             <span className="flex items-center gap-3"><Download className="h-5 w-5 text-black/45 dark:text-white/50" /> Download CSV template</span>
           </ActionsButton>
         </ActionsGroup>
-        <ActionsGroup>
-          <ActionsButton bold onClick={() => setMenuOpen(false)}>
-            Cancel
-          </ActionsButton>
-        </ActionsGroup>
       </Actions>
 
       <FormSheet
@@ -238,12 +233,16 @@ export default function ProductsScreen() {
 
           {!!goodRows.length && (
             <div className={cn(CARD, "divide-y divide-black/[0.06] dark:divide-white/10")}>
-              {goodRows.map(({ line, data: d }) => (
+              {goodRows.map(({ line, data: d, newCategory }) => (
                 <div key={line} className="flex items-center gap-3 px-3 py-2.5">
                   <ProductArt category={d!.category} className="h-10 w-10 shrink-0 rounded-lg" emojiClassName="text-[20px]" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[14px] font-bold">{d!.product_name}</p>
-                    <p className="truncate text-[12px] text-black/45 dark:text-white/50">{d!.category}{d!.is_available ? "" : " · sold out"}</p>
+                    <p className="truncate text-[12px] text-black/45 dark:text-white/50">
+                      {d!.category}
+                      {newCategory && <span className="ml-1.5 rounded bg-primary/10 px-1 text-[10px] font-bold text-primary">NEW</span>}
+                      {d!.is_available ? "" : " · sold out"}
+                    </p>
                   </div>
                   <p className="tabular text-[14px] font-extrabold">{formatMoney(d!.discount_price ?? d!.price)}</p>
                 </div>
@@ -251,7 +250,7 @@ export default function ProductsScreen() {
             </div>
           )}
 
-          <p className="px-1 text-[12px] text-black/45 dark:text-white/50">New items are reviewed by Diyaar before customers can see them. Photos can be added to each item afterwards.</p>
+          <p className="px-1 text-[12px] text-black/45 dark:text-white/50">Categories marked NEW are created for you. New items are reviewed by Diyaar before customers can see them. Photos can be added to each item afterwards.</p>
         </div>
       </FormSheet>
     </Screen>

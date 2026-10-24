@@ -8,7 +8,7 @@ import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Actions as KActions, Block, Link as KLink, Navbar, NavbarBackLink, Page, Preloader, Sheet as KSheet, Toolbar, useTheme } from "konsta/react";
 import type { LucideIcon } from "lucide-react";
-import { AlertTriangle, ArrowDownRight, ArrowUpRight, RotateCw } from "lucide-react";
+import { AlertTriangle, ArrowDownRight, ArrowUpRight, RotateCw, X } from "lucide-react";
 import { haptic } from "@/lib/native";
 import { cn } from "@/lib/utils";
 
@@ -246,9 +246,6 @@ export function Thumb({ id, label, image, className }: { id: string; label: stri
   return <span className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-[15px] font-semibold text-white", color, className)}>{letters}</span>;
 }
 
-// ── Form sheet (Cancel · Title · Save) ──────────────────────
-
-
 // ── Overlays ────────────────────────────────────────────────
 // Sheets render at the app root (above the tab bar, outside the page transition)
 // and ride up with the iOS keyboard via the --kb variable set in lib/native.
@@ -261,6 +258,16 @@ export function Sheet({ className, ...props }: ComponentProps<typeof KSheet>) {
 
 export function Actions({ className, ...props }: ComponentProps<typeof KActions>) {
   return toRoot(<KActions {...props} className={cn(props.opened && "kb-lift-actions", className)} />);
+}
+
+// ── Form sheet (Close · Title · Save) ───────────────────────
+
+export function SheetClose({ onClick }: { onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} aria-label="Close" className="ml-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/[0.06] text-black/60 active:bg-black/10 dark:bg-white/10 dark:text-white/70">
+      <X className="h-[18px] w-[18px]" strokeWidth={2.5} />
+    </button>
+  );
 }
 
 export function FormSheet({
@@ -285,9 +292,7 @@ export function FormSheet({
   return (
     <Sheet opened={opened} onBackdropClick={onClose} className="max-h-[calc(92dvh-var(--kb,0px))] w-full overflow-hidden rounded-t-[22px]">
       <Toolbar top className="rounded-t-[22px]">
-        <KLink toolbar onClick={onClose}>
-          Cancel
-        </KLink>
+        <SheetClose onClick={onClose} />
         <span className="text-[17px] font-semibold">{title}</span>
         <KLink toolbar onClick={() => canSave && !saving && onSave()} className={cn("font-semibold", (!canSave || saving) && "opacity-40")}>
           {saving ? "…" : saveLabel}

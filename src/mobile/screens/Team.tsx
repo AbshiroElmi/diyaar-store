@@ -115,11 +115,6 @@ export default function TeamScreen() {
             Remove from team
           </ActionsButton>
         </ActionsGroup>
-        <ActionsGroup>
-          <ActionsButton bold onClick={() => setSelected(null)}>
-            Cancel
-          </ActionsButton>
-        </ActionsGroup>
       </Actions>
     </Screen>
   );

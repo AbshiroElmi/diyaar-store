@@ -82,9 +82,6 @@ export default function SettingsScreen() {
             </ActionsButton>
           ))}
         </ActionsGroup>
-        <ActionsGroup>
-          <ActionsButton onClick={() => setSheet(null)}>Cancel</ActionsButton>
-        </ActionsGroup>
       </Actions>
 
       <Actions opened={sheet === "language"} onBackdropClick={() => setSheet(null)}>
@@ -95,9 +92,6 @@ export default function SettingsScreen() {
               {LANG[l]}
             </ActionsButton>
           ))}
-        </ActionsGroup>
-        <ActionsGroup>
-          <ActionsButton onClick={() => setSheet(null)}>Cancel</ActionsButton>
         </ActionsGroup>
       </Actions>
 
@@ -114,9 +108,6 @@ export default function SettingsScreen() {
             </ActionsButton>
           ))}
         </ActionsGroup>
-        <ActionsGroup>
-          <ActionsButton onClick={() => setSheet(null)}>Cancel</ActionsButton>
-        </ActionsGroup>
       </Actions>
 
       <Actions opened={sheet === "reset"} onBackdropClick={() => setSheet(null)}>
@@ -130,11 +121,6 @@ export default function SettingsScreen() {
             }}
           >
             Reset demo data
-          </ActionsButton>
-        </ActionsGroup>
-        <ActionsGroup>
-          <ActionsButton bold onClick={() => setSheet(null)}>
-            Cancel
           </ActionsButton>
         </ActionsGroup>
       </Actions>

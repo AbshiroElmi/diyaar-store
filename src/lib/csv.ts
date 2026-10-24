@@ -70,6 +70,8 @@ export const productTemplateCsv = (categories: Category[]) =>
 export interface ImportRow {
   line: number;
   data?: ProductInput;
+  /** The row's category doesn't exist yet and will be created on import. */
+  newCategory?: boolean;
   error?: string;
 }
 
@@ -85,17 +87,19 @@ export function readProductsCsv(text: string, categories: Category[]): ImportRow
   return body.map((r, i) => {
     const line = i + 2;
     const name = get(r, "name");
-    const category = byName.get(get(r, "category").toLowerCase());
+    const rawCategory = get(r, "category");
+    const category = byName.get(rawCategory.toLowerCase()) ?? rawCategory;
     const price = Number(get(r, "price"));
     const sale = get(r, "sale_price") ? Number(get(r, "sale_price")) : undefined;
     const prep = get(r, "prep_time") ? Number(get(r, "prep_time")) : undefined;
     if (!name) return { line, error: "Name is empty" };
-    if (!category) return { line, error: `Unknown category “${get(r, "category")}”` };
+    if (!category) return { line, error: "Category is empty" };
     if (!(price > 0)) return { line, error: "Price must be above 0" };
     if (sale !== undefined && !(sale > 0 && sale < price)) return { line, error: "Sale price must be lower than price" };
     if (prep !== undefined && !(prep >= 0)) return { line, error: "Prep time must be a number" };
     return {
       line,
+      newCategory: !byName.has(category.toLowerCase()),
       data: {
         product_name: name,
         description: get(r, "description"),
@@ -107,5 +111,46 @@ export function readProductsCsv(text: string, categories: Category[]): ImportRow
         is_popular: yes(get(r, "popular")) ? 1 : 0,
       },
     };
+  });
+}
+
+// ── Categories ──────────────────────────────────────────────
+
+const CATEGORY_HEADERS = ["name", "description", "visible"] as const;
+
+export interface CategoryImportRow {
+  line: number;
+  data?: { category_name: string; description: string; is_active: 0 | 1 };
+  error?: string;
+}
+
+export const categoriesToCsv = (categories: Category[]) =>
+  toCsv([[...CATEGORY_HEADERS], ...categories.map((c) => [c.category_name, c.description ?? "", c.is_active ? "yes" : "no"])]);
+
+export const categoryTemplateCsv = () =>
+  toCsv([
+    [...CATEGORY_HEADERS],
+    ["Breakfast", "Served until 11am", "yes"],
+    ["Fresh Juices", "", "yes"],
+  ]);
+
+/** Validate category rows; names already on the menu (or repeated in the file) are skipped. */
+export function readCategoriesCsv(text: string, existing: Category[]): CategoryImportRow[] {
+  const [head, ...body] = parseCsv(text);
+  if (!head) throw new Error("The file is empty");
+  const col = Object.fromEntries(head.map((h, i) => [h.trim().toLowerCase().replace(/\s+/g, "_"), i]));
+  const nameCol = col.name ?? col.category ?? col.category_name;
+  if (nameCol === undefined) throw new Error("Missing “name” column");
+  const get = (r: string[], i: number | undefined) => (i === undefined ? "" : (r[i] ?? "").trim());
+  const seen = new Set(existing.map((c) => c.category_name.toLowerCase()));
+
+  return body.map((r, i) => {
+    const line = i + 2;
+    const name = get(r, nameCol);
+    if (!name) return { line, error: "Name is empty" };
+    if (seen.has(name.toLowerCase())) return { line, error: `“${name}” already exists` };
+    seen.add(name.toLowerCase());
+    const visible = get(r, col.visible);
+    return { line, data: { category_name: name, description: get(r, col.description), is_active: visible && !yes(visible) ? 0 : 1 } };
   });
 }

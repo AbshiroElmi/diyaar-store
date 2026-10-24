@@ -126,9 +126,6 @@ export default function EarningsScreen() {
                 Withdraw {formatMoney(s.available_balance)}
               </ActionsButton>
             </ActionsGroup>
-            <ActionsGroup>
-              <ActionsButton onClick={() => setConfirm(false)}>Cancel</ActionsButton>
-            </ActionsGroup>
           </Actions>
         </>
       )}

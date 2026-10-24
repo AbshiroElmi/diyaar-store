@@ -224,11 +224,6 @@ export default function ProductEditScreen() {
                 Delete
               </ActionsButton>
             </ActionsGroup>
-            <ActionsGroup>
-              <ActionsButton bold onClick={() => setConfirmDelete(false)}>
-                Cancel
-              </ActionsButton>
-            </ActionsGroup>
           </Actions>
         </>
       )}
