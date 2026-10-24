@@ -20,7 +20,7 @@ export default function LoginPage() {
   const { requestOtp, verifyOtp } = useAuth();
   const { resolvedTheme } = useTheme();
   const [step, setStep] = useState<"phone" | "otp">("phone");
-  const [phone, setPhone] = useState(isMockApi ? "615550107" : "");
+  const [phone, setPhone] = useState(isMockApi ? "613187029" : "");
   const [otp, setOtp] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

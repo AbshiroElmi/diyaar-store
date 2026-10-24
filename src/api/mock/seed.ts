@@ -77,14 +77,14 @@ export const seedStore = (): Store => ({
   auto_accept_orders: 0,
   commission_rate: 15,
   owner_name: "Abdi Hassan",
-  owner_phone: "+252615550107",
+  owner_phone: "+252613187029",
 });
 
 export const seedUser = (): StoreUser => ({
   name: "abdi@xamargrill.so",
   full_name: "Abdi Hassan",
   email: "abdi@xamargrill.so",
-  phone: "+252615550107",
+  phone: "+252613187029",
   role: "Owner",
 });
 
@@ -385,10 +385,10 @@ export const seedHours = (): { weekly: OpeningHours[]; closures: HolidayClosure[
 // ── Team ────────────────────────────────────────────────────
 
 export const seedTeam = (now: number): TeamMember[] => [
-  { name: "abdi@xamargrill.so", full_name: "Abdi Hassan", email: "abdi@xamargrill.so", phone: "+252615550107", role: "Owner", status: "active", last_active: iso(now - 2 * MIN) },
-  { name: "hodan@xamargrill.so", full_name: "Hodan Warsame", email: "hodan@xamargrill.so", phone: "+252615550221", role: "Manager", status: "active", last_active: iso(now - 40 * MIN) },
-  { name: "omar@xamargrill.so", full_name: "Omar Jama", email: "omar@xamargrill.so", phone: "+252615550318", role: "Staff", status: "active", last_active: iso(now - 3 * HOUR) },
-  { name: "sahra@xamargrill.so", full_name: "Sahra Nur", email: "sahra@xamargrill.so", phone: "+252615550477", role: "Staff", status: "invited" },
+  { name: "abdi@xamargrill.so", full_name: "Abdi Hassan", email: "[EMAIL_ADDRESS]", phone: "+252613187029", role: "Owner", status: "active", last_active: iso(now - 2 * MIN) },
+  { name: "hodan@xamargrill.so", full_name: "Hodan Warsame", email: "hodan@xamargrill.so", phone: "+252613187029", role: "Manager", status: "active", last_active: iso(now - 40 * MIN) },
+  { name: "omar@xamargrill.so", full_name: "Omar Jama", email: "omar@xamargrill.so", phone: "+252613187029", role: "Staff", status: "active", last_active: iso(now - 3 * HOUR) },
+  { name: "sahra@xamargrill.so", full_name: "Sahra Nur", email: "sahra@xamargrill.so", phone: "+252613187029", role: "Staff", status: "invited" },
 ];
 
 // ── Notifications ───────────────────────────────────────────

@@ -59,5 +59,5 @@ export function registerBackButton(goBack: () => void, isHome: () => boolean) {
 export function initNativeShell() {
   if (!isNative) return;
   document.documentElement.classList.add("native", `native-${platform}`);
-  safe(() => Keyboard.setAccessoryBarVisible({ isVisible: true }));
+  safe(() => Keyboard.setAccessoryBarVisible({ isVisible: false }));
 }
