@@ -30,7 +30,7 @@ function LiveCard({ order, onReject }: { order: Order; onReject: () => void }) {
   const next = order.status === "ready" && isPickup(order) ? { status: "completed" as OrderStatus, label: "Picked up" } : NEXT[order.status];
 
   return (
-    <div className={cn("mx-4 mb-3 overflow-hidden rounded-xl border border-black/[0.06] bg-white dark:bg-[#1c1c1d]", isNew && "ring-2 ring-[#ff9500]")}>
+    <div className={cn("mx-4 mb-3 overflow-hidden rounded-xl border border-black/[0.06] bg-white dark:bg-[#1c1c1d]", isNew && "border-[#ff9500]/70 shadow-[0_10px_28px_-10px_rgba(255,149,0,0.45),0_2px_6px_-2px_rgba(255,149,0,0.25)] ring-1 ring-[#ff9500]/40 dark:shadow-[0_10px_28px_-10px_rgba(255,149,0,0.35)]")}>
       <button onClick={() => navigate(`/orders/${order.name}`)} className="block w-full p-4 text-left active:bg-black/5 dark:active:bg-white/5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
