@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Diyaar Store</string>
+    <string name="title_activity_main">Diyaar Store</string>
+    <string name="package_name">so.diyaar.store</string>
+    <string name="custom_url_scheme">so.diyaar.store</string>
+</resources>

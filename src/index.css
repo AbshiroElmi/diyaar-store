@@ -1,0 +1,182 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Diyaar Brand Colors - Professional Teal */
+    --background: 0 0% 98%;
+    --foreground: 220 20% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 10%;
+
+    /* Deep Teal - Trust & Reliability */
+    --primary: 174 62% 35%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 200 15% 94%;
+    --secondary-foreground: 220 20% 20%;
+
+    --muted: 210 15% 95%;
+    --muted-foreground: 220 10% 45%;
+
+    --accent: 174 45% 92%;
+    --accent-foreground: 174 62% 25%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 174 62% 35%;
+
+    --radius: 0.875rem;
+
+    /* Extended Palette */
+    --success: 152 69% 40%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 38 92% 10%;
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
+
+    /* Auth page specific */
+    --auth-gradient-start: 174 62% 35%;
+    --auth-gradient-end: 199 89% 48%;
+
+    /* Sidebar */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 20% 30%;
+    --sidebar-primary: 174 62% 35%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 174 45% 95%;
+    --sidebar-accent-foreground: 174 62% 25%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 174 62% 35%;
+  }
+
+  .dark {
+    --background: 220 20% 7%;
+    --foreground: 210 20% 98%;
+
+    --card: 220 20% 10%;
+    --card-foreground: 210 20% 98%;
+
+    --popover: 220 20% 10%;
+    --popover-foreground: 210 20% 98%;
+
+    --primary: 174 62% 45%;
+    --primary-foreground: 220 20% 7%;
+
+    --secondary: 220 15% 18%;
+    --secondary-foreground: 210 20% 98%;
+
+    --muted: 220 15% 18%;
+    --muted-foreground: 215 15% 60%;
+
+    --accent: 174 40% 18%;
+    --accent-foreground: 174 62% 65%;
+
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 210 20% 98%;
+
+    --border: 220 15% 20%;
+    --input: 220 15% 20%;
+    --ring: 174 62% 45%;
+
+    --success: 152 60% 45%;
+    --warning: 38 85% 55%;
+    --info: 199 80% 55%;
+
+    --sidebar-background: 220 20% 10%;
+    --sidebar-foreground: 210 20% 90%;
+    --sidebar-primary: 174 62% 50%;
+    --sidebar-primary-foreground: 220 20% 7%;
+    --sidebar-accent: 174 40% 15%;
+    --sidebar-accent-foreground: 174 50% 70%;
+    --sidebar-border: 220 15% 20%;
+    --sidebar-ring: 174 62% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+
+@layer base {
+  :root {
+    --brand-lime: 75 92% 62%;
+  }
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ── Native app feel (iOS / Android) ─────────────────────── */
+@layer base {
+  html,
+  body {
+    overscroll-behavior-y: none;
+  }
+  .native body {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  .native input,
+  .native textarea,
+  .native [contenteditable] {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+}
+
+@layer utilities {
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  /* Gentle press feedback on anything tappable */
+  .pressable {
+    transition: transform 120ms ease, background-color 150ms ease;
+  }
+  .pressable:active {
+    transform: scale(0.97);
+  }
+}
+
+/* ── Mobile app (Konsta) tweaks ── */
+.k-portal button.uppercase,
+.k-portal a.uppercase {
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 600;
+}
