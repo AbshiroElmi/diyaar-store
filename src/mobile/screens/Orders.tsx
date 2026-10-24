@@ -30,7 +30,7 @@ function LiveCard({ order, onReject }: { order: Order; onReject: () => void }) {
   const next = order.status === "ready" && isPickup(order) ? { status: "completed" as OrderStatus, label: "Picked up" } : NEXT[order.status];
 
   return (
-    <div className={cn("mx-4 mb-3 overflow-hidden rounded-2xl border border-black/[0.06] bg-white dark:bg-[#1c1c1d]", isNew && "ring-2 ring-[#ff9500]")}>
+    <div className={cn("mx-4 mb-3 overflow-hidden rounded-xl border border-black/[0.06] bg-white dark:bg-[#1c1c1d]", isNew && "ring-2 ring-[#ff9500]")}>
       <button onClick={() => navigate(`/orders/${order.name}`)} className="block w-full p-4 text-left active:bg-black/5 dark:active:bg-white/5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -58,10 +58,10 @@ function LiveCard({ order, onReject }: { order: Order; onReject: () => void }) {
       <div className="flex gap-2 border-t border-black/5 p-3 dark:border-white/10">
         {isNew ? (
           <>
-            <Button rounded outline className="flex-1 !text-[#ff3b30] !border-[#ff3b30]/40" onClick={onReject}>
+            <Button outline className="flex-1 !text-[#ff3b30] !border-[#ff3b30]/40" onClick={onReject}>
               Reject
             </Button>
-            <Button rounded
+            <Button
               className="flex-[2]"
               disabled={update.isPending}
               onClick={() => {
@@ -73,7 +73,7 @@ function LiveCard({ order, onReject }: { order: Order; onReject: () => void }) {
             </Button>
           </>
         ) : next ? (
-          <Button rounded
+          <Button
             tonal={order.status === "accepted"}
             className={cn("flex-1", order.status === "preparing" && "!bg-[#34c759]")}
             disabled={update.isPending}
@@ -187,7 +187,7 @@ function History() {
           ))}
           {data.total > page * 30 && (
             <div className="px-4 pt-4">
-              <Button rounded tonal large disabled={isFetching} onClick={() => setPage((p) => p + 1)}>
+              <Button tonal large disabled={isFetching} onClick={() => setPage((p) => p + 1)}>
                 {isFetching ? "Loading…" : "Load more"}
               </Button>
             </div>

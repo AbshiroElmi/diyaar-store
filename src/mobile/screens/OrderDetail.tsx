@@ -54,29 +54,29 @@ function ActionBar({ order, onReject }: { order: Order; onReject: () => void }) 
   if (order.status === "confirming")
     content = (
       <>
-        <Button rounded outline large className="flex-1 !border-[#ff3b30]/40 !text-[#ff3b30]" onClick={onReject}>
+        <Button outline large className="flex-1 !border-[#ff3b30]/40 !text-[#ff3b30]" onClick={onReject}>
           Reject
         </Button>
-        <Button rounded large className="flex-[2]" disabled={update.isPending} onClick={() => run("accepted")}>
+        <Button large className="flex-[2]" disabled={update.isPending} onClick={() => run("accepted")}>
           Accept order
         </Button>
       </>
     );
   else if (order.status === "accepted")
     content = (
-      <Button rounded large disabled={update.isPending} onClick={() => run("preparing")}>
+      <Button large disabled={update.isPending} onClick={() => run("preparing")}>
         Start cooking
       </Button>
     );
   else if (order.status === "preparing")
     content = (
-      <Button rounded large className="!bg-[#34c759]" disabled={update.isPending} onClick={() => run("ready")}>
+      <Button large className="!bg-[#34c759]" disabled={update.isPending} onClick={() => run("ready")}>
         Mark ready
       </Button>
     );
   else if (order.status === "ready" && isPickup(order))
     content = (
-      <Button rounded large disabled={update.isPending} onClick={() => run("completed")}>
+      <Button large disabled={update.isPending} onClick={() => run("completed")}>
         Picked up by customer
       </Button>
     );

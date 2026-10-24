@@ -53,7 +53,8 @@ export function Screen({ title, subtitle, back, right, subnavbar, tabbar, onRefr
             />
           ) : undefined
         }
-        right={right}
+        // Mirror the back link's inset so right-side actions sit the same distance from the edge.
+        right={right ? <div className="flex items-center pr-2.5 [&_svg]:h-6 [&_svg]:w-6">{right}</div> : undefined}
         subnavbar={subnavbar}
       />
       )}
