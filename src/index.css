@@ -175,6 +175,18 @@
 
 /* ── Mobile app (Konsta) tweaks ── */
 
+/* No grey press flash on list rows / inputs, and no focus rings — the caret is enough. */
+.k-portal .active\:bg-black:active,
+.k-portal .dark\:active\:bg-white:active {
+  background-color: transparent !important;
+}
+.k-portal input:focus,
+.k-portal textarea:focus,
+.k-portal select:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 /* Search field (SearchField in mobile/ui): taller, light-teal like the "In stock" pill. */
 .k-search-teal input {
   height: 44px !important;
@@ -183,9 +195,6 @@
   border: 1px solid rgb(33 145 134 / 0.25);
   background-color: rgb(33 145 134 / 0.08) !important;
   font-size: 16px !important;
-}
-.k-search-teal input:focus {
-  border-color: rgb(33 145 134 / 0.6);
 }
 .dark .k-search-teal input {
   border-color: rgb(63 208 189 / 0.25);

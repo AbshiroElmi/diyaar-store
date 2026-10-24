@@ -335,9 +335,14 @@ export function FormSheet({
       <Toolbar top className="rounded-t-[22px]">
         <SheetClose onClick={onClose} />
         <span className="text-[17px] font-semibold">{title}</span>
-        <KLink toolbar onClick={() => canSave && !saving && onSave()} className={cn("font-semibold", (!canSave || saving) && "opacity-40")}>
+        <button
+          type="button"
+          disabled={!canSave || saving}
+          onClick={onSave}
+          className="mr-2 h-9 min-w-[72px] rounded-full bg-primary px-4 text-[15px] font-bold text-white transition-[opacity,transform] active:scale-95 disabled:opacity-35"
+        >
           {saving ? "…" : saveLabel}
-        </KLink>
+        </button>
       </Toolbar>
       <div className="no-scrollbar max-h-[calc(92dvh-44px-var(--kb,0px))] overflow-y-auto pb-[calc(2rem+env(safe-area-inset-bottom))]">{children}</div>
     </Sheet>
