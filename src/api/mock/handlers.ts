@@ -5,6 +5,7 @@
 
 import { ENDPOINTS as E, type Endpoint } from "../endpoints";
 import type {
+  Banner,
   AppNotification,
   Category,
   DashboardData,
@@ -53,6 +54,7 @@ interface MockDb {
   notifications: AppNotification[];
   tickets: SupportTicket[];
   settings: StoreSettings;
+  banners?: Banner[];
   seq: number;
   lastIncomingAt: number;
 }
@@ -96,6 +98,17 @@ function loadDb(): MockDb {
 }
 
 let db = loadDb();
+
+/** Home banners; seeded lazily so demo data saved before banners existed still works. */
+function banners(): Banner[] {
+  db.banners ??= [
+    { name: "BN-1", title: "Free Delivery Fridays", subtitle: "Stores using it get 32% more orders", cta: "Create promo", link: "/promotions", theme: "lime", emoji: "🛵", is_active: 1, sort_order: 1 },
+    { name: "BN-2", title: "Your week in numbers", subtitle: `${db.store.store_name} is up this week — see what sold best`, cta: "View report", link: "/reports", theme: "teal", emoji: "📈", is_active: 1, sort_order: 2 },
+    { name: "BN-3", title: "Reply to your reviews", subtitle: "Stores that reply get higher ratings", cta: "Open reviews", link: "/reviews", theme: "sunset", emoji: "⭐", is_active: 1, sort_order: 3 },
+    { name: "BN-4", title: "Add photos to your menu", subtitle: "Items with photos sell up to 2× more", cta: "Edit menu", link: "/products", theme: "violet", emoji: "📸", is_active: 1, sort_order: 4 },
+  ];
+  return db.banners;
+}
 
 function save() {
   try {
@@ -364,15 +377,26 @@ export const mockHandlers: Partial<Record<Endpoint, Handler>> = {
     };
   },
 
-  [E.getBanners]: () => ({
-    success: true,
-    banners: [
-      { name: "BN-1", title: "Free Delivery Fridays", subtitle: "Stores using it get 32% more orders", cta: "Create promo", link: "/promotions", theme: "lime", emoji: "🛵" },
-      { name: "BN-2", title: "Your week in numbers", subtitle: `${db.store.store_name} is up this week — see what sold best`, cta: "View report", link: "/reports", theme: "teal", emoji: "📈" },
-      { name: "BN-3", title: "Reply to your reviews", subtitle: "Stores that reply get higher ratings", cta: "Open reviews", link: "/reviews", theme: "sunset", emoji: "⭐" },
-      { name: "BN-4", title: "Add photos to your menu", subtitle: "Items with photos sell up to 2× more", cta: "Edit menu", link: "/products", theme: "violet", emoji: "📸" },
-    ],
-  }),
+  [E.getBanners]: () => ({ success: true, banners: banners().sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)) }),
+  [E.createBanner]: (input: Omit<Banner, "name">) => {
+    if (!input.title?.trim()) fail("Title is required");
+    const list = banners();
+    const banner: Banner = { ...input, name: nextId("BN"), is_active: input.is_active ?? 1, sort_order: Math.max(0, ...list.map((b) => b.sort_order ?? 0)) + 1 };
+    list.push(banner);
+    save();
+    return { success: true, banner };
+  },
+  [E.updateBanner]: ({ banner_id, ...changes }: { banner_id: string } & Partial<Banner>) => {
+    const banner = banners().find((b) => b.name === banner_id) ?? fail("Banner not found");
+    Object.assign(banner, changes);
+    save();
+    return { success: true, banner };
+  },
+  [E.deleteBanner]: ({ banner_id }: { banner_id: string }) => {
+    db.banners = banners().filter((b) => b.name !== banner_id);
+    save();
+    return { success: true };
+  },
 
   // Orders
   [E.getOrders]: ({ status, search, page, page_size }: OrderListParams) => {

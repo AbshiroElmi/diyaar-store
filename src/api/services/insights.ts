@@ -19,4 +19,8 @@ export const reviewsService = {
 
 export const bannersService = {
   list: () => api.get<{ success: boolean; banners: Banner[] }>(ENDPOINTS.getBanners).then((r) => r.banners),
+  create: (data: Omit<Banner, "name">) => api.post<{ success: boolean; banner: Banner }>(ENDPOINTS.createBanner, data).then((r) => r.banner),
+  update: (bannerId: string, data: Partial<Banner>) =>
+    api.post<{ success: boolean; banner: Banner }>(ENDPOINTS.updateBanner, { banner_id: bannerId, ...data }).then((r) => r.banner),
+  remove: (bannerId: string) => api.post<{ success: boolean }>(ENDPOINTS.deleteBanner, { banner_id: bannerId }),
 };

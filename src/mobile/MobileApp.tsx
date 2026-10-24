@@ -7,7 +7,8 @@ import {
   BarChart3,
   Bell,
   Clock,
-  FolderTree,
+  // FolderTree, // Categories hidden for now
+  GalleryHorizontal,
   Headphones,
   LayoutGrid,
   LogOut,
@@ -38,7 +39,9 @@ import EarningsScreen from "./screens/Earnings";
 import ReportsScreen from "./screens/Reports";
 import ReviewsScreen from "./screens/Reviews";
 import PromotionsScreen from "./screens/Promotions";
-import CategoriesScreen from "./screens/Categories";
+import BannersScreen from "./screens/Banners";
+// Categories hidden for now — products only.
+// import CategoriesScreen from "./screens/Categories";
 import StoreProfileScreen from "./screens/StoreProfile";
 import HoursScreen from "./screens/Hours";
 import TeamScreen from "./screens/Team";
@@ -84,7 +87,8 @@ const MENU: Array<{ title: string; items: MenuEntry[] }> = [
       { href: "/reports", label: "Reports", icon: BarChart3, tint: "bg-[#007aff]" },
       { href: "/reviews", label: "Reviews", icon: Star, tint: "bg-[#ff9500]", badge: "reviews" },
       { href: "/promotions", label: "Promotions", icon: Megaphone, tint: "bg-[#ff2d55]" },
-      { href: "/categories", label: "Categories", icon: FolderTree, tint: "bg-[#5856d6]" },
+      { href: "/banners", label: "Home banners", icon: GalleryHorizontal, tint: "bg-[#34c759]" },
+      // { href: "/categories", label: "Categories", icon: FolderTree, tint: "bg-[#5856d6]" },
     ],
   },
   {
@@ -379,7 +383,8 @@ export default function MobileApp() {
         <Route path="reports" element={<ReportsScreen />} />
         <Route path="reviews" element={<ReviewsScreen />} />
         <Route path="promotions" element={<PromotionsScreen />} />
-        <Route path="categories" element={<CategoriesScreen />} />
+        <Route path="banners" element={<BannersScreen />} />
+        {/* <Route path="categories" element={<CategoriesScreen />} /> */}
         <Route path="store" element={<StoreProfileScreen />} />
         <Route path="hours" element={<HoursScreen />} />
         <Route path="team" element={<TeamScreen />} />

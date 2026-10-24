@@ -21,6 +21,7 @@ import {
   storeService,
   supportService,
   teamService,
+  type Banner,
   type OrderListParams,
   type OrderStatus,
   type Period,
@@ -116,6 +117,30 @@ export const useDashboard = () =>
   useQuery({ queryKey: qk.dashboard, queryFn: dashboardService.get, refetchInterval: LIVE_POLL_MS });
 
 export const useBanners = () => useQuery({ queryKey: qk.banners, queryFn: bannersService.list, staleTime: 5 * 60_000 });
+
+export function useSaveBanner() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data, silent: _ }: { id?: string; data: Partial<Banner>; silent?: boolean }) => (id ? bannersService.update(id, data) : bannersService.create(data as Omit<Banner, "name">)),
+    onSuccess: (_, { id, silent }) => {
+      qc.invalidateQueries({ queryKey: qk.banners });
+      if (!silent) toast.success(id ? "Banner updated" : "Banner added to Home");
+    },
+    onError,
+  });
+}
+
+export function useDeleteBanner() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: bannersService.remove,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: qk.banners });
+      toast.success("Banner deleted");
+    },
+    onError,
+  });
+}
 
 export const useReports = (period: Period) =>
   useQuery({ queryKey: qk.reports(period), queryFn: () => reportsService.get(period), placeholderData: keepPreviousData });

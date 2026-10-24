@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { useTheme } from "next-themes";
 import { Area, AreaChart, ResponsiveContainer, XAxis } from "recharts";
 import { BarChart3, Bell, ChefHat, ChevronDown, ChevronRight, Clock, Headphones, Megaphone, PackageCheck, PackagePlus, ReceiptText, Search, ShoppingBag, Star } from "lucide-react";
-import { useBanners, useCategories, useDashboard, useNotifications, useProducts, useSetStoreOpen, useStore } from "@/hooks/queries";
+import { useBanners, /* useCategories, */ useDashboard, useNotifications, useProducts, useSetStoreOpen, useStore } from "@/hooks/queries";
 import { formatMoney, formatNumber, initials, timeAgo } from "@/lib/format";
 import { haptic, setStatusBarTheme } from "@/lib/native";
 import { cn } from "@/lib/utils";
@@ -29,9 +29,11 @@ export default function HomeScreen() {
   const navigate = useNavigate();
   const { resolvedTheme } = useTheme();
   const { data, isLoading, error, refetch } = useDashboard();
-  const { data: banners } = useBanners();
-  const { data: allCategories } = useCategories();
-  const categories = allCategories?.filter((c) => c.is_active);
+  const { data: allBanners } = useBanners();
+  const banners = allBanners?.filter((b) => b.is_active !== 0);
+  // Categories hidden for now — products only.
+  // const { data: allCategories } = useCategories();
+  // const categories = allCategories?.filter((c) => c.is_active);
   const { data: store } = useStore();
   const { data: products } = useProducts();
   const categoryOf = (id: string) => products?.data.find((x) => x.name === id)?.category ?? "";
@@ -257,7 +259,7 @@ export default function HomeScreen() {
             ))}
           </div>
 
-          {/* ── Your menu (category tiles) ────────────── */}
+          {/* ── Your menu (category tiles) — hidden for now, products only ──
           {!!categories?.length && (
             <section>
               <SectionTitle action="Manage" onAction={() => go("/categories")}>
@@ -275,6 +277,7 @@ export default function HomeScreen() {
               </div>
             </section>
           )}
+          */}
 
           {/* ── Best sellers ──────────────────────────── */}
           <section>

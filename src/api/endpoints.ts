@@ -27,6 +27,9 @@ export const ENDPOINTS = {
   getAnalytics: "get_store_analytics", // ready — basic totals
   getReports: "get_store_reports", // planned
   getBanners: "get_store_banners", // planned — home carousel
+  createBanner: "create_store_banner", // planned
+  updateBanner: "update_store_banner", // planned
+  deleteBanner: "delete_store_banner", // planned
 
   // Orders
   getOrders: "get_store_orders", // ready
