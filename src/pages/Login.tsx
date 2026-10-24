@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LogoMark } from "@/components/shared/Logo";
+import storeHero from "@/assets/store-hero.jpg";
 import { MOCK_OTP } from "@/api/mock/handlers";
 import { useAuth } from "@/contexts/AuthContext";
 import { isMockApi } from "@/lib/env";
@@ -75,16 +76,28 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-dvh flex-col items-center bg-background">
-      <div className="pt-safe relative w-full overflow-hidden bg-gradient-to-br from-[#3fd0bd] via-[#219186] to-[#0f4f48] pb-24 text-white">
-        {/* bottom of the header fades into the page */}
-        <span className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent via-background/70 to-background dark:via-black/70 dark:to-black" />
-        {/* soft glows on the gradient */}
-        <span className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-[#BEFF00]/20 blur-3xl" />
+      <div className="pt-safe relative w-full overflow-hidden pb-24 text-white">
+        {/* Store picture background */}
+        <img
+          src={storeHero}
+          alt="Diyaar store"
+          className="absolute inset-0 h-full w-full object-cover object-[center_38%] filter brightness-[0.8] contrast-[1.05]"
+        />
+        {/* Dark cinematic + brand tint overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/35 to-[#0b2b27]/85" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#3fd0bd]/15 via-transparent to-[#0f4f48]/50" />
+
+        {/* Ambient glows */}
+        <span className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-[#BEFF00]/15 blur-3xl" />
         <span className="pointer-events-none absolute -bottom-24 -left-16 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
+
+        {/* Bottom smooth fade into the page background */}
+        <span className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent via-background/70 to-background dark:via-black/70 dark:to-black" />
+
         <div className="relative mx-auto flex max-w-sm flex-col items-center px-6 pt-14 text-center sm:pt-20">
-          <LogoMark className="h-20 w-20 rounded-[1.4rem] shadow-xl shadow-black/25 ring-4 ring-white/20" />
-          <h1 className="mt-5 text-3xl font-extrabold tracking-tight">Diyaar Store</h1>
-          <p className="mt-1 text-sm font-medium text-white/80">Your orders, menu and earnings — in your pocket</p>
+          <LogoMark className="h-20 w-20 rounded-[1.4rem] shadow-2xl shadow-black/40 ring-4 ring-white/30 backdrop-blur-sm" />
+          <h1 className="mt-5 text-3xl font-extrabold tracking-tight drop-shadow-sm">Diyaar Store</h1>
+          <p className="mt-1 text-sm font-medium text-white/90 drop-shadow-sm">Your orders, menu and earnings — in your pocket</p>
         </div>
       </div>
 
