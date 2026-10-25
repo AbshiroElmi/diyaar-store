@@ -61,3 +61,23 @@ export function useHomeCategories(allIds: string[]) {
   };
   return { shown, toggle };
 }
+
+// ── Onboarding (shown once per phone) ───────────────────────
+
+const ONBOARDED_KEY = "portal_onboarded";
+
+export function onboardingSeen() {
+  try {
+    return localStorage.getItem(ONBOARDED_KEY) === "1";
+  } catch {
+    return true;
+  }
+}
+
+export function markOnboardingSeen() {
+  try {
+    localStorage.setItem(ONBOARDED_KEY, "1");
+  } catch {
+    /* storage unavailable */
+  }
+}

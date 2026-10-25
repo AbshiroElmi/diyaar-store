@@ -1,4 +1,5 @@
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { AnimatePresence } from "framer-motion";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider, useTheme } from "next-themes";
@@ -7,6 +8,9 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import LoginPage from "@/pages/Login";
+import OnboardingPage from "@/pages/Onboarding";
+import { markOnboardingSeen, onboardingSeen } from "@/lib/prefs";
+import { LaunchScreen } from "@/components/shared/LaunchScreen";
 import { NoInternet } from "@/components/shared/NoInternet";
 import { hideSplash, setStatusBarTheme } from "@/lib/native";
 import { useOnline } from "@/lib/network";
@@ -62,17 +66,34 @@ function AppToaster() {
 
 /** Keeps native chrome (splash, status bar) in sync with the app. */
 function NativeBridge() {
-  const { status } = useAuth();
   const { resolvedTheme } = useTheme();
-  const online = useOnline();
+  // The animated launch screen looks the same as the native splash, so hand over straight away.
   useEffect(() => {
-    // Offline at launch: drop the splash so the no-internet page shows.
-    if (status !== "loading" || !online) hideSplash();
-  }, [status, online]);
+    hideSplash();
+  }, []);
   useEffect(() => {
     setStatusBarTheme(resolvedTheme === "dark");
   }, [resolvedTheme]);
   return null;
+}
+
+/** Plays the animated logo while the session is restored, for at least one full loop. */
+const LAUNCH_MIN_MS = 1500;
+
+function Launch() {
+  const { status } = useAuth();
+  const [played, setPlayed] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setPlayed(true), LAUNCH_MIN_MS);
+    return () => clearTimeout(t);
+  }, []);
+  const show = !played || status === "loading";
+  // White status-bar icons on the teal. The first screen after it (Home or Login) wants them too,
+  // and each screen restores the app's own colour when it's left.
+  useEffect(() => {
+    if (show) setStatusBarTheme(true);
+  }, [show]);
+  return <AnimatePresence>{show && <LaunchScreen key="launch" />}</AnimatePresence>;
 }
 
 /** Covers everything (login included) while the phone has no internet; lifts itself when it's back. */
@@ -96,7 +117,18 @@ function ProtectedRoutes() {
 
 function PublicOnly() {
   const { status } = useAuth();
+  // The introduction shows once per phone, before the first sign-in.
+  const [onboarded, setOnboarded] = useState(onboardingSeen);
   if (status === "signed-in") return <Navigate to="/" replace />;
+  if (!onboarded)
+    return (
+      <OnboardingPage
+        onDone={() => {
+          markOnboardingSeen();
+          setOnboarded(true);
+        }}
+      />
+    );
   return <LoginPage />;
 }
 
@@ -108,6 +140,7 @@ export default function App() {
           <BrowserRouter>
             <AuthProvider>
               <NativeBridge />
+              <Launch />
               <Suspense fallback={<FullScreenLoader />}>
                 <Routes>
                   <Route path="/login" element={<PublicOnly />} />
