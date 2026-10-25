@@ -124,23 +124,29 @@ export default function ProductsScreen() {
         <SearchField placeholder="Search your menu" value={search} onChange={setSearch} />
       }
     >
-      <div className="flex">
-        {/* Category rail (Blinkit-style); the URL holds the category ID */}
-        <nav ref={railRef} style={{ top: railTop }} className="sticky w-[78px] shrink-0 self-start border-r border-black/[0.06] bg-white pb-28 dark:border-white/10 dark:bg-[#111]">
+      <div>
+        {/* Category row across the top, pinned under the navbar while scrolling; the URL holds the category ID */}
+        <nav ref={railRef} style={{ top: railTop }} className="no-scrollbar sticky z-10 flex gap-2 overflow-x-auto border-b border-black/[0.06] bg-[#f7f9f9]/95 px-3 py-2.5 backdrop-blur dark:border-white/10 dark:bg-black/90">
           {rail.map((c) => {
             const active = c.name === category;
             return (
-              <button key={c.name} onClick={() => setCategory(c.name)} className="relative flex w-full flex-col items-center gap-1 px-1.5 py-2.5">
-                {active && <span className="absolute right-0 top-2 h-[calc(100%-16px)] w-1 rounded-l-full bg-primary" />}
-                <ProductArt category={c.name === "all" ? "" : c.category_name} image={"image" in c ? c.image : undefined} className={cn("h-12 w-12 rounded-xl transition-transform", active && "scale-110 ring-2 ring-primary/30")} emojiClassName="text-[24px]" />
-                <span className={cn("line-clamp-2 text-center text-[10.5px] leading-tight", active ? "font-extrabold text-primary" : "font-semibold text-black/60 dark:text-white/60")}>{c.category_name}</span>
+              <button
+                key={c.name}
+                onClick={() => setCategory(c.name)}
+                className={cn(
+                  "flex h-10 shrink-0 items-center gap-2 rounded-full pl-1 pr-3.5 text-[14px] transition-colors active:scale-95",
+                  active ? "bg-primary font-bold text-white" : "bg-white font-semibold text-black/70 ring-1 ring-black/[0.06] dark:bg-white/10 dark:text-white/75 dark:ring-white/10",
+                )}
+              >
+                <ProductArt category={c.name === "all" ? "" : c.category_name} image={"image" in c ? c.image : undefined} className="h-8 w-8 rounded-full" emojiClassName="text-[16px]" />
+                <span className="whitespace-nowrap">{c.category_name}</span>
               </button>
             );
           })}
         </nav>
 
         {/* Product grid */}
-        <div className="min-w-0 flex-1 p-2.5">
+        <div className="p-2.5">
           {error ? (
             <ErrorBlock error={error} onRetry={refetch} />
           ) : isLoading ? (

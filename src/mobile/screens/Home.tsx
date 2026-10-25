@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { useTheme } from "next-themes";
 import { Area, AreaChart, ResponsiveContainer, XAxis } from "recharts";
-import { ChevronDown, Clock, PackagePlus, Search, Star, Users } from "lucide-react";
+import { ChefHat, ChevronDown, Clock, PackageCheck, PackagePlus, ReceiptText, Search, ShoppingBag, Star, Users } from "lucide-react";
 import { useBanners, useStoreCategories, useDashboard, useOrderCounts, useSetStoreOpen, useStore } from "@/hooks/queries";
 import { formatMoney, formatNumber, initials, timeAgo } from "@/lib/format";
 import { haptic, setStatusBarTheme } from "@/lib/native";
@@ -12,62 +12,12 @@ import { cn } from "@/lib/utils";
 import { BannerCarousel } from "../BannerCarousel";
 import { CARD, ErrorBlock, Kpi, Loading, ProductArt, Screen, SectionTitle } from "../ui";
 
-// Order stages, each with one colour: a dot on Home, a tint for avatars in Recent orders.
-// Tints are see-through so the same colours work in light and dark mode.
 const PIPELINE = [
-  { key: "confirming", label: "New", dot: "bg-[#f08c00]", tint: "bg-[#e07b00]/10 dark:bg-[#ff9f1a]/15", fg: "text-[#d97000] dark:text-[#ffaa3b]" },
-  { key: "accepted", label: "Accepted", dot: "bg-[#1f6fe5]", tint: "bg-[#1f6fe5]/10 dark:bg-[#4d8dff]/15", fg: "text-[#1f6fe5] dark:text-[#6ea2ff]" },
-  { key: "preparing", label: "Cooking", dot: "bg-[#5b4ee0]", tint: "bg-[#5b4ee0]/10 dark:bg-[#8a7fff]/15", fg: "text-[#5b4ee0] dark:text-[#a59dff]" },
-  { key: "ready", label: "Ready", dot: "bg-[#1a9d4b]", tint: "bg-[#1a9d4b]/10 dark:bg-[#34c759]/15", fg: "text-[#1a9d4b] dark:text-[#4cd97b]" },
+  { key: "confirming", label: "New", icon: ReceiptText, tint: "bg-[#fff4e0]", fg: "text-[#e07b00]" },
+  { key: "accepted", label: "Accepted", icon: PackageCheck, tint: "bg-[#e8f1ff]", fg: "text-[#1f6fe5]" },
+  { key: "preparing", label: "Cooking", icon: ChefHat, tint: "bg-[#f0eeff]", fg: "text-[#5b4ee0]" },
+  { key: "ready", label: "Ready", icon: ShoppingBag, tint: "bg-[#e8f7ee]", fg: "text-[#1a9d4b]" },
 ] as const;
-
-type Stage = (typeof PIPELINE)[number]["key"];
-
-/**
- * Live order counts in one calm card, like merchant apps (Uber Eats Manager, DoorDash, Shopify):
- * a label with a status dot, a big number, and colour only where something needs doing.
- * The thin bar underneath shows how the live orders are spread across the stages.
- */
-function LiveOrders({ counts, onOpen }: { counts: Record<string, number>; onOpen: (key: Stage) => void }) {
-  const total = PIPELINE.reduce((n, p) => n + (counts[p.key] ?? 0), 0);
-  return (
-    <div className={cn(CARD, "mx-4 overflow-hidden")}>
-      <div className="grid grid-cols-4 divide-x divide-black/[0.06] dark:divide-white/10">
-        {PIPELINE.map((p) => {
-          const count = counts[p.key] ?? 0;
-          const waiting = p.key === "confirming" && count > 0;
-          return (
-            <button
-              key={p.key}
-              onClick={() => onOpen(p.key)}
-              aria-label={`${count} ${p.label}`}
-              className={cn("flex flex-col items-start px-3 pb-3 pt-3 text-left transition-colors active:bg-black/[0.04] dark:active:bg-white/[0.06]", waiting && "bg-[#f08c00]/[0.07]")}
-            >
-              <span className="flex items-center gap-1.5 text-[11.5px] font-semibold text-black/50 dark:text-white/55">
-                <span className="relative flex h-1.5 w-1.5">
-                  {waiting && <span className={cn("absolute inline-flex h-full w-full animate-ping rounded-full opacity-75", p.dot)} />}
-                  <span className={cn("relative inline-flex h-1.5 w-1.5 rounded-full", p.dot, !count && "opacity-30")} />
-                </span>
-                {p.label}
-              </span>
-              <span
-                className={cn(
-                  "tabular mt-1 text-[26px] font-bold leading-none tracking-tight",
-                  waiting ? "text-[#d97000] dark:text-[#ffaa3b]" : count ? "text-[#1c1c1e] dark:text-white" : "text-black/20 dark:text-white/20",
-                )}
-              >
-                {count}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-      <div className="flex h-1 bg-black/[0.04] dark:bg-white/[0.06]">
-        {total > 0 && PIPELINE.map((p) => (counts[p.key] ? <span key={p.key} className={p.dot} style={{ width: `${(counts[p.key] / total) * 100}%` }} /> : null))}
-      </div>
-    </div>
-  );
-}
 
 const QUICK = [
   { label: "Add item", icon: PackagePlus, href: "/products/new" },
@@ -247,7 +197,20 @@ export default function HomeScreen() {
             <SectionTitle action="See all" onAction={() => go("/orders")}>
               Live orders
             </SectionTitle>
-            <LiveOrders counts={Object.fromEntries(PIPELINE.map((p) => [p.key, counts?.[p.key] ?? data.today[p.key]]))} onOpen={(key) => go(`/orders?status=${key}`)} />
+            <div className="grid grid-cols-4 gap-2 px-4">
+              {PIPELINE.map((p) => {
+                const count = counts?.[p.key] ?? data.today[p.key];
+                const hot = p.key === "confirming" && count > 0;
+                return (
+                  <button key={p.key} onClick={() => go(`/orders?status=${p.key}`)} className={cn("relative flex flex-col items-center rounded-xl py-3 transition-transform active:scale-95", p.tint, hot && "ring-2 ring-[#e07b00]")}>
+                    {hot && <span className="absolute -top-2 rounded bg-[#e5383b] px-1.5 text-[9px] font-extrabold uppercase leading-[16px] text-white">New</span>}
+                    <p.icon className={cn("h-5 w-5", p.fg)} />
+                    <span className="tabular mt-1.5 text-[24px] font-extrabold leading-none text-[#1c1c1e]">{count}</span>
+                    <span className={cn("mt-1 text-[11px] font-bold", p.fg)}>{p.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </section>
 
           {/* ── Today ─────────────────────────────────── */}
