@@ -52,15 +52,15 @@ export default function HoursScreen() {
                     {d.day === TODAY && <span className="ml-1.5 text-[12px] font-medium text-primary">Today</span>}
                   </span>
                 }
-                text={
-                  d.is_open ? (
-                    <span className="mt-1 flex items-center gap-1.5">
-                      <input type="time" value={d.open_time} onChange={(e) => setDay(i, { open_time: e.target.value })} className="rounded-lg bg-black/5 px-2 py-1 text-[15px] text-black dark:bg-white/10 dark:text-white" />
-                      <span>–</span>
-                      <input type="time" value={d.close_time} onChange={(e) => setDay(i, { close_time: e.target.value })} className={cn("rounded-lg bg-black/5 px-2 py-1 text-[15px] text-black dark:bg-white/10 dark:text-white", d.close_time <= d.open_time && "ring-2 ring-[#ff3b30]")} />
-                    </span>
-                  ) : (
-                    "Closed"
+                text={!d.is_open && "Closed"}
+                // Not `text`: Konsta line-clamps it, which clips the pickers and ellipsizes the dash.
+                innerChildren={
+                  d.is_open && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <input type="time" value={d.open_time} onChange={(e) => setDay(i, { open_time: e.target.value })} className="time-pill" />
+                      <span className="shrink-0 text-black/40 dark:text-white/40">–</span>
+                      <input type="time" value={d.close_time} onChange={(e) => setDay(i, { close_time: e.target.value })} className={cn("time-pill", d.close_time <= d.open_time && "ring-2 ring-[#ff3b30]")} />
+                    </div>
                   )
                 }
                 after={<Toggle checked={d.is_open} onChange={() => setDay(i, { is_open: !d.is_open })} />}

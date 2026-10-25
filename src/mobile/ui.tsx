@@ -1,6 +1,6 @@
 /**
  * Mobile building blocks shared by every mobile screen.
- * Built on Konsta UI so they render as iOS or Material depending on the device.
+ * Built on Konsta UI with the iOS theme on every device (see mobileTheme in MobileApp).
  */
 
 import { useRef, useState, type ComponentProps, type ReactNode } from "react";
@@ -61,7 +61,7 @@ export function Screen({ title, subtitle, back, right, subnavbar, tabbar, onRefr
       )}
       {onRefresh ? <PullToRefresh onRefresh={onRefresh}>{children}</PullToRefresh> : children}
       {footer}
-      <div className={tabbar ? "h-[calc(9rem+env(safe-area-inset-bottom))]" : "h-[calc(1.5rem+env(safe-area-inset-bottom))]"} />
+      <div className={tabbar ? "h-[calc(5rem+env(safe-area-inset-bottom))]" : "h-[calc(1.5rem+env(safe-area-inset-bottom))]"} />
     </Page>
   );
 }

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useTheme } from "next-themes";
-import { Bell, BellRing, Clapperboard, Database, ImagePlus, Globe, LogOut, Mail, MessageSquare, Moon, Printer, RotateCcw, Check, Star, Sun, SunMoon, Timer, Video, X, Volume2, Wallet, Zap } from "lucide-react";
+import { BellRing, Clapperboard, Database, ImagePlus, Globe, LogOut, Mail, MessageSquare, Moon, Printer, RotateCcw, Check, Star, Sun, SunMoon, Timer, Video, X, Volume2, Wallet, Zap } from "lucide-react";
 import { ActionsGroup, ActionsLabel, BlockFooter, BlockTitle, List, ListItem, Toggle } from "konsta/react";
 import { toast } from "sonner";
 import storeHero from "@/assets/store-hero.jpg";
@@ -12,7 +12,7 @@ import type { StoreSettings } from "@/api";
 import { env, isMockApi } from "@/lib/env";
 import { clearLoginMedia, MAX_LOGIN_MEDIA_MB, removeLibraryItem, selectLibraryItem, setLoginMedia, useLoginLibrary, useLoginMedia } from "@/lib/login-media";
 import { cn } from "@/lib/utils";
-import { haptic } from "@/lib/native";
+import { getAppVersion, haptic } from "@/lib/native";
 import { ActionItem, Actions, IconTile, Loading, Screen } from "../ui";
 
 const LANG = { en: "English", so: "Soomaali", ar: "العربية" } as const;
@@ -44,10 +44,15 @@ export default function SettingsScreen() {
     }
   };
   const [s, setS] = useState<StoreSettings | null>(null);
+  const [version, setVersion] = useState("");
 
   useEffect(() => {
     if (data) setS(data);
   }, [data]);
+
+  useEffect(() => {
+    getAppVersion().then(setVersion);
+  }, []);
 
   // Settings save instantly, like iOS.
   const commit = (next: StoreSettings) => {
@@ -94,8 +99,12 @@ export default function SettingsScreen() {
           </List>
           <BlockFooter className="text-center">
             Diyaar Store · {env.apiMode === "mock" ? "Demo data" : "Live"}
-            <br />
-            <Bell className="inline h-3 w-3" /> Changes save automatically
+            {version && (
+              <>
+                <br />
+                Version {version}
+              </>
+            )}
           </BlockFooter>
         </>
       )}

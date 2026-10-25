@@ -26,7 +26,7 @@ import {
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications, useOrderCounts, useReviews, useSettings, useStore } from "@/hooks/queries";
-import { haptic, platform, registerBackButton } from "@/lib/native";
+import { haptic, registerBackButton } from "@/lib/native";
 import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { IconTile, Sheet } from "./ui";
@@ -52,7 +52,7 @@ import SupportScreen from "./screens/Support";
 import TicketScreen from "./screens/Ticket";
 import SettingsScreen from "./screens/Settings";
 
-/** iOS styling everywhere except on Android devices. `?theme=material` forces Material for testing. */
+/** iOS styling on every platform, Android included, so both apps look the same. `?theme=material` forces Material for testing. */
 const forced = (() => {
   const fromUrl = new URLSearchParams(window.location.search).get("theme");
   try {
@@ -62,7 +62,7 @@ const forced = (() => {
     return fromUrl;
   }
 })();
-export const mobileTheme: "ios" | "material" = forced === "material" || forced === "ios" ? forced : platform === "android" ? "material" : "ios";
+export const mobileTheme: "ios" | "material" = forced === "material" ? "material" : "ios";
 
 const TABS = [
   { href: "/", label: "Home", icon: LayoutGrid },

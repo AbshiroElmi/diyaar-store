@@ -1,5 +1,8 @@
 /// <reference types="vite/client" />
 
+/** package.json "version", injected by vite.config.ts. */
+declare const __APP_VERSION__: string;
+
 interface ImportMetaEnv {
   readonly VITE_APP_NAME?: string;
   readonly VITE_DEFAULT_CURRENCY?: string;

@@ -234,6 +234,35 @@ html.kb-open .hide-on-kb {
   opacity: 0;
   pointer-events: none;
 }
+/* Time picker pill (Opening Hours), sized like the iOS Settings time pickers.
+   WebKit gives time inputs an intrinsic min-width, so pin the box and center the value. */
+.time-pill {
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  width: 6.5rem;
+  min-width: 0;
+  height: 2.25rem;
+  padding: 0 0.5rem;
+  border-radius: 0.5rem;
+  background-color: rgb(118 118 128 / 0.12);
+  color: #000;
+  font-size: 17px;
+  line-height: 2.25rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.dark .time-pill {
+  background-color: rgb(118 118 128 / 0.24);
+  color: #fff;
+}
+.time-pill::-webkit-date-and-time-value {
+  text-align: center;
+  margin: 0;
+}
+.time-pill::-webkit-calendar-picker-indicator {
+  display: none;
+}
 .k-portal button.uppercase,
 .k-portal a.uppercase {
   text-transform: none;

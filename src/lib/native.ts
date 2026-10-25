@@ -31,6 +31,17 @@ export function setStatusBarTheme(dark: boolean) {
   if (platform === "android") safe(() => StatusBar.setOverlaysWebView({ overlay: true }));
 }
 
+/** "1.0 (1)" from the installed app on a device, or the package.json version in the browser. */
+export async function getAppVersion(): Promise<string> {
+  if (!isNative) return __APP_VERSION__;
+  try {
+    const { version, build } = await App.getInfo();
+    return `${version} (${build})`;
+  } catch {
+    return __APP_VERSION__;
+  }
+}
+
 export function hideSplash() {
   safe(() => SplashScreen.hide({ fadeOutDuration: 250 }));
 }

@@ -329,6 +329,8 @@ export default function HomeScreen() {
           </section>
         </div>
       )}
+      {/* Room for the floating "new orders" bar, which only shows on Home. */}
+      {newOrders > 0 && <div className="h-16" />}
     </Screen>
   );
 }
