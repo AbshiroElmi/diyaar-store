@@ -1,5 +1,8 @@
-/** Shrink a picked photo to a square-ish JPEG so it stays light to store and upload. */
-export function readPhoto(file: File, max = 800): Promise<string> {
+/**
+ * Shrink a picked photo to a light JPEG before it's saved or uploaded.
+ * 600px is sharp in product tiles; the Diyaar server is slow to send files, so every KB counts.
+ */
+export function readPhoto(file: File, max = 600, quality = 0.72): Promise<string> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
     const img = new Image();
@@ -10,7 +13,7 @@ export function readPhoto(file: File, max = 800): Promise<string> {
       canvas.height = Math.round(img.height * scale);
       canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
       URL.revokeObjectURL(url);
-      resolve(canvas.toDataURL("image/jpeg", 0.8));
+      resolve(canvas.toDataURL("image/jpeg", quality));
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);

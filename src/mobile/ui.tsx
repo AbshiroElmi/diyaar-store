@@ -366,13 +366,26 @@ export const categoryLook = (name: string): [RegExp, string, string] => CATEGORY
 
 /** Product picture: the photo when there is one, otherwise the category emoji on a soft tile. */
 export function ProductArt({ category, image, className, emojiClassName }: { category: string; image?: string; className?: string; emojiClassName?: string }) {
-  // A photo that fails to load falls back to the category emoji instead of a broken-image icon.
+  // The category emoji shows until the photo arrives (and stays if it fails), so a slow
+  // connection never leaves a blank tile. Off-screen photos wait until they're scrolled to.
+  const [loaded, setLoaded] = useState<string | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
-  if (image && failed !== image) return <img src={image} alt="" onError={() => setFailed(image)} className={cn("object-cover", className)} />;
   const [, emoji, tint] = categoryLook(category);
+  const photo = image && failed !== image ? image : null;
   return (
-    <span className={cn("flex items-center justify-center", tint, className)}>
-      <span className={cn("drop-shadow-sm", emojiClassName)}>{emoji}</span>
+    <span className={cn("relative flex items-center justify-center overflow-hidden", tint, className)}>
+      {loaded !== photo && <span className={cn("drop-shadow-sm", emojiClassName)}>{emoji}</span>}
+      {photo && (
+        <img
+          src={photo}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          onLoad={() => setLoaded(photo)}
+          onError={() => setFailed(photo)}
+          className={cn("absolute inset-0 h-full w-full object-cover transition-opacity duration-200", loaded === photo ? "opacity-100" : "opacity-0")}
+        />
+      )}
     </span>
   );
 }
