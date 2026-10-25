@@ -9,7 +9,7 @@ import { resetMockDb } from "@/api/mock/handlers";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettings, useUpdateSettings } from "@/hooks/queries";
 import type { StoreSettings } from "@/api";
-import { env, isMockApi } from "@/lib/env";
+import { isMockApi } from "@/lib/env";
 import { clearLoginMedia, MAX_LOGIN_MEDIA_MB, removeLibraryItem, selectLibraryItem, setLoginMedia, useLoginLibrary, useLoginMedia } from "@/lib/login-media";
 import { cn } from "@/lib/utils";
 import { getAppVersion, haptic } from "@/lib/native";
@@ -97,15 +97,7 @@ export default function SettingsScreen() {
           <List strong inset className="!mt-8">
             <ListItem link chevron={false} onClick={signOut} title={<span className="flex items-center gap-2 text-[#ff3b30]"><LogOut className="h-[18px] w-[18px]" /> Sign out</span>} />
           </List>
-          <BlockFooter className="text-center">
-            Diyaar Store · {env.apiMode === "mock" ? "Demo data" : "Live"}
-            {version && (
-              <>
-                <br />
-                Version {version}
-              </>
-            )}
-          </BlockFooter>
+          {version && <p className="mt-4 w-full text-center text-[13px] text-black/45 dark:text-white/45">Version {version}</p>}
         </>
       )}
 
