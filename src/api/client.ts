@@ -74,7 +74,8 @@ export const UNAUTHORIZED_EVENT = "portal:unauthorized";
 
 // The browser build calls its own origin (the dev server proxies /api); the phone app calls the backend directly.
 const baseUrl = isNative ? env.apiBaseUrl : "";
-const buildUrl = (endpoint: Endpoint) => `${baseUrl}${env.apiMethodPath}.${endpoint}`;
+// Store-portal endpoints are short names on VITE_API_METHOD_PATH; a dotted name is a full module path.
+const buildUrl = (endpoint: Endpoint) => (endpoint.includes(".") ? `${baseUrl}/api/method/${endpoint}` : `${baseUrl}${env.apiMethodPath}.${endpoint}`);
 
 /** Uploaded files come back as "/files/…"; the phone app needs the full address to show them. */
 export const fileUrl = (path?: string | null) => (path?.startsWith("/") ? `${baseUrl}${path}` : path || undefined);

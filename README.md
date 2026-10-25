@@ -5,7 +5,7 @@ It talks to the live Diyaar backend (`diyaar_backend`) through the same store-po
 `https://diyaar-app.easytouch.cloud/admin_panel/store/dashboard`.
 
 The app stays small on purpose: anything a store rarely does (creating categories, branding, payout accounts, documents) is managed on the web panel.
-Home banners and the login background have no API yet, so they're saved on the phone (`src/api/services/banners.ts`, `src/lib/login-media.ts`).
+Diyaar's banners and promotions are read-only here: Diyaar runs them, and the app reads the same customer-API endpoints as the customer app (`src/api/services/banners.ts`).
 
 ## Quick start
 
@@ -49,13 +49,14 @@ Icon and splash sources are in `assets/` (lime `#BEFF00` with the Diyaar hand, a
 | Orders        | Accept → cooking → ready (→ picked up for pickup orders), history with search | `get_orders`, `get_order_details`, `update_store_order_status` |
 | Products      | Add and edit items, photo, sale price, sold-out switch, CSV import / export | `get_products`, `create_product`, `update_product`, `delete_product`, `get_categories`, `upload_store_image` |
 | Categories    | Browse the store's categories (read-only) and open their items | `get_categories` |
-| Home banners  | Make offer banners for the Home screen | *none yet — saved on the phone* |
+| Promotions    | Diyaar's live offers (read-only) | `customer_api.get_promotions` |
+| Banners       | Diyaar's Home banners, the store's own marked (read-only) | `customer_api.get_banners` |
 | Earnings      | Earnings to be paid, this month, commission, payout accounts | `get_store_earnings`, `get_store_settings` |
 | Reviews       | Rating summary and reviews by stars | `get_store_reviews` |
 | Store Profile | Tagline, description, contact, minimum order, prep time (sent for approval) | `get_store_settings`, `submit_store_edit_request` |
 | Opening Hours | Weekly schedule (sent for approval) | `get_store_settings`, `submit_store_edit_request` |
 | Team          | Owners add staff (email + password) and turn their access on or off | `get_admin_users`, `create_admin_user`, `update_admin_user` |
-| Settings      | Auto-accept orders, new-order sound, login background (saved on the phone), appearance | `update_store_settings` |
+| Settings      | Auto-accept orders, new-order sound (saved on the phone), appearance | `update_store_settings` |
 
 **Navigation:** a 5-item bottom bar: **Menu** · Home · Orders · Products · Earnings. **Menu** opens a sheet with the other screens.
 **New orders:** a chime plays, a toast appears, and counts refresh every 15 seconds.

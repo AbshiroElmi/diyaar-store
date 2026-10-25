@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { LogoMark } from "@/components/shared/Logo";
 import storeHero from "@/assets/store-hero.jpg";
 import loginBgVideo from "@/assets/login-bg.mp4";
-import { useLoginMedia } from "@/lib/login-media";
 import { useAuth } from "@/contexts/AuthContext";
 import { setStatusBarTheme } from "@/lib/native";
 import { useTheme } from "next-themes";
@@ -17,10 +16,6 @@ const RESEND_SECONDS = 30;
 
 export default function LoginPage() {
   const { requestOtp, verifyOtp, signInWithPassword } = useAuth();
-  // The owner's own photo or video from Settings → Login background (saved on this phone).
-  const login = useLoginMedia();
-  const customBg = login.media;
-  const bgReady = login.ready;
   const { resolvedTheme } = useTheme();
   // Owners usually sign in with a code to their phone; staff added in the app use email and password.
   const [step, setStep] = useState<"phone" | "otp" | "email">("phone");
@@ -103,24 +98,10 @@ export default function LoginPage() {
           maskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
         }}
       >
-        {/* Background: the owner's own video/photo (Settings → Login background) or the built-in loop */}
-        {customBg?.kind === "image" ? (
-          <img src={customBg.url} alt="" className="absolute inset-0 h-full w-full object-cover object-[center_35%]" />
-        ) : bgReady ? (
-          <video
-            key={customBg?.url ?? "default"}
-            autoPlay
-            loop
-            muted
-            playsInline
-            poster={customBg ? undefined : storeHero}
-            className="absolute inset-0 h-full w-full object-cover object-[center_35%]"
-          >
-            <source src={customBg?.url ?? loginBgVideo} type={customBg ? undefined : "video/mp4"} />
-          </video>
-        ) : (
-          <img src={storeHero} alt="" className="absolute inset-0 h-full w-full object-cover object-[center_35%]" />
-        )}
+        {/* Background: the built-in video loop; the photo shows while it loads */}
+        <video autoPlay loop muted playsInline poster={storeHero} className="absolute inset-0 h-full w-full object-cover object-[center_35%]">
+          <source src={loginBgVideo} type="video/mp4" />
+        </video>
 
         {/* Minimal top scrim only for status bar and branding readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-transparent to-black/20 pointer-events-none" />

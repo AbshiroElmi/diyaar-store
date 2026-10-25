@@ -9,7 +9,9 @@ import { useNavigate } from "react-router-dom";
 import { Actions as KActions, ActionsButton, Block, Link as KLink, Navbar, NavbarBackLink, Page, Preloader, Searchbar, Sheet as KSheet, Toolbar, useTheme } from "konsta/react";
 import type { LucideIcon } from "lucide-react";
 import { AlertTriangle, ArrowDownRight, ArrowUpRight, Check, RotateCw, X } from "lucide-react";
+import { NoInternet } from "@/components/shared/NoInternet";
 import { haptic } from "@/lib/native";
+import { isConnectionError } from "@/lib/network";
 import { cn } from "@/lib/utils";
 
 export const useIsIos = () => useTheme() === "ios";
@@ -189,6 +191,8 @@ export function Empty({ icon: Icon, title, text, action }: { icon: LucideIcon; t
 }
 
 export function ErrorBlock({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
+  // No answer from the server: show the connection page, not a technical message.
+  if (isConnectionError(error)) return <NoInternet offline={!navigator.onLine} onRetry={onRetry} className="min-h-[50dvh] py-10" />;
   return (
     <Empty
       icon={AlertTriangle}

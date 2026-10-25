@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { authService, currentStore, session, UNAUTHORIZED_EVENT, type StoreUser } from "@/api";
+import { isConnectionError } from "@/lib/network";
 
 interface AuthState {
   status: "loading" | "signed-in" | "signed-out";
@@ -32,10 +33,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus("signed-in");
   }, []);
 
-  // Restore an existing session on load.
+  // Restore an existing session on load. No connection isn't a sign-out: wait and try again.
   useEffect(() => {
     if (!session.active()) return;
-    authService.me().then(signedIn).catch(clear);
+    let timer: ReturnType<typeof setTimeout>;
+    const restore = () =>
+      authService
+        .me()
+        .then(signedIn)
+        .catch((err) => {
+          if (!isConnectionError(err)) return clear();
+          if (navigator.onLine) timer = setTimeout(restore, 5000);
+          else window.addEventListener("online", restore, { once: true });
+        });
+    restore();
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("online", restore);
+    };
   }, [signedIn, clear]);
 
   useEffect(() => {

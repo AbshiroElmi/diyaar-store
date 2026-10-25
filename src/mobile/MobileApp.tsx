@@ -9,6 +9,7 @@ import {
   GalleryHorizontal,
   LayoutGrid,
   LogOut,
+  Megaphone,
   Menu as MenuIcon,
   Package,
   ReceiptText,
@@ -36,6 +37,7 @@ import EarningsScreen from "./screens/Earnings";
 import ReviewsScreen from "./screens/Reviews";
 import CategoriesScreen from "./screens/Categories";
 import BannersScreen from "./screens/Banners";
+import PromotionsScreen from "./screens/Promotions";
 import StoreProfileScreen from "./screens/StoreProfile";
 import HoursScreen from "./screens/Hours";
 import TeamScreen from "./screens/Team";
@@ -73,9 +75,14 @@ interface MenuEntry {
 const MENU: Array<{ title: string; items: MenuEntry[] }> = [
   {
     title: "Menu",
+    items: [{ href: "/categories", label: "Categories", icon: FolderTree, tint: "bg-[#5856d6]" }],
+  },
+  {
+    // Run by Diyaar; the store can see them but not create them.
+    title: "Diyaar",
     items: [
-      { href: "/categories", label: "Categories", icon: FolderTree, tint: "bg-[#5856d6]" },
-      { href: "/banners", label: "Home banners", icon: GalleryHorizontal, tint: "bg-[#34c759]" },
+      { href: "/promotions", label: "Promotions", icon: Megaphone, tint: "bg-[#ff2d55]" },
+      { href: "/banners", label: "Banners", icon: GalleryHorizontal, tint: "bg-[#34c759]" },
     ],
   },
   {
@@ -358,6 +365,7 @@ export default function MobileApp() {
         <Route path="reviews" element={<ReviewsScreen />} />
         <Route path="categories" element={<CategoriesScreen />} />
         <Route path="banners" element={<BannersScreen />} />
+        <Route path="promotions" element={<PromotionsScreen />} />
         <Route path="store" element={<StoreProfileScreen />} />
         <Route path="hours" element={<HoursScreen />} />
         <Route path="team" element={<TeamScreen />} />

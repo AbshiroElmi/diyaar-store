@@ -7,7 +7,9 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import LoginPage from "@/pages/Login";
+import { NoInternet } from "@/components/shared/NoInternet";
 import { hideSplash, setStatusBarTheme } from "@/lib/native";
+import { useOnline } from "@/lib/network";
 
 const MobileApp = lazy(() => import("@/mobile/MobileApp"));
 
@@ -62,13 +64,27 @@ function AppToaster() {
 function NativeBridge() {
   const { status } = useAuth();
   const { resolvedTheme } = useTheme();
+  const online = useOnline();
   useEffect(() => {
-    if (status !== "loading") hideSplash();
-  }, [status]);
+    // Offline at launch: drop the splash so the no-internet page shows.
+    if (status !== "loading" || !online) hideSplash();
+  }, [status, online]);
   useEffect(() => {
     setStatusBarTheme(resolvedTheme === "dark");
   }, [resolvedTheme]);
   return null;
+}
+
+/** Covers everything (login included) while the phone has no internet; lifts itself when it's back. */
+function OfflinePage() {
+  const online = useOnline();
+  if (online) return null;
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#f7f9f9] pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] dark:bg-black">
+      {/* React Query refetches on its own when the connection returns; the button just checks again. */}
+      <NoInternet onRetry={() => (navigator.onLine ? queryClient.refetchQueries() : undefined)} />
+    </div>
+  );
 }
 
 function ProtectedRoutes() {
@@ -101,6 +117,7 @@ export default function App() {
             </AuthProvider>
           </BrowserRouter>
           <AppToaster />
+          <OfflinePage />
         </TooltipProvider>
       </QueryClientProvider>
     </ThemeProvider>

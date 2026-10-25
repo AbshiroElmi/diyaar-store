@@ -44,6 +44,10 @@ export const ENDPOINTS = {
   getTeam: "get_admin_users",
   createMember: "create_admin_user",
   updateMember: "update_admin_user",
+
+  // Run by Diyaar; the customer app reads the same ones. A full module path is called as is.
+  getBanners: "diyaar_backend.customer_api.get_banners",
+  getPromotions: "diyaar_backend.customer_api.get_promotions",
 } as const;
 
 export type Endpoint = (typeof ENDPOINTS)[keyof typeof ENDPOINTS];

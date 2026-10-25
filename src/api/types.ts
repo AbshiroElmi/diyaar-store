@@ -253,22 +253,35 @@ export interface TeamMemberInput {
   password: string;
 }
 
-// ── Banners (Home carousel, saved on the phone for now) ────
+// ── Diyaar banners and promotions (read-only) ──────────────
 
 export interface Banner {
   name: string;
   title: string;
   subtitle: string;
-  cta: string;
-  /** In-app route or external URL. */
-  link: string;
-  theme: "lime" | "teal" | "sunset" | "violet" | "ocean";
-  emoji: string;
-  /** Owner's photo; when set it fills the card instead of the colour + emoji. null clears it. */
-  image?: string | null;
-  /** Hidden banners stay saved but don't show on Home. */
-  is_active?: 0 | 1;
-  sort_order?: number;
+  image?: string;
+  /** "image": the picture already carries its own text, so none is drawn over it. */
+  display_mode: string;
+  /** Solid or gradient banners have no picture. */
+  background?: string;
+  /** The store the banner promotes, when it opens one. */
+  store?: { id: string; name: string; logo?: string };
+}
+
+export type PromotionType = "percentage" | "fixed" | "free_delivery" | "bogo" | "cashback";
+
+export interface Promotion {
+  name: string;
+  title: string;
+  description: string;
+  type: PromotionType;
+  value: number;
+  /** Promo code customers type in, when the offer has one. */
+  code?: string;
+  min_order?: number;
+  max_discount?: number;
+  image?: string;
+  valid_until?: string;
 }
 
 // ── Common ──────────────────────────────────────────────────

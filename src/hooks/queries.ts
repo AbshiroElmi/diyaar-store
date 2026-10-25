@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { haptic } from "@/lib/native";
 import {
   bannersService,
+  promotionsService,
   categoriesService,
   dashboardService,
   earningsService,
@@ -16,7 +17,6 @@ import {
   reviewsService,
   storeService,
   teamService,
-  type Banner,
   type OrderListParams,
   type OrderStatus,
   type ProductInput,
@@ -26,6 +26,7 @@ import {
 export const qk = {
   dashboard: ["dashboard"] as const,
   banners: ["banners"] as const,
+  promotions: ["promotions"] as const,
   store: ["store"] as const,
   orders: (p?: OrderListParams) => ["orders", p ?? {}] as const,
   orderCounts: ["orders", "counts"] as const,
@@ -104,33 +105,10 @@ export function useSetAutoAccept() {
 export const useDashboard = () =>
   useQuery({ queryKey: qk.dashboard, queryFn: dashboardService.get, refetchInterval: LIVE_POLL_MS });
 
-// ── Banners (saved on this phone for now) ───────────────────
+// ── Banners & promotions (run by Diyaar, read-only) ─────────
 
-export const useBanners = () => useQuery({ queryKey: qk.banners, queryFn: bannersService.list });
-
-export function useSaveBanner() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, data, silent: _ }: { id?: string; data: Partial<Banner>; silent?: boolean }) => (id ? bannersService.update(id, data) : bannersService.create(data as Omit<Banner, "name">)),
-    onSuccess: (_, { id, silent }) => {
-      qc.invalidateQueries({ queryKey: qk.banners });
-      if (!silent) toast.success(id ? "Banner updated" : "Banner added to Home");
-    },
-    onError,
-  });
-}
-
-export function useDeleteBanner() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: bannersService.remove,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: qk.banners });
-      toast.success("Banner deleted");
-    },
-    onError,
-  });
-}
+export const useBanners = () => useQuery({ queryKey: qk.banners, queryFn: bannersService.list, staleTime: 10 * 60_000 });
+export const usePromotions = () => useQuery({ queryKey: qk.promotions, queryFn: promotionsService.list, staleTime: 5 * 60_000 });
 
 // ── Orders ──────────────────────────────────────────────────
 
