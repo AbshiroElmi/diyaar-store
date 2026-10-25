@@ -78,7 +78,7 @@ function NativeBridge() {
 }
 
 /** Plays the animated logo while the session is restored, for at least one full loop. */
-const LAUNCH_MIN_MS = 1500;
+const LAUNCH_MIN_MS = 1800;
 
 function Launch() {
   const { status } = useAuth();

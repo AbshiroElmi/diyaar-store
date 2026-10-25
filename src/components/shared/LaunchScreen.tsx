@@ -2,7 +2,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { Heart } from "lucide-react";
 import hand from "@/assets/logo-hand.png";
 
-// Same colours and logo size as the native splash (assets/splash*.png), so the hand-off is seamless.
+// Same colours as the native splash (assets/splash*.png), which is plain teal, so the logo appears only here.
 const DARK = typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)").matches;
 
 /** Little hearts that pop out of the finger-heart and float away. */
@@ -22,7 +22,14 @@ export function LaunchScreen() {
       initial={{ opacity: 1 }}
       exit={{ opacity: 0, transition: { duration: 0.35, ease: "easeOut" } }}
     >
-      <div className="relative" style={{ width: "16vh", height: "16vh" }}>
+      {/* The hand pops in from the middle with a little bounce, then keeps moving. */}
+      <motion.div
+        className="relative"
+        style={{ width: "16vh", height: "16vh" }}
+        initial={still ? false : { opacity: 0, scale: 0.5 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ type: "spring", stiffness: 260, damping: 16 }}
+      >
         {!still &&
           HEARTS.map((h, i) => (
             <motion.span
@@ -53,7 +60,7 @@ export function LaunchScreen() {
           }
           transition={{ duration: 1.4, times: [0, 0.25, 0.45, 0.6, 0.75, 1], ease: "easeInOut", repeat: Infinity, repeatDelay: 0.4 }}
         />
-      </div>
+      </motion.div>
     </motion.div>
   );
 }
