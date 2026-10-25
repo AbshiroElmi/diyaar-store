@@ -261,10 +261,11 @@ export default function HomeScreen() {
                   No categories on Home. Tap to choose some.
                 </button>
               )}
-              <div className="grid grid-cols-4 gap-x-2 gap-y-3 px-4">
+              {/* One row that scrolls sideways, however many categories are switched on. */}
+              <div className="no-scrollbar flex gap-3 overflow-x-auto px-4 pb-1">
                 {categories.map((c) => (
-                  <button key={c.name} onClick={() => go(`/products?category=${encodeURIComponent(c.name)}`)} className="flex flex-col items-center gap-1.5 transition-transform active:scale-95">
-                    <ProductArt category={c.category_name} image={c.image} className="aspect-square w-full rounded-xl" emojiClassName="text-[34px]" />
+                  <button key={c.name} onClick={() => go(`/products?category=${encodeURIComponent(c.name)}`)} className="flex w-[76px] shrink-0 flex-col items-center gap-1.5 transition-transform active:scale-95">
+                    <ProductArt category={c.category_name} image={c.image} className="h-[76px] w-[76px] rounded-xl" emojiClassName="text-[34px]" />
                     <span className="line-clamp-2 text-center text-[11px] font-bold leading-tight">{c.category_name}</span>
                   </button>
                 ))}
