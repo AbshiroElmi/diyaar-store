@@ -366,7 +366,9 @@ export const categoryLook = (name: string): [RegExp, string, string] => CATEGORY
 
 /** Product picture: the photo when there is one, otherwise the category emoji on a soft tile. */
 export function ProductArt({ category, image, className, emojiClassName }: { category: string; image?: string; className?: string; emojiClassName?: string }) {
-  if (image) return <img src={image} alt="" className={cn("object-cover", className)} />;
+  // A photo that fails to load falls back to the category emoji instead of a broken-image icon.
+  const [failed, setFailed] = useState<string | null>(null);
+  if (image && failed !== image) return <img src={image} alt="" onError={() => setFailed(image)} className={cn("object-cover", className)} />;
   const [, emoji, tint] = categoryLook(category);
   return (
     <span className={cn("flex items-center justify-center", tint, className)}>

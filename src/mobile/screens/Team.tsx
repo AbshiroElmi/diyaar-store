@@ -1,26 +1,26 @@
 import { useState } from "react";
-import { Plus, ShieldCheck, UserCheck, UserMinus, UserRound, Users, UserX } from "lucide-react";
-import { ActionsGroup, ActionsLabel, BlockFooter, Link as KLink, List, ListInput, ListItem, Segmented, SegmentedButton } from "konsta/react";
+import { Plus, ShieldCheck, UserCheck, Users, UserX } from "lucide-react";
+import { ActionsGroup, ActionsLabel, BlockFooter, Link as KLink, List, ListInput, ListItem } from "konsta/react";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { useInviteMember, useRemoveMember, useTeam, useUpdateMember } from "@/hooks/queries";
-import type { TeamMember, TeamRole } from "@/api";
+import { useAuth } from "@/contexts/AuthContext";
+import { useAddMember, useSetMemberActive, useTeam } from "@/hooks/queries";
+import type { TeamMember, TeamMemberInput } from "@/api";
 import { initials, timeAgo } from "@/lib/format";
 import { ActionItem, Actions, Empty, ErrorBlock, FormSheet, Loading, Screen } from "../ui";
 
-const ROLE_HELP: Record<TeamRole, string> = {
-  Owner: "Everything, including payouts and team",
-  Manager: "Orders, menu, promotions, reports and store details",
-  Staff: "Accept and prepare orders, mark items sold out",
-};
+const MIN_PASSWORD = 8;
+const EMPTY: TeamMemberInput = { full_name: "", email: "", phone: "", password: "" };
 
 export default function TeamScreen() {
+  const { user } = useAuth();
   const { data, isLoading, error, refetch } = useTeam();
-  const invite = useInviteMember();
-  const update = useUpdateMember();
-  const remove = useRemoveMember();
-  const [inviting, setInviting] = useState(false);
-  const [form, setForm] = useState({ full_name: "", email: "", phone: "", role: "Staff" as TeamRole });
+  const add = useAddMember();
+  const setActive = useSetMemberActive();
+  const [adding, setAdding] = useState(false);
+  const [form, setForm] = useState(EMPTY);
   const [selected, setSelected] = useState<TeamMember | null>(null);
+  const canAdd = !!user?.is_store_admin;
+  const field = (k: keyof TeamMemberInput) => (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [k]: e.target.value });
 
   return (
     <Screen
@@ -29,9 +29,11 @@ export default function TeamScreen() {
       tabbar
       onRefresh={refetch}
       right={
-        <KLink navbar iconOnly onClick={() => setInviting(true)}>
-          <Plus className="h-7 w-7" />
-        </KLink>
+        canAdd && (
+          <KLink navbar iconOnly onClick={() => setAdding(true)}>
+            <Plus className="h-7 w-7" />
+          </KLink>
+        )
       }
     >
       {error ? (
@@ -46,9 +48,9 @@ export default function TeamScreen() {
             {data.map((m) => (
               <ListItem
                 key={m.name}
-                link={m.role !== "Owner"}
-                chevron={m.role !== "Owner"}
-                onClick={() => m.role !== "Owner" && setSelected(m)}
+                link={m.can_manage}
+                chevron={m.can_manage}
+                onClick={() => m.can_manage && setSelected(m)}
                 media={<span className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-[#5ac8fa] to-[#007aff] text-[15px] font-semibold text-white">{initials(m.full_name)}</span>}
                 title={
                   <span className="flex items-center gap-1.5">
@@ -67,36 +69,28 @@ export default function TeamScreen() {
       )}
 
       <FormSheet
-        opened={inviting}
-        onClose={() => setInviting(false)}
-        title="Invite"
-        saveLabel="Send"
-        saving={invite.isPending}
-        canSave={!!form.full_name.trim() && form.email.includes("@")}
+        opened={adding}
+        onClose={() => setAdding(false)}
+        title="Add staff"
+        saveLabel="Add"
+        saving={add.isPending}
+        canSave={!!form.full_name.trim() && form.email.includes("@") && form.password.length >= MIN_PASSWORD}
         onSave={() =>
-          invite.mutate(form, {
+          add.mutate(form, {
             onSuccess: () => {
-              setInviting(false);
-              setForm({ full_name: "", email: "", phone: "", role: "Staff" });
+              setAdding(false);
+              setForm(EMPTY);
             },
           })
         }
       >
         <List strongIos insetIos>
-          <ListInput label="Full name" value={form.full_name} onInput={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, full_name: e.target.value })} />
-          <ListInput label="Email" type="email" value={form.email} onInput={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, email: e.target.value })} />
-          <ListInput label="Phone" type="tel" placeholder="+252…" value={form.phone} onInput={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, phone: e.target.value })} />
+          <ListInput label="Full name" value={form.full_name} onInput={field("full_name")} />
+          <ListInput label="Email" type="email" value={form.email} onInput={field("email")} />
+          <ListInput label="Phone" type="tel" placeholder="+252…" value={form.phone} onInput={field("phone")} />
+          <ListInput label="Password" type="password" placeholder={`At least ${MIN_PASSWORD} characters`} value={form.password} onInput={field("password")} />
         </List>
-        <div className="px-4">
-          <Segmented strong rounded>
-            {(["Manager", "Staff"] as const).map((r) => (
-              <SegmentedButton key={r} strong rounded active={form.role === r} onClick={() => setForm({ ...form, role: r })}>
-                {r}
-              </SegmentedButton>
-            ))}
-          </Segmented>
-        </div>
-        <BlockFooter>{ROLE_HELP[form.role]}</BlockFooter>
+        <BlockFooter>Staff sign in with this email and password, or with a code sent to their phone. They can accept and prepare orders and update the menu.</BlockFooter>
       </FormSheet>
 
       <Actions opened={!!selected} onBackdropClick={() => setSelected(null)}>
@@ -104,24 +98,15 @@ export default function TeamScreen() {
           <ActionsLabel>
             {selected?.full_name} · {selected?.role}
           </ActionsLabel>
-          {selected?.role === "Staff" && (
-            <ActionItem icon={ShieldCheck} onClick={() => (update.mutate({ id: selected.name, data: { role: "Manager" } }), setSelected(null))}>
-              Make manager
-            </ActionItem>
-          )}
-          {selected?.role === "Manager" && (
-            <ActionItem icon={UserRound} onClick={() => (update.mutate({ id: selected.name, data: { role: "Staff" } }), setSelected(null))}>
-              Change to staff
-            </ActionItem>
-          )}
           {selected && (
-            <ActionItem icon={selected.status === "disabled" ? UserCheck : UserX} onClick={() => (update.mutate({ id: selected.name, data: { status: selected.status === "disabled" ? "active" : "disabled" } }), setSelected(null))}>
-              {selected.status === "disabled" ? "Enable access" : "Disable access"}
+            <ActionItem
+              icon={selected.status === "disabled" ? UserCheck : UserX}
+              danger={selected.status === "active"}
+              onClick={() => (setActive.mutate({ id: selected.name, active: selected.status === "disabled" }), setSelected(null))}
+            >
+              {selected.status === "disabled" ? "Turn access back on" : "Turn off access"}
             </ActionItem>
           )}
-          <ActionItem icon={UserMinus} danger onClick={() => (selected && remove.mutate(selected.name), setSelected(null))}>
-            Remove from team
-          </ActionItem>
         </ActionsGroup>
       </Actions>
     </Screen>

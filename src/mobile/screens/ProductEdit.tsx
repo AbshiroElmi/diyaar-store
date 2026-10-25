@@ -11,24 +11,22 @@ import { ActionItem, Actions, Loading, ProductArt, Screen, Sheet } from "../ui";
 interface Form {
   product_name: string;
   description: string;
+  /** Category ID; the categories themselves are managed on the Diyaar web panel. */
   category: string;
   price: string;
   discount_price: string;
-  preparation_time: string;
   is_available: boolean;
-  is_popular: boolean;
   image: string;
 }
-
-// Categories are hidden for now — products only. Set to true to bring them back.
-const SHOW_CATEGORIES = false;
 
 export default function ProductEditScreen() {
   const { id } = useParams();
   const isNew = !id;
   const navigate = useNavigate();
-  const { data: categories } = useCategories();
-  const { data: products, isLoading } = useProducts();
+  const { data: allCategories } = useCategories();
+  // The store's own categories first, then the rest it can use.
+  const categories = allCategories && [...allCategories.filter((c) => c.in_store), ...allCategories.filter((c) => !c.in_store)];
+  const { data: products, isLoading } = useProducts(isNew ? {} : { search: id });
   const product = products?.data.find((p) => p.name === id);
   const save = useSaveProduct();
   const remove = useDeleteProduct();
@@ -41,7 +39,7 @@ export default function ProductEditScreen() {
   useEffect(() => {
     if (form) return;
     if (isNew && categories) {
-      setForm({ product_name: "", description: "", category: categories[0]?.category_name ?? "", price: "", discount_price: "", preparation_time: "", is_available: true, is_popular: false, image: "" });
+      setForm({ product_name: "", description: "", category: categories[0]?.name ?? "", price: "", discount_price: "", is_available: true, image: "" });
     } else if (product) {
       setForm({
         product_name: product.product_name,
@@ -49,14 +47,13 @@ export default function ProductEditScreen() {
         category: product.category,
         price: String(product.price),
         discount_price: product.discount_price ? String(product.discount_price) : "",
-        preparation_time: product.preparation_time ? String(product.preparation_time) : "",
         is_available: !!product.is_available,
-        is_popular: !!product.is_popular,
         image: product.image ?? "",
       });
     }
   }, [isNew, categories, product, form]);
 
+  const categoryName = categories?.find((c) => c.name === form?.category)?.category_name ?? "";
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm((f) => (f ? { ...f, [k]: v } : f));
 
   const submit = () => {
@@ -64,6 +61,7 @@ export default function ProductEditScreen() {
     const price = Number(form.price);
     const discount = form.discount_price ? Number(form.discount_price) : undefined;
     if (!form.product_name.trim()) return setError("Enter a product name");
+    if (!form.category) return setError("Choose a category. Categories are added on the Diyaar web panel.");
     if (!(price > 0)) return setError("Enter a price above 0");
     if (discount !== undefined && !(discount > 0 && discount < price)) return setError("Sale price must be lower than the price");
     setError(null);
@@ -76,9 +74,7 @@ export default function ProductEditScreen() {
           category: form.category,
           price,
           discount_price: discount ?? null,
-          preparation_time: form.preparation_time ? Number(form.preparation_time) : null,
           is_available: form.is_available ? 1 : 0,
-          is_popular: form.is_popular ? 1 : 0,
           image: form.image || null,
         },
       },
@@ -117,7 +113,7 @@ export default function ProductEditScreen() {
               }}
             />
             <button type="button" onClick={() => fileRef.current?.click()} className="relative transition-transform active:scale-95">
-              <ProductArt category={form.category} image={form.image || undefined} className="h-24 w-24 rounded-3xl shadow-[0_8px_24px_-12px_rgba(0,0,0,0.35)]" emojiClassName="text-[52px]" />
+              <ProductArt category={categoryName} image={form.image || undefined} className="h-24 w-24 rounded-3xl shadow-[0_8px_24px_-12px_rgba(0,0,0,0.35)]" emojiClassName="text-[52px]" />
               <span className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white shadow-lg ring-4 ring-[#f7f9f9] dark:ring-black">
                 <Camera className="h-4 w-4" />
               </span>
@@ -137,7 +133,6 @@ export default function ProductEditScreen() {
           <List strongIos insetIos>
             <ListInput label="Name" type="text" placeholder="e.g. Chicken Shawarma" value={form.product_name} onInput={(e: React.ChangeEvent<HTMLInputElement>) => set("product_name", e.target.value)} />
             <ListInput label="Description" type="textarea" placeholder="What's in it?" inputClassName="!h-20 resize-none" value={form.description} onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) => set("description", e.target.value)} />
-            {SHOW_CATEGORIES && (
             <ListItem
               link
               chevron={false}
@@ -145,27 +140,24 @@ export default function ProductEditScreen() {
                 haptic.tap();
                 setPickingCategory(true);
               }}
-              media={<ProductArt category={form.category} image={categories?.find((c) => c.category_name === form.category)?.image} className="h-9 w-9 rounded-xl" emojiClassName="text-[20px]" />}
+              media={<ProductArt category={categoryName} image={categories?.find((c) => c.name === form.category)?.image} className="h-9 w-9 rounded-xl" emojiClassName="text-[20px]" />}
               header="Category"
-              title={form.category || "Choose a category"}
+              title={categoryName || "Choose a category"}
               after={<ChevronDown className="h-5 w-5 text-black/35 dark:text-white/35" />}
             />
-            )}
           </List>
 
           <BlockTitle>Price</BlockTitle>
           <List strongIos insetIos>
             <ListInput label="Price ($)" type="text" inputMode="decimal" placeholder="0.00" value={form.price} onInput={(e: React.ChangeEvent<HTMLInputElement>) => set("price", e.target.value)} />
             <ListInput label="Sale price ($)" type="text" inputMode="decimal" placeholder="Optional" value={form.discount_price} onInput={(e: React.ChangeEvent<HTMLInputElement>) => set("discount_price", e.target.value)} />
-            <ListInput label="Prep time (minutes)" type="text" inputMode="numeric" placeholder="15" value={form.preparation_time} onInput={(e: React.ChangeEvent<HTMLInputElement>) => set("preparation_time", e.target.value)} />
           </List>
           {error && <p className="px-8 text-[13px] text-[#ff3b30]">{error}</p>}
 
           <List strong inset dividers>
             <ListItem title="In stock" after={<Toggle checked={form.is_available} onChange={() => set("is_available", !form.is_available)} />} />
-            <ListItem title="Popular tag" after={<Toggle checked={form.is_popular} onChange={() => set("is_popular", !form.is_popular)} />} />
           </List>
-          <BlockFooter>{isNew ? "New products are reviewed by Diyaar before customers can see them." : "Turn off “In stock” when you run out — customers will see it as sold out."}</BlockFooter>
+          <BlockFooter>{isNew ? "New products may be reviewed by Diyaar before customers can see them." : "Turn off “In stock” when you run out — customers will see it as sold out."}</BlockFooter>
 
           {!isNew && (
             <List strong inset className="!mt-8">
@@ -182,19 +174,20 @@ export default function ProductEditScreen() {
             </List>
           )}
 
-          <Sheet opened={SHOW_CATEGORIES && pickingCategory} onBackdropClick={() => setPickingCategory(false)} className="w-full rounded-t-[22px] pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
+          <Sheet opened={pickingCategory} onBackdropClick={() => setPickingCategory(false)} className="w-full rounded-t-[22px] pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
             <div className="mx-auto mt-2.5 h-1.5 w-10 rounded-full bg-black/15 dark:bg-white/20" />
             <p className="px-5 pb-3 pt-3 text-center text-[17px] font-bold">Choose a category</p>
-            <div className="grid grid-cols-3 gap-2.5 px-4">
+            {/* Long lists scroll inside the sheet; the title stays put. */}
+            <div className="grid max-h-[65dvh] grid-cols-3 gap-2.5 overflow-y-auto overscroll-contain px-4 pb-2">
               {categories?.map((c) => {
-                const selected = c.category_name === form.category;
+                const selected = c.name === form.category;
                 return (
                   <button
                     key={c.name}
                     type="button"
                     onClick={() => {
                       haptic.tap();
-                      set("category", c.category_name);
+                      set("category", c.name);
                       setPickingCategory(false);
                     }}
                     className={cn(

@@ -11,22 +11,14 @@ import {
   categoriesService,
   dashboardService,
   earningsService,
-  notificationsService,
   ordersService,
   productsService,
-  promotionsService,
-  reportsService,
   reviewsService,
-  settingsService,
   storeService,
-  supportService,
   teamService,
-  driversService,
   type Banner,
-  type Driver,
   type OrderListParams,
   type OrderStatus,
-  type Period,
   type ProductInput,
   type ProductListParams,
 } from "@/api";
@@ -35,21 +27,15 @@ export const qk = {
   dashboard: ["dashboard"] as const,
   banners: ["banners"] as const,
   store: ["store"] as const,
-  hours: ["store", "hours"] as const,
   orders: (p?: OrderListParams) => ["orders", p ?? {}] as const,
   orderCounts: ["orders", "counts"] as const,
   order: (id: string) => ["orders", "detail", id] as const,
   products: (p?: ProductListParams) => ["products", p ?? {}] as const,
   categories: ["categories"] as const,
   reviews: (p?: object) => ["reviews", p ?? {}] as const,
-  reports: (period: Period) => ["reports", period] as const,
+  reviewSummary: ["reviews", "summary"] as const,
   earnings: ["earnings"] as const,
-  promotions: ["promotions"] as const,
   team: ["team"] as const,
-  drivers: ["drivers"] as const,
-  notifications: ["notifications"] as const,
-  tickets: ["tickets"] as const,
-  settings: ["settings"] as const,
 };
 
 const LIVE_POLL_MS = 15_000;
@@ -61,15 +47,29 @@ const onError = (err: unknown) => {
 
 // ── Store ───────────────────────────────────────────────────
 
-export const useStore = () => useQuery({ queryKey: qk.store, queryFn: storeService.getProfile });
+// Store details and opening hours share one request.
+export const useStore = () => useQuery({ queryKey: qk.store, queryFn: storeService.get, select: (d) => d.store });
+export const useHours = () => useQuery({ queryKey: qk.store, queryFn: storeService.get, select: (d) => d.hours });
 
-export function useUpdateStore() {
+export function useSubmitProfile() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: storeService.updateProfile,
-    onSuccess: (store) => {
-      qc.setQueryData(qk.store, store);
-      toast.success("Store details saved");
+    mutationFn: storeService.submitProfile,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: qk.store });
+      toast.success("Sent to Diyaar for approval");
+    },
+    onError,
+  });
+}
+
+export function useSubmitHours() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: storeService.submitHours,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: qk.store });
+      toast.success("New hours sent to Diyaar for approval");
     },
     onError,
   });
@@ -81,45 +81,32 @@ export function useSetStoreOpen() {
     mutationFn: storeService.setOpen,
     onSuccess: (_, isOpen) => {
       qc.invalidateQueries({ queryKey: qk.store });
-      qc.invalidateQueries({ queryKey: qk.dashboard });
       toast.success(isOpen ? "Your store is open for orders" : "Your store is closed — no new orders");
     },
     onError,
   });
 }
 
-export function useSetBusy() {
+export function useSetAutoAccept() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: storeService.setBusy,
-    onSuccess: (_, busy) => {
+    mutationFn: storeService.setAutoAccept,
+    onSuccess: (_, on) => {
       qc.invalidateQueries({ queryKey: qk.store });
-      toast.success(busy ? "Busy mode on — customers see longer wait times" : "Busy mode off");
+      toast.success(on ? "New orders are accepted automatically" : "You'll accept each order yourself");
     },
     onError,
   });
 }
 
-export const useHours = () => useQuery({ queryKey: qk.hours, queryFn: storeService.getHours });
-
-export function useUpdateHours() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: storeService.updateHours,
-    onSuccess: (hours) => {
-      qc.setQueryData(qk.hours, hours);
-      toast.success("Opening hours saved");
-    },
-    onError,
-  });
-}
-
-// ── Dashboard & reports ─────────────────────────────────────
+// ── Dashboard ───────────────────────────────────────────────
 
 export const useDashboard = () =>
   useQuery({ queryKey: qk.dashboard, queryFn: dashboardService.get, refetchInterval: LIVE_POLL_MS });
 
-export const useBanners = () => useQuery({ queryKey: qk.banners, queryFn: bannersService.list, staleTime: 5 * 60_000 });
+// ── Banners (saved on this phone for now) ───────────────────
+
+export const useBanners = () => useQuery({ queryKey: qk.banners, queryFn: bannersService.list });
 
 export function useSaveBanner() {
   const qc = useQueryClient();
@@ -145,9 +132,6 @@ export function useDeleteBanner() {
   });
 }
 
-export const useReports = (period: Period) =>
-  useQuery({ queryKey: qk.reports(period), queryFn: () => reportsService.get(period), placeholderData: keepPreviousData });
-
 // ── Orders ──────────────────────────────────────────────────
 
 export const useOrders = (params: OrderListParams) =>
@@ -167,16 +151,13 @@ export const useOrder = (id: string | null) =>
 export function useUpdateOrderStatus() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, status, reason }: { id: string; status: OrderStatus; reason?: string }) =>
-      ordersService.updateStatus(id, status, reason),
+    mutationFn: ({ id, status }: { id: string; status: OrderStatus }) => ordersService.updateStatus(id, status),
     onSuccess: (order) => {
       qc.setQueryData(qk.order(order.name), order);
       qc.invalidateQueries({ queryKey: ["orders"] });
       qc.invalidateQueries({ queryKey: qk.dashboard });
-      qc.invalidateQueries({ queryKey: qk.notifications });
       const labels: Partial<Record<OrderStatus, string>> = {
         accepted: "Order accepted",
-        rejected: "Order rejected",
         preparing: "Marked as preparing",
         ready: "Marked as ready for pickup",
         completed: "Order completed",
@@ -193,10 +174,17 @@ export function useUpdateOrderStatus() {
 export const useProducts = (params: ProductListParams = {}) =>
   useQuery({ queryKey: qk.products(params), queryFn: () => productsService.list(params), placeholderData: keepPreviousData });
 
+/** Every category the store can file a product under (the product form's picker). */
+export const useCategories = () => useQuery({ queryKey: qk.categories, queryFn: categoriesService.list, staleTime: 10 * 60_000 });
+/** Only the categories this store's products are in, for Home, the Categories screen and the Products list. */
+export const useStoreCategories = () =>
+  useQuery({ queryKey: qk.categories, queryFn: categoriesService.list, staleTime: 10 * 60_000, select: (all) => all.filter((c) => c.in_store) });
+
 function useCatalogInvalidate() {
   const qc = useQueryClient();
   return () => {
     qc.invalidateQueries({ queryKey: ["products"] });
+    // A product in a new category puts that category on the store's list.
     qc.invalidateQueries({ queryKey: qk.categories });
     qc.invalidateQueries({ queryKey: qk.dashboard });
   };
@@ -205,10 +193,10 @@ function useCatalogInvalidate() {
 export function useSaveProduct() {
   const invalidate = useCatalogInvalidate();
   return useMutation({
-    mutationFn: ({ id, data }: { id?: string; data: any }) => (id ? productsService.update(id, data) : productsService.create(data)),
-    onSuccess: (_, { id }) => {
+    mutationFn: async ({ id, data }: { id?: string; data: ProductInput }) => (id ? (await productsService.update(id, data), { pending: false }) : productsService.create(data)),
+    onSuccess: ({ pending }, { id }) => {
       invalidate();
-      toast.success(id ? "Product updated" : "Product submitted for approval");
+      toast.success(id ? "Product updated" : pending ? "Product submitted for approval" : "Product added");
     },
     onError,
   });
@@ -219,13 +207,6 @@ export function useImportProducts() {
   const invalidate = useCatalogInvalidate();
   return useMutation({
     mutationFn: async (rows: ProductInput[]) => {
-      // Create any categories the file mentions that don't exist yet.
-      const existing = new Set((await categoriesService.list()).map((c) => c.category_name.toLowerCase()));
-      for (const name of new Set(rows.map((r) => r.category))) {
-        if (existing.has(name.toLowerCase())) continue;
-        await categoriesService.create({ category_name: name }).catch(() => undefined);
-        existing.add(name.toLowerCase());
-      }
       let added = 0;
       for (const row of rows) {
         try {
@@ -240,32 +221,7 @@ export function useImportProducts() {
     onSuccess: ({ added, failed }) => {
       invalidate();
       if (failed) toast.warning(`${added} items imported, ${failed} failed`);
-      else toast.success(`${added} items imported for approval`);
-    },
-    onError,
-  });
-}
-
-export function useImportCategories() {
-  const invalidate = useCatalogInvalidate();
-  return useMutation({
-    mutationFn: async (rows: Array<{ category_name: string; description: string; is_active: 0 | 1 }>) => {
-      let added = 0;
-      for (const { is_active, ...row } of rows) {
-        try {
-          const created = await categoriesService.create(row);
-          if (!is_active) await categoriesService.update(created.name, { is_active: 0 });
-          added++;
-        } catch {
-          // keep going; the count tells the owner how many made it
-        }
-      }
-      return { added, failed: rows.length - added };
-    },
-    onSuccess: ({ added, failed }) => {
-      invalidate();
-      if (failed) toast.warning(`${added} categories imported, ${failed} failed`);
-      else toast.success(`${added} categories imported`);
+      else toast.success(`${added} items imported`);
     },
     onError,
   });
@@ -274,8 +230,7 @@ export function useImportCategories() {
 export function useToggleProduct() {
   const invalidate = useCatalogInvalidate();
   return useMutation({
-    mutationFn: ({ id, is_available }: { id: string; is_available: boolean }) =>
-      productsService.update(id, { is_available: is_available ? 1 : 0 }),
+    mutationFn: ({ id, is_available }: { id: string; is_available: boolean }) => productsService.update(id, { is_available: is_available ? 1 : 0 }),
     onSuccess: (p) => {
       haptic.tap();
       invalidate();
@@ -297,227 +252,40 @@ export function useDeleteProduct() {
   });
 }
 
-export const useCategories = () => useQuery({ queryKey: qk.categories, queryFn: categoriesService.list });
-
-export function useSaveCategory() {
-  const invalidate = useCatalogInvalidate();
-  return useMutation({
-    mutationFn: ({ id, data }: { id?: string; data: any }) => (id ? categoriesService.update(id, data) : categoriesService.create(data)),
-    onSuccess: (_, { id }) => {
-      invalidate();
-      toast.success(id ? "Category updated" : "Category created");
-    },
-    onError,
-  });
-}
-
-export function useDeleteCategory() {
-  const invalidate = useCatalogInvalidate();
-  return useMutation({
-    mutationFn: categoriesService.remove,
-    onSuccess: () => {
-      invalidate();
-      toast.success("Category deleted");
-    },
-    onError,
-  });
-}
-
 // ── Reviews ─────────────────────────────────────────────────
 
-export const useReviews = (params: { rating?: number; filter?: "all" | "unreplied"; page?: number }) =>
+export const useReviews = (params: { rating?: number; max_rating?: number; page?: number }) =>
   useQuery({ queryKey: qk.reviews(params), queryFn: () => reviewsService.list(params), placeholderData: keepPreviousData });
 
-export function useReplyReview() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, reply }: { id: string; reply: string }) => reviewsService.reply(id, reply),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["reviews"] });
-      toast.success("Reply posted");
-    },
-    onError,
-  });
-}
+export const useReviewSummary = () => useQuery({ queryKey: qk.reviewSummary, queryFn: reviewsService.summary, staleTime: 5 * 60_000 });
 
 // ── Money ───────────────────────────────────────────────────
 
 export const useEarnings = () => useQuery({ queryKey: qk.earnings, queryFn: earningsService.get });
 
-export function useRequestPayout() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: earningsService.requestPayout,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: qk.earnings });
-      toast.success("Payout requested — it usually arrives within 24 hours");
-    },
-    onError,
-  });
-}
-
-export const usePromotions = () => useQuery({ queryKey: qk.promotions, queryFn: promotionsService.list });
-
-export function useSavePromotion() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, data }: { id?: string; data: any }) => (id ? promotionsService.update(id, data) : promotionsService.create(data)),
-    onSuccess: (_, { id }) => {
-      qc.invalidateQueries({ queryKey: qk.promotions });
-      toast.success(id ? "Promotion updated" : "Promotion created");
-    },
-    onError,
-  });
-}
-
-export function useDeletePromotion() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: promotionsService.remove,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: qk.promotions });
-      toast.success("Promotion deleted");
-    },
-    onError,
-  });
-}
-
 // ── Team ────────────────────────────────────────────────────
-
-// ── Delivery drivers ────────────────────────────────────────
-
-export const useDrivers = () => useQuery({ queryKey: qk.drivers, queryFn: driversService.list });
-
-export function useSaveDriver() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, data, silent: _ }: { id?: string; data: Partial<Driver>; silent?: boolean }) =>
-      id ? driversService.update(id, data) : driversService.create(data as Pick<Driver, "full_name" | "phone" | "vehicle">),
-    onSuccess: (_, { id, silent }) => {
-      qc.invalidateQueries({ queryKey: qk.drivers });
-      qc.invalidateQueries({ queryKey: ["orders"] });
-      if (!silent) toast.success(id ? "Driver updated" : "Driver added");
-    },
-    onError,
-  });
-}
-
-export function useDeleteDriver() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: driversService.remove,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: qk.drivers });
-      toast.success("Driver removed");
-    },
-    onError,
-  });
-}
-
-export function useAssignDriver() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ orderId, driverId }: { orderId: string; driverId: string }) => driversService.assign(orderId, driverId),
-    onSuccess: (order) => {
-      qc.setQueryData(qk.order(order.name), order);
-      qc.invalidateQueries({ queryKey: ["orders"] });
-      qc.invalidateQueries({ queryKey: qk.drivers });
-      haptic.success();
-      toast.success(`${order.driver_name} is taking ${order.name}`);
-    },
-    onError,
-  });
-}
 
 export const useTeam = () => useQuery({ queryKey: qk.team, queryFn: teamService.list });
 
-export function useInviteMember() {
+export function useAddMember() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: teamService.invite,
-    onSuccess: (m) => {
+    mutationFn: teamService.create,
+    onSuccess: (_, m) => {
       qc.invalidateQueries({ queryKey: qk.team });
-      toast.success(`Invitation sent to ${m.email}`);
+      toast.success(`${m.full_name} can now sign in with ${m.email}`);
     },
     onError,
   });
 }
 
-export function useUpdateMember() {
+export function useSetMemberActive() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => teamService.update(id, data),
-    onSuccess: () => {
+    mutationFn: ({ id, active }: { id: string; active: boolean }) => teamService.setActive(id, active),
+    onSuccess: (_, { active }) => {
       qc.invalidateQueries({ queryKey: qk.team });
-      toast.success("Team member updated");
-    },
-    onError,
-  });
-}
-
-export function useRemoveMember() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: teamService.remove,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: qk.team });
-      toast.success("Team member removed");
-    },
-    onError,
-  });
-}
-
-// ── Notifications ───────────────────────────────────────────
-
-export const useNotifications = () =>
-  useQuery({ queryKey: qk.notifications, queryFn: notificationsService.list, refetchInterval: LIVE_POLL_MS });
-
-export function useMarkNotificationsRead() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (ids?: string[]) => notificationsService.markRead(ids),
-    onSuccess: () => qc.invalidateQueries({ queryKey: qk.notifications }),
-    onError,
-  });
-}
-
-// ── Support ─────────────────────────────────────────────────
-
-export const useTickets = () => useQuery({ queryKey: qk.tickets, queryFn: supportService.list });
-
-export function useCreateTicket() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: supportService.create,
-    onSuccess: (t) => {
-      qc.invalidateQueries({ queryKey: qk.tickets });
-      toast.success(`Ticket ${t.name} created — we'll reply soon`);
-    },
-    onError,
-  });
-}
-
-export function useReplyTicket() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, ...data }: { id: string; message?: string; status?: any }) => supportService.reply(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: qk.tickets }),
-    onError,
-  });
-}
-
-// ── Settings ────────────────────────────────────────────────
-
-export const useSettings = () => useQuery({ queryKey: qk.settings, queryFn: settingsService.get });
-
-export function useUpdateSettings() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: settingsService.update,
-    onSuccess: (s) => {
-      qc.setQueryData(qk.settings, s);
-      qc.invalidateQueries({ queryKey: qk.store });
-      toast.success("Settings saved");
+      toast.success(active ? "Access turned back on" : "Access turned off");
     },
     onError,
   });

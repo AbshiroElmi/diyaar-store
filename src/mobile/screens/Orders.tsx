@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Bike, Check, ChefHat, Clock, History as HistoryIcon, Inbox, LayoutGrid, PackageCheck, Phone, Search, StickyNote, Store, UserPlus, X } from "lucide-react";
+import { Bike, Check, ChefHat, Clock, History as HistoryIcon, Inbox, LayoutGrid, PackageCheck, Phone, Search, StickyNote, Store } from "lucide-react";
 import { Button, Link as KLink, List, ListItem } from "konsta/react";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { useOrderCounts, useOrders, useUpdateOrderStatus } from "@/hooks/queries";
@@ -10,8 +10,6 @@ import { formatMoney, formatDay, formatTime, initials } from "@/lib/format";
 import { haptic } from "@/lib/native";
 import { cn } from "@/lib/utils";
 import { Empty, ErrorBlock, Loading, Screen, SearchField } from "../ui";
-import { AssignDriverSheet } from "../AssignDriverSheet";
-import { RejectSheet } from "./OrderDetail";
 
 type Stage = "confirming" | "accepted" | "preparing" | "ready";
 
@@ -32,7 +30,7 @@ const NEXT: Partial<Record<OrderStatus, { status: OrderStatus; label: string; ic
 };
 
 /** Ticket-style card: order number + timer on top, perforated edge, customer and items, one main action. */
-function Ticket({ order, onReject, onAssign }: { order: Order; onReject: () => void; onAssign: (o: Order) => void }) {
+function Ticket({ order }: { order: Order }) {
   const navigate = useNavigate();
   const update = useUpdateOrderStatus();
   const stage = STAGES.find((x) => x.key === order.status) ?? STAGES[1];
@@ -42,8 +40,7 @@ function Ticket({ order, onReject, onAssign }: { order: Order; onReject: () => v
   const items = order.order_items;
   const advance = (status: OrderStatus) => {
     haptic.press();
-    // Delivery orders go straight to picking a driver once they're ready.
-    update.mutate({ id: order.name, status }, { onSuccess: (o) => status === "ready" && !isPickup(o) && onAssign(o) });
+    update.mutate({ id: order.name, status });
   };
 
   return (
@@ -95,18 +92,13 @@ function Ticket({ order, onReject, onAssign }: { order: Order; onReject: () => v
       {/* action */}
       <div className="flex gap-2 px-4 pb-4">
         {order.status === "confirming" ? (
-          <>
-            <button onClick={onReject} aria-label="Reject" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#ff3b30]/[0.08] text-[#ff3b30] transition-transform active:scale-95">
-              <X className="h-5 w-5" strokeWidth={2.5} />
-            </button>
-            <button
-              disabled={update.isPending}
-              onClick={() => advance("accepted")}
-              className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary text-[15px] font-bold text-white transition-transform active:scale-[0.98] disabled:opacity-50"
-            >
-              <Check className="h-[18px] w-[18px]" strokeWidth={3} /> Accept
-            </button>
-          </>
+          <button
+            disabled={update.isPending}
+            onClick={() => advance("accepted")}
+            className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary text-[15px] font-bold text-white transition-transform active:scale-[0.98] disabled:opacity-50"
+          >
+            <Check className="h-[18px] w-[18px]" strokeWidth={3} /> Accept
+          </button>
         ) : next ? (
           <button
             disabled={update.isPending}
@@ -115,16 +107,6 @@ function Ticket({ order, onReject, onAssign }: { order: Order; onReject: () => v
             className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl text-[15px] font-bold text-white transition-transform active:scale-[0.98] disabled:opacity-50"
           >
             <next.icon className="h-[18px] w-[18px]" /> {next.label}
-          </button>
-        ) : order.status === "ready" && !isPickup(order) && !order.driver ? (
-          <button
-            onClick={() => {
-              haptic.tap();
-              onAssign(order);
-            }}
-            className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#1a9d4b] text-[15px] font-bold text-white transition-transform active:scale-[0.98]"
-          >
-            <UserPlus className="h-[18px] w-[18px]" /> Assign driver
           </button>
         ) : order.driver_name ? (
           <div className="flex h-11 flex-1 items-center gap-2.5 rounded-xl bg-[#34c759]/10 pl-2 pr-1.5">
@@ -137,15 +119,10 @@ function Ticket({ order, onReject, onAssign }: { order: Order; onReject: () => v
                 <Phone className="h-4 w-4" />
               </a>
             )}
-            {order.status === "ready" && (
-              <button onClick={() => onAssign(order)} className="h-8 rounded-lg bg-white px-2.5 text-[13px] font-bold text-[#1a9d4b] dark:bg-black/30">
-                Change
-              </button>
-            )}
           </div>
         ) : (
           <p className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-black/[0.035] text-[14px] font-medium text-black/55 dark:bg-white/[0.06] dark:text-white/60">
-            <Bike className="h-4 w-4" /> Waiting for the customer
+            <Bike className="h-4 w-4" /> {isPickup(order) ? "Waiting for the customer" : "Waiting for a Diyaar driver"}
           </p>
         )}
       </div>
@@ -185,8 +162,6 @@ function StageTabs({ value, onChange, counts }: { value: Stage; onChange: (s: St
 
 function Board({ stage }: { stage: Stage }) {
   const { data, isLoading, error, refetch } = useOrders({ status: stage, page_size: 100 });
-  const [rejecting, setRejecting] = useState<Order | null>(null);
-  const [assigning, setAssigning] = useState<Order | null>(null);
   const info = STAGES.find((x) => x.key === stage)!;
 
   return (
@@ -198,10 +173,8 @@ function Board({ stage }: { stage: Stage }) {
       ) : !data?.data.length ? (
         <Empty icon={Inbox} title="All caught up" text={info.empty} />
       ) : (
-        data.data.map((o) => <Ticket key={o.name} order={o} onReject={() => setRejecting(o)} onAssign={setAssigning} />)
+        data.data.map((o) => <Ticket key={o.name} order={o} />)
       )}
-      <RejectSheet order={rejecting} onClose={() => setRejecting(null)} />
-      <AssignDriverSheet order={assigning} onClose={() => setAssigning(null)} />
     </div>
   );
 }

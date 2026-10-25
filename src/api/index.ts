@@ -7,4 +7,5 @@ export * from "./services/catalog";
 export * from "./services/insights";
 export * from "./services/money";
 export * from "./services/account";
+export * from "./services/banners";
 export type * from "./types";

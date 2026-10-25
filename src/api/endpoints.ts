@@ -1,91 +1,49 @@
 /**
- * Every backend endpoint the Portal calls, in one place.
+ * Every backend endpoint the app calls, in one place.
+ * These are the same store-portal endpoints the Diyaar web admin panel uses.
  *
  * Live URL = VITE_API_BASE_URL + VITE_API_METHOD_PATH + "." + endpoint
- *   e.g. /api/method/diyaar_backend.api.stores.self_service.get_store_orders
- *
- * `ready`   → already exists in diyaar_backend/api/stores/self_service.py
- * `planned` → mocked only for now; the backend still needs this endpoint
+ *   e.g. https://diyaar-app.easytouch.cloud/api/method/diyaar_backend.admin_api.get_orders
  */
 
 export const ENDPOINTS = {
-  // Auth
-  login: "store_login", // ready — sends OTP to owner phone
-  verifyOtp: "store_verify_otp", // ready
-  logout: "store_logout", // planned
+  // Auth (Frappe session cookie + CSRF token)
+  login: "admin_login",
+  sendOtp: "admin_send_otp",
+  verifyOtp: "admin_verify_otp",
+  logout: "admin_logout",
+  currentUser: "get_current_user",
 
   // Store
-  getProfile: "get_store_profile", // ready
-  updateProfile: "update_store_profile", // ready
-  updateStatus: "update_store_status", // ready — open / closed
-  setBusyMode: "set_store_busy_mode", // planned
-  getHours: "get_store_hours", // planned
-  updateHours: "update_store_hours", // planned
+  getSettings: "get_store_settings",
+  /** Applies at once; only for fields a store may change itself (open now, auto-accept). */
+  updateSettings: "update_store_settings",
+  /** Profile and hours changes go to Diyaar for approval. */
+  submitEditRequest: "submit_store_edit_request",
+  getPendingEditRequest: "get_pending_store_edit_request",
+  uploadImage: "upload_store_image",
 
-  // Dashboard & analytics
-  getDashboard: "get_store_dashboard", // planned (admin_api has a similar one)
-  getAnalytics: "get_store_analytics", // ready — basic totals
-  getReports: "get_store_reports", // planned
-  getBanners: "get_store_banners", // planned — home carousel
-  createBanner: "create_store_banner", // planned
-  updateBanner: "update_store_banner", // planned
-  deleteBanner: "delete_store_banner", // planned
+  // Dashboard & orders
+  getDashboard: "get_store_dashboard",
+  getOrders: "get_orders",
+  getOrder: "get_order_details",
+  updateOrderStatus: "update_store_order_status",
 
-  // Orders
-  getOrders: "get_store_orders", // ready
-  getOrderCounts: "get_store_order_counts", // planned
-  getOrder: "get_store_order", // planned
-  updateOrderStatus: "update_store_order_status", // ready
+  // Catalog
+  getProducts: "get_products",
+  createProduct: "create_product",
+  updateProduct: "update_product",
+  deleteProduct: "delete_product",
+  getCategories: "get_categories",
 
-  // Products
-  getProducts: "get_store_products_list", // ready
-  createProduct: "create_store_product", // ready
-  updateProduct: "update_store_product", // ready
-  deleteProduct: "delete_store_product", // ready
-
-  // Categories
-  getCategories: "get_store_categories", // planned
-  createCategory: "create_store_category", // planned
-  updateCategory: "update_store_category", // planned
-  deleteCategory: "delete_store_category", // planned
-
-  // Reviews
-  getReviews: "get_store_reviews", // planned (admin_api has a similar one)
-  replyReview: "reply_store_review", // planned
-
-  // Earnings
-  getEarnings: "get_store_earnings", // planned (admin_api has a similar one)
-  requestPayout: "request_store_payout", // planned
-
-  // Promotions
-  getPromotions: "get_store_promotions", // planned
-  createPromotion: "create_store_promotion", // planned
-  updatePromotion: "update_store_promotion", // planned
-  deletePromotion: "delete_store_promotion", // planned
+  // Reviews & money
+  getReviews: "get_store_reviews",
+  getEarnings: "get_store_earnings",
 
   // Team
-  getDrivers: "get_store_drivers", // planned
-  createDriver: "create_store_driver", // planned
-  updateDriver: "update_store_driver", // planned
-  deleteDriver: "delete_store_driver", // planned
-  assignDriver: "assign_order_driver", // planned
-  getTeam: "get_store_team", // planned
-  inviteMember: "invite_store_member", // planned
-  updateMember: "update_store_member", // planned
-  removeMember: "remove_store_member", // planned
-
-  // Notifications
-  getNotifications: "get_store_notifications", // planned
-  markNotificationsRead: "mark_store_notifications_read", // planned
-
-  // Support
-  getTickets: "get_store_tickets", // planned
-  createTicket: "create_store_ticket", // planned
-  replyTicket: "reply_store_ticket", // planned
-
-  // Settings
-  getSettings: "get_store_portal_settings", // planned
-  updateSettings: "update_store_portal_settings", // planned
+  getTeam: "get_admin_users",
+  createMember: "create_admin_user",
+  updateMember: "update_admin_user",
 } as const;
 
 export type Endpoint = (typeof ENDPOINTS)[keyof typeof ENDPOINTS];

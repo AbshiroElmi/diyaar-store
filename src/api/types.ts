@@ -1,6 +1,6 @@
 /**
- * Data shapes shared by the mock API and the live Frappe API.
- * Field names follow the backend (snake_case) so the live switch needs no mapping.
+ * Data shapes the screens use. The services in ./services map the Diyaar
+ * backend's responses into these, so screens never see raw API rows.
  */
 
 // ── Auth ────────────────────────────────────────────────────
@@ -11,48 +11,38 @@ export interface StoreUser {
   email: string;
   phone: string;
   role: TeamRole;
-  avatar?: string;
-}
-
-export interface LoginResponse {
-  success: boolean;
-  store: Store;
-  user: StoreUser;
-  api_key: string;
-  api_secret: string;
+  /** Store owners can manage the team; staff can't. */
+  is_store_admin: boolean;
+  store: string;
+  store_name: string;
 }
 
 // ── Store ───────────────────────────────────────────────────
 
-export type StoreStatus = "Active" | "Inactive" | "Pending" | "Suspended";
-
 export interface Store {
   name: string;
   store_name: string;
+  tagline: string;
   description: string;
   logo?: string;
-  cover_image?: string;
   phone: string;
   email: string;
   address: string;
-  city: string;
-  service_type: string;
-  status: StoreStatus;
+  status: string;
   is_open: 0 | 1;
   busy_mode: 0 | 1;
-  rating: number;
-  review_count: number;
-  delivery_time_min: number;
-  delivery_time_max: number;
-  delivery_fee: number;
   minimum_order: number;
   preparation_time: number;
-  accepts_scheduled_orders: 0 | 1;
   auto_accept_orders: 0 | 1;
   commission_rate: number;
   owner_name: string;
   owner_phone: string;
+  /** Profile or hours changes sent to Diyaar and not approved yet. */
+  pending_approval: boolean;
 }
+
+/** Fields the store can change; they go to Diyaar for approval. */
+export type StoreProfileInput = Pick<Store, "tagline" | "description" | "phone" | "email" | "address" | "minimum_order" | "preparation_time">;
 
 export interface OpeningHours {
   day: Weekday;
@@ -63,15 +53,8 @@ export interface OpeningHours {
 
 export type Weekday = "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday" | "Sunday";
 
-export interface HolidayClosure {
-  name: string;
-  title: string;
-  date: string;
-}
-
 export interface StoreHours {
   weekly: OpeningHours[];
-  closures: HolidayClosure[];
 }
 
 // ── Orders ──────────────────────────────────────────────────
@@ -124,7 +107,6 @@ export interface Order {
   notes?: string;
   order_items: OrderItem[];
   item_count: number;
-  /** Delivery driver assigned by the store (Driver.name). */
   driver?: string;
   driver_name?: string;
   driver_phone?: string;
@@ -156,25 +138,25 @@ export interface Product {
   name: string;
   product_name: string;
   description: string;
+  /** Category ID (Diyaar Category). */
   category: string;
+  category_name: string;
   price: number;
   discount_price?: number;
   image?: string;
   is_available: 0 | 1;
-  is_popular: 0 | 1;
-  is_featured: 0 | 1;
-  preparation_time?: number;
   status: ProductStatus;
-  sort_order: number;
-  sold_count: number;
-  rating: number;
 }
 
-export type ProductInput = Partial<Omit<Product, "name" | "sold_count" | "rating" | "status">> & {
+export interface ProductInput {
   product_name: string;
+  description?: string;
   category: string;
   price: number;
-};
+  discount_price?: number | null;
+  is_available?: 0 | 1;
+  image?: string | null;
+}
 
 export interface ProductListParams {
   category?: string;
@@ -188,12 +170,11 @@ export interface ProductListParams {
 export interface Category {
   name: string;
   category_name: string;
-  description?: string;
-  /** Photo URL (or data URL from the device); falls back to the category emoji. */
   image?: string;
   is_active: 0 | 1;
-  sort_order: number;
   product_count: number;
+  /** At least one of this store's products is in it. */
+  in_store: boolean;
 }
 
 // ── Reviews ─────────────────────────────────────────────────
@@ -205,89 +186,31 @@ export interface Review {
   rating: number;
   comment: string;
   creation: string;
-  reply?: string;
-  reply_at?: string;
 }
 
 export interface ReviewSummary {
   average: number;
   total: number;
   distribution: Record<1 | 2 | 3 | 4 | 5, number>;
-  unreplied: number;
 }
 
 // ── Money ───────────────────────────────────────────────────
 
-export interface EarningsSummary {
-  available_balance: number;
-  pending_balance: number;
+export interface EarningsData {
+  /** Completed-order sales minus commission, not yet paid out. */
+  pending_payout: number;
+  total_revenue: number;
   total_earned: number;
   commission_paid: number;
   commission_rate: number;
-  next_payout_date: string;
   this_month_gross: number;
   this_month_net: number;
+  order_count: number;
+  /** Where payouts go, e.g. "Salaam Bank · 1234" or "EVC Plus · 61xxxxxxx". */
+  payout_accounts: string[];
 }
-
-export interface Transaction {
-  name: string;
-  type: "order" | "commission" | "payout" | "refund" | "adjustment";
-  reference: string;
-  description: string;
-  amount: number;
-  creation: string;
-}
-
-export interface Payout {
-  name: string;
-  amount: number;
-  status: "paid" | "processing" | "failed";
-  method: string;
-  account: string;
-  period_start: string;
-  period_end: string;
-  creation: string;
-}
-
-export interface BankAccount {
-  bank_name: string;
-  account_name: string;
-  account_number_masked: string;
-  method: "bank" | "mobile_money";
-}
-
-export interface EarningsData {
-  summary: EarningsSummary;
-  transactions: Transaction[];
-  payouts: Payout[];
-  account: BankAccount;
-}
-
-// ── Marketing ───────────────────────────────────────────────
-
-export type PromotionType = "percentage" | "fixed" | "free_delivery" | "bogo";
-export type PromotionStatus = "active" | "scheduled" | "paused" | "ended";
-
-export interface Promotion {
-  name: string;
-  title: string;
-  type: PromotionType;
-  value: number;
-  code?: string;
-  min_order: number;
-  starts_at: string;
-  ends_at: string;
-  status: PromotionStatus;
-  usage_count: number;
-  usage_limit?: number;
-  revenue: number;
-}
-
-export type PromotionInput = Omit<Promotion, "name" | "status" | "usage_count" | "revenue">;
 
 // ── Analytics ───────────────────────────────────────────────
-
-export type Period = "today" | "week" | "month" | "quarter";
 
 export interface Kpi {
   value: number;
@@ -296,7 +219,6 @@ export interface Kpi {
 
 export interface DashboardData {
   store_name: string;
-  is_open: 0 | 1;
   kpis: {
     revenue: Kpi;
     orders: Kpi;
@@ -305,31 +227,12 @@ export interface DashboardData {
   };
   today: Record<"confirming" | "accepted" | "preparing" | "ready" | "completed" | "cancelled", number>;
   trend: Array<{ date: string; revenue: number; orders: number }>;
-  top_products: Array<{ product: string; product_name: string; quantity: number; revenue: number }>;
   recent_orders: Order[];
-  recent_reviews: Review[];
-}
-
-export interface ReportsData {
-  period: Period;
-  kpis: {
-    revenue: Kpi;
-    net_earnings: Kpi;
-    orders: Kpi;
-    avg_order_value: Kpi;
-    cancel_rate: Kpi;
-    avg_prep_minutes: Kpi;
-  };
-  series: Array<{ date: string; revenue: number; orders: number }>;
-  by_hour: Array<{ hour: string; orders: number }>;
-  by_payment: Array<{ method: PaymentMethod; orders: number; revenue: number }>;
-  by_category: Array<{ category: string; revenue: number }>;
-  top_products: Array<{ product: string; product_name: string; quantity: number; revenue: number }>;
 }
 
 // ── Team ────────────────────────────────────────────────────
 
-export type TeamRole = "Owner" | "Manager" | "Staff";
+export type TeamRole = "Owner" | "Staff";
 
 export interface TeamMember {
   name: string;
@@ -337,82 +240,20 @@ export interface TeamMember {
   email: string;
   phone: string;
   role: TeamRole;
-  status: "active" | "invited" | "disabled";
+  status: "active" | "disabled";
   last_active?: string;
+  /** Whether the signed-in user may disable or remove this person. */
+  can_manage: boolean;
 }
 
-// ── Delivery drivers ────────────────────────────────────────
-
-export type DriverVehicle = "motorbike" | "car" | "bicycle";
-
-export interface Driver {
-  name: string;
+export interface TeamMemberInput {
   full_name: string;
+  email: string;
   phone: string;
-  vehicle: DriverVehicle;
-  /** Off-duty drivers stay on the list but can't be assigned. */
-  is_active: 0 | 1;
-  /** Orders currently with this driver (ready or picked up). */
-  active_orders: number;
-  deliveries_today: number;
+  password: string;
 }
 
-// ── Notifications ───────────────────────────────────────────
-
-export interface AppNotification {
-  name: string;
-  type: "order" | "review" | "payout" | "product" | "system";
-  title: string;
-  body: string;
-  read: boolean;
-  creation: string;
-  link?: string;
-}
-
-// ── Support ─────────────────────────────────────────────────
-
-export type TicketStatus = "open" | "pending" | "resolved" | "closed";
-
-export interface TicketMessage {
-  name: string;
-  from: "store" | "support";
-  author: string;
-  body: string;
-  creation: string;
-}
-
-export interface SupportTicket {
-  name: string;
-  subject: string;
-  category: "order" | "payment" | "account" | "technical" | "other";
-  priority: "low" | "normal" | "high";
-  status: TicketStatus;
-  order?: string;
-  creation: string;
-  modified: string;
-  messages: TicketMessage[];
-}
-
-// ── Settings ────────────────────────────────────────────────
-
-export interface StoreSettings {
-  notifications: {
-    new_order_sound: boolean;
-    new_order_push: boolean;
-    new_order_sms: boolean;
-    review_alerts: boolean;
-    payout_alerts: boolean;
-    daily_summary_email: boolean;
-  };
-  orders: {
-    auto_accept_orders: boolean;
-    accept_timeout_minutes: number;
-    print_receipt_on_accept: boolean;
-  };
-  language: "en" | "so" | "ar";
-}
-
-// ── Banners (home carousel) ─────────────────────────────
+// ── Banners (Home carousel, saved on the phone for now) ────
 
 export interface Banner {
   name: string;

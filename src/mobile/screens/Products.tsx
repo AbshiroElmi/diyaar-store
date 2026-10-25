@@ -1,9 +1,9 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { AlertCircle, CheckCircle2, Download, FileDown, FileUp, Package, PackagePlus, Plus, TrendingUp } from "lucide-react";
+import { AlertCircle, CheckCircle2, Download, FileDown, FileUp, Package, PackagePlus, Plus } from "lucide-react";
 import { ActionsGroup, ActionsLabel } from "konsta/react";
 import { toast } from "sonner";
-import { useCategories, useImportProducts, useProducts, useToggleProduct } from "@/hooks/queries";
+import { useCategories, useStoreCategories, useImportProducts, useProducts, useToggleProduct } from "@/hooks/queries";
 import { useDebounce } from "@/hooks/use-debounce";
 import type { Product } from "@/api";
 import { productsToCsv, productTemplateCsv, readProductsCsv, saveCsv, type ImportRow } from "@/lib/csv";
@@ -12,8 +12,6 @@ import { haptic } from "@/lib/native";
 import { cn } from "@/lib/utils";
 import { ActionItem, Actions, CARD, Empty, ErrorBlock, FormSheet, Loading, ProductArt, Screen, SearchField } from "../ui";
 
-// Categories are hidden for now — products only. Set to true to bring them back.
-const SHOW_CATEGORIES = false;
 
 function ProductCard({ p }: { p: Product }) {
   const navigate = useNavigate();
@@ -25,13 +23,11 @@ function ProductCard({ p }: { p: Product }) {
     <div className={cn(CARD, "relative flex flex-col overflow-hidden p-2")}>
       <button onClick={() => navigate(`/products/${p.name}`)} className="text-left">
         <div className="relative">
-          <ProductArt category={p.category} image={p.image} className={cn("h-[96px] w-full rounded-xl", off && "opacity-40 grayscale")} emojiClassName="text-[46px]" />
+          <ProductArt category={p.category_name} image={p.image} className={cn("h-[96px] w-full rounded-xl", off && "opacity-40 grayscale")} emojiClassName="text-[46px]" />
           {discount > 0 && <span className="absolute left-0 top-0 rounded-br-lg rounded-tl-xl bg-[#1f6fe5] px-1.5 text-[10px] font-extrabold leading-[18px] text-white">{discount}% OFF</span>}
           {p.status === "Pending" && <span className="absolute bottom-1 left-1 rounded bg-black/70 px-1.5 text-[9px] font-bold uppercase leading-[16px] text-white">In review</span>}
         </div>
-        <p className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-black/45 dark:text-white/50">
-          {p.sold_count} sold {!!p.is_popular && <TrendingUp className="h-3 w-3 text-primary" />}
-        </p>
+        <p className="mt-2 truncate text-[11px] font-semibold text-black/45 dark:text-white/50">{p.category_name}</p>
         <p className={cn("line-clamp-2 h-[34px] text-[13px] font-bold leading-tight", off && "text-black/40 dark:text-white/40")}>{p.product_name}</p>
       </button>
       <div className="mt-2 flex items-end justify-between gap-1">
@@ -62,9 +58,11 @@ export default function ProductsScreen() {
   const category = params.get("category") ?? "all";
   const [search, setSearch] = useState("");
   const debounced = useDebounce(search, 250);
-  const { data: categories } = useCategories();
+  // The rail shows this store's categories; a CSV may name any category the store can use.
+  const { data: categories } = useStoreCategories();
+  const { data: allCategories } = useCategories();
   const { data: all } = useProducts();
-  const { data, isLoading, error, refetch } = useProducts({ search: debounced || undefined, category: !SHOW_CATEGORIES || category === "all" ? undefined : category });
+  const { data, isLoading, error, refetch } = useProducts({ search: debounced || undefined, category: category === "all" ? undefined : category });
 
   // Keep the rail pinned just under the navbar (its height differs on iOS / Material).
   const railRef = useRef<HTMLElement>(null);
@@ -103,7 +101,7 @@ export default function ProductsScreen() {
     e.target.value = "";
     if (!file) return;
     try {
-      const rows = readProductsCsv(await file.text(), categories ?? []);
+      const rows = readProductsCsv(await file.text(), allCategories ?? []);
       if (!rows.length) return toast.error("No items found in that file");
       setImportRows(rows);
     } catch (err) {
@@ -127,13 +125,12 @@ export default function ProductsScreen() {
       }
     >
       <div className="flex">
-        {/* Category rail (Blinkit-style) — hidden while SHOW_CATEGORIES is off */}
-        {SHOW_CATEGORIES && (
+        {/* Category rail (Blinkit-style); the URL holds the category ID */}
         <nav ref={railRef} style={{ top: railTop }} className="sticky w-[78px] shrink-0 self-start border-r border-black/[0.06] bg-white pb-28 dark:border-white/10 dark:bg-[#111]">
           {rail.map((c) => {
-            const active = (c.name === "all" ? "all" : c.category_name) === category;
+            const active = c.name === category;
             return (
-              <button key={c.name} onClick={() => setCategory(c.name === "all" ? "all" : c.category_name)} className="relative flex w-full flex-col items-center gap-1 px-1.5 py-2.5">
+              <button key={c.name} onClick={() => setCategory(c.name)} className="relative flex w-full flex-col items-center gap-1 px-1.5 py-2.5">
                 {active && <span className="absolute right-0 top-2 h-[calc(100%-16px)] w-1 rounded-l-full bg-primary" />}
                 <ProductArt category={c.name === "all" ? "" : c.category_name} image={"image" in c ? c.image : undefined} className={cn("h-12 w-12 rounded-xl transition-transform", active && "scale-110 ring-2 ring-primary/30")} emojiClassName="text-[24px]" />
                 <span className={cn("line-clamp-2 text-center text-[10.5px] leading-tight", active ? "font-extrabold text-primary" : "font-semibold text-black/60 dark:text-white/60")}>{c.category_name}</span>
@@ -141,7 +138,6 @@ export default function ProductsScreen() {
             );
           })}
         </nav>
-        )}
 
         {/* Product grid */}
         <div className="min-w-0 flex-1 p-2.5">
@@ -154,7 +150,7 @@ export default function ProductsScreen() {
           ) : (
             <>
               <p className="px-1 pb-2 text-[13px] font-extrabold">
-                {!SHOW_CATEGORIES || category === "all" ? "All items" : category} <span className="font-semibold text-black/40 dark:text-white/40">· {data.total}</span>
+                {category === "all" ? "All items" : (categories?.find((c) => c.name === category)?.category_name ?? "Items")} <span className="font-semibold text-black/40 dark:text-white/40">· {data.total}</span>
               </p>
               <div className="grid grid-cols-2 gap-2">
                 {data.data.map((p) => (
@@ -192,7 +188,7 @@ export default function ProductsScreen() {
           <ActionItem icon={FileDown} onClick={pick(exportCsv)}>
             Export CSV{all ? ` (${all.total})` : ""}
           </ActionItem>
-          <ActionItem icon={Download} onClick={pick(() => saveCsv("menu-items-template.csv", productTemplateCsv(categories ?? [])))}>
+          <ActionItem icon={Download} onClick={pick(() => saveCsv("menu-items-template.csv", productTemplateCsv(categories?.length ? categories : (allCategories ?? []))))}>
             Download CSV template
           </ActionItem>
         </ActionsGroup>
@@ -232,14 +228,13 @@ export default function ProductsScreen() {
 
           {!!goodRows.length && (
             <div className={cn(CARD, "divide-y divide-black/[0.06] dark:divide-white/10")}>
-              {goodRows.map(({ line, data: d, newCategory }) => (
+              {goodRows.map(({ line, data: d, categoryName }) => (
                 <div key={line} className="flex items-center gap-3 px-3 py-2.5">
-                  <ProductArt category={d!.category} className="h-10 w-10 shrink-0 rounded-lg" emojiClassName="text-[20px]" />
+                  <ProductArt category={categoryName ?? ""} className="h-10 w-10 shrink-0 rounded-lg" emojiClassName="text-[20px]" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[14px] font-bold">{d!.product_name}</p>
                     <p className="truncate text-[12px] text-black/45 dark:text-white/50">
-                      {d!.category}
-                      {newCategory && <span className="ml-1.5 rounded bg-primary/10 px-1 text-[10px] font-bold text-primary">NEW</span>}
+                      {categoryName}
                       {d!.is_available ? "" : " · sold out"}
                     </p>
                   </div>
@@ -249,7 +244,7 @@ export default function ProductsScreen() {
             </div>
           )}
 
-          <p className="px-1 text-[12px] text-black/45 dark:text-white/50">Categories marked NEW are created for you. New items are reviewed by Diyaar before customers can see them. Photos can be added to each item afterwards.</p>
+          <p className="px-1 text-[12px] text-black/45 dark:text-white/50">Categories must already exist on the Diyaar web panel. New items may be reviewed by Diyaar before customers can see them. Photos can be added to each item afterwards.</p>
         </div>
       </FormSheet>
     </Screen>

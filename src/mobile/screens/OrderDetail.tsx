@@ -1,69 +1,30 @@
-import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { Bike, Clock, CreditCard, Flame, MapPin, MapPinOff, MessageSquare, PackageX, Phone, Store, User, UserPlus, type LucideIcon } from "lucide-react";
-import { ActionsGroup, ActionsLabel, BlockTitle, Button, List, ListItem, Toolbar } from "konsta/react";
+import { Bike, CreditCard, MapPin, MessageSquare, Phone, Store, User } from "lucide-react";
+import { BlockTitle, Button, List, ListItem, Toolbar } from "konsta/react";
 import { StatusBadge, statusLabel } from "@/components/shared/StatusBadge";
 import { useOrder, useUpdateOrderStatus } from "@/hooks/queries";
 import type { Order, OrderStatus } from "@/api";
 import { formatDateTime, formatMoney, formatTime } from "@/lib/format";
 import { haptic } from "@/lib/native";
 import { cn } from "@/lib/utils";
-import { AssignDriverSheet } from "../AssignDriverSheet";
-import { ActionItem, Actions, ErrorBlock, IconTile, Loading, Screen } from "../ui";
+import { ErrorBlock, IconTile, Loading, Screen } from "../ui";
 
-const REASONS: Array<[string, LucideIcon]> = [
-  ["Item out of stock", PackageX],
-  ["Kitchen too busy", Flame],
-  ["Closing soon", Clock],
-  ["Delivery area too far", MapPinOff],
-];
 const PAYMENT: Record<Order["payment_method"], string> = { cash: "Cash on delivery", card: "Card", wallet: "Diyaar wallet", mobile_money: "Mobile money (EVC)" };
 const isPickup = (o: Order) => o.delivery_type.includes("pickup");
 
-/** iOS-style action sheet with reject reasons. */
-export function RejectSheet({ order, onClose }: { order: Order | null; onClose: () => void }) {
-  const update = useUpdateOrderStatus();
-  return (
-    <Actions opened={!!order} onBackdropClick={onClose}>
-      <ActionsGroup>
-        <ActionsLabel>Why are you rejecting {order?.name}? The customer will be refunded.</ActionsLabel>
-        {REASONS.map(([r, icon]) => (
-          <ActionItem
-            key={r}
-            icon={icon}
-            danger
-            onClick={() => {
-              haptic.warning();
-              if (order) update.mutate({ id: order.name, status: "rejected", reason: r });
-              onClose();
-            }}
-          >
-            {r}
-          </ActionItem>
-        ))}
-      </ActionsGroup>
-    </Actions>
-  );
-}
-
-function ActionBar({ order, onReject, onAssign }: { order: Order; onReject: () => void; onAssign: () => void }) {
+/** The next step for the store. Diyaar assigns drivers, so delivery orders end at "ready". */
+function ActionBar({ order }: { order: Order }) {
   const update = useUpdateOrderStatus();
   const run = (status: OrderStatus) => {
     haptic.press();
-    // Delivery orders go straight to picking a driver once they're ready.
-    update.mutate({ id: order.name, status }, { onSuccess: (o) => status === "ready" && !isPickup(o) && onAssign() });
+    update.mutate({ id: order.name, status });
   };
   let content: React.ReactNode = null;
   if (order.status === "confirming")
     content = (
-      <>
-        <Button outline large className="flex-1 !border-[#ff3b30]/40 !text-[#ff3b30]" onClick={onReject}>
-          Reject
-        </Button>
-        <Button large className="flex-[2]" disabled={update.isPending} onClick={() => run("accepted")}>
-          Accept order
-        </Button>
-      </>
+      <Button large disabled={update.isPending} onClick={() => run("accepted")}>
+        Accept order
+      </Button>
     );
   else if (order.status === "accepted")
     content = (
@@ -83,12 +44,6 @@ function ActionBar({ order, onReject, onAssign }: { order: Order; onReject: () =
         Picked up by customer
       </Button>
     );
-  else if (order.status === "ready" && !order.driver)
-    content = (
-      <Button large className="!bg-[#1a9d4b]" onClick={onAssign}>
-        <UserPlus className="mr-1.5 h-5 w-5" /> Assign driver
-      </Button>
-    );
   if (!content) return null;
   return (
     <Toolbar className="fixed bottom-0 left-0 z-20 !h-auto" innerClassName="!h-auto gap-2 !px-4 !py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
@@ -100,8 +55,6 @@ function ActionBar({ order, onReject, onAssign }: { order: Order; onReject: () =
 export default function OrderDetailScreen() {
   const { id } = useParams();
   const { data: order, isLoading, error, refetch } = useOrder(id ?? null);
-  const [rejecting, setRejecting] = useState(false);
-  const [assigning, setAssigning] = useState(false);
 
   return (
     <Screen title={id} subtitle={order ? statusLabel(order.status) : undefined} back footer={order && <div className="h-24" />}>
@@ -145,7 +98,7 @@ export default function OrderDetailScreen() {
           <BlockTitle>Customer</BlockTitle>
           <List strong inset dividers>
             <ListItem media={<IconTile icon={User} className="bg-[#007aff]" />} title={order.customer_name} />
-            <ListItem link href={`tel:${order.customer_phone}`} media={<IconTile icon={Phone} className="bg-[#34c759]" />} title={order.customer_phone} after="Call" />
+            {order.customer_phone && <ListItem link href={`tel:${order.customer_phone}`} media={<IconTile icon={Phone} className="bg-[#34c759]" />} title={order.customer_phone} after="Call" />}
             {isPickup(order) ? (
               <ListItem media={<IconTile icon={Store} className="bg-[#5856d6]" />} title="Collects from your store" />
             ) : (
@@ -159,7 +112,6 @@ export default function OrderDetailScreen() {
               <BlockTitle>Driver</BlockTitle>
               <List strong inset dividers>
                 <ListItem link href={`tel:${order.driver_phone}`} media={<IconTile icon={Bike} className="bg-primary" />} title={order.driver_name} after="Call" />
-                {order.status === "ready" && <ListItem link media={<IconTile icon={UserPlus} className="bg-[#1a9d4b]" />} title="Change driver" onClick={() => setAssigning(true)} />}
               </List>
             </>
           )}
@@ -190,9 +142,7 @@ export default function OrderDetailScreen() {
             </div>
           </List>
 
-          <ActionBar order={order} onReject={() => setRejecting(true)} onAssign={() => setAssigning(true)} />
-              <AssignDriverSheet order={assigning ? order : null} onClose={() => setAssigning(false)} />
-          <RejectSheet order={rejecting ? order : null} onClose={() => setRejecting(false)} />
+          <ActionBar order={order} />
         </>
       )}
     </Screen>

@@ -1,14 +1,9 @@
 import { useState } from "react";
-import { CornerDownRight, MessageSquareText, Star } from "lucide-react";
-import { Button, Link as KLink, Toolbar } from "konsta/react";
-import { useReplyReview, useReviews } from "@/hooks/queries";
-import type { Review } from "@/api";
-import { formatDate, initials, timeAgo } from "@/lib/format";
-import { haptic } from "@/lib/native";
+import { Star } from "lucide-react";
+import { useReviews, useReviewSummary } from "@/hooks/queries";
+import { initials, timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { ChipBar, Empty, ErrorBlock, Loading, Screen, Sheet, SheetClose } from "../ui";
-
-const QUICK = ["Thank you so much! We're glad you enjoyed it 🙏", "Thanks for the feedback — we'll share it with the kitchen.", "Sorry about this. Please contact us so we can make it right."];
+import { ChipBar, Empty, ErrorBlock, Loading, Screen } from "../ui";
 
 function Stars({ value, className }: { value: number; className?: string }) {
   return (
@@ -20,62 +15,16 @@ function Stars({ value, className }: { value: number; className?: string }) {
   );
 }
 
-function ReplySheet({ review, onClose }: { review: Review | null; onClose: () => void }) {
-  const reply = useReplyReview();
-  const [text, setText] = useState("");
-  return (
-    <Sheet opened={!!review} onBackdropClick={onClose} className="w-full rounded-t-[22px] pb-safe">
-      <Toolbar top className="rounded-t-[22px]">
-        <SheetClose onClick={onClose} />
-        <span className="font-semibold">Reply</span>
-        <KLink
-          toolbar
-          className="font-semibold"
-          onClick={() => {
-            if (!review || !text.trim()) return;
-            haptic.success();
-            reply.mutate({ id: review.name, reply: text }, { onSuccess: onClose });
-            setText("");
-          }}
-        >
-          Post
-        </KLink>
-      </Toolbar>
-      {review && (
-        <div className="space-y-3 p-4">
-          <p className="rounded-xl bg-black/5 p-3 text-[15px] dark:bg-white/10">
-            <span className="font-semibold">{review.customer_name}: </span>“{review.comment}”
-          </p>
-          <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
-            {QUICK.map((q) => (
-              <button key={q} onClick={() => setText(q)} className="shrink-0 rounded-full bg-primary/10 px-3 py-1.5 text-[13px] text-primary">
-                {q.slice(0, 26)}…
-              </button>
-            ))}
-          </div>
-          <textarea
-            autoFocus
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Write a public reply…"
-            className="h-28 w-full resize-none rounded-xl bg-black/5 p-3 text-[16px] outline-none dark:bg-white/10"
-          />
-        </div>
-      )}
-    </Sheet>
-  );
-}
-
 export default function ReviewsScreen() {
-  const [filter, setFilter] = useState<"all" | "unreplied" | "5" | "4" | "low">("all");
+  // Replying isn't available yet: the backend doesn't save replies.
+  const [filter, setFilter] = useState<"all" | "5" | "4" | "low">("all");
   const rating = filter === "5" || filter === "4" ? Number(filter) : undefined;
-  const { data, isLoading, error, refetch } = useReviews({ filter: filter === "unreplied" ? "unreplied" : "all", rating, page: 1 });
-  const [replying, setReplying] = useState<Review | null>(null);
-  const s = data?.summary;
-  const rows = filter === "low" ? data?.data.filter((r) => r.rating <= 3) : data?.data;
+  const { data, isLoading, error, refetch } = useReviews({ rating, max_rating: filter === "low" ? 3 : undefined, page: 1 });
+  const { data: s, refetch: refetchSummary } = useReviewSummary();
+  const rows = data?.data;
 
   return (
-    <Screen title="Reviews" back tabbar onRefresh={refetch}>
+    <Screen title="Reviews" back tabbar onRefresh={() => Promise.all([refetch(), refetchSummary()])}>
       {error ? (
         <ErrorBlock error={error} onRetry={refetch} />
       ) : isLoading || !s ? (
@@ -109,7 +58,6 @@ export default function ReviewsScreen() {
               onChange={setFilter}
               items={[
                 { value: "all", label: "All" },
-                { value: "unreplied", label: "Needs reply", count: s.unreplied },
                 { value: "5", label: "5 ★" },
                 { value: "4", label: "4 ★" },
                 { value: "low", label: "3 ★ & below" },
@@ -118,7 +66,7 @@ export default function ReviewsScreen() {
           </div>
 
           {!rows?.length ? (
-            <Empty icon={Star} title="Nothing here" text={filter === "unreplied" ? "You've replied to every review 🎉" : undefined} />
+            <Empty icon={Star} title="Nothing here" />
           ) : (
             <div className="space-y-2 px-4 pt-2">
               {rows.map((r) => (
@@ -133,27 +81,13 @@ export default function ReviewsScreen() {
                       </div>
                     </div>
                   </div>
-                  <p className="mt-3 text-[15px] leading-snug">{r.comment}</p>
-                  {r.reply ? (
-                    <div className="mt-3 flex gap-2 rounded-xl bg-black/[0.04] p-3 dark:bg-white/5">
-                      <CornerDownRight className="mt-0.5 h-4 w-4 shrink-0 text-black/35 dark:text-white/40" />
-                      <div>
-                        <p className="text-[12px] font-medium text-black/45 dark:text-white/45">You replied · {r.reply_at && formatDate(r.reply_at)}</p>
-                        <p className="text-[14px]">{r.reply}</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <Button rounded small className="mt-3 !w-auto px-4" onClick={() => setReplying(r)}>
-                      <MessageSquareText className="mr-1.5 h-4 w-4" /> Reply
-                    </Button>
-                  )}
+                  {r.comment && <p className="mt-3 text-[15px] leading-snug">{r.comment}</p>}
                 </div>
               ))}
             </div>
           )}
         </>
       )}
-      <ReplySheet review={replying} onClose={() => setReplying(null)} />
     </Screen>
   );
 }

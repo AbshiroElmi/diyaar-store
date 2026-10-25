@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { ChevronLeft, FlaskConical, Loader2, Phone, ShieldCheck } from "lucide-react";
+import { ChevronLeft, Loader2, Lock, Mail, Phone, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,9 +8,7 @@ import { LogoMark } from "@/components/shared/Logo";
 import storeHero from "@/assets/store-hero.jpg";
 import loginBgVideo from "@/assets/login-bg.mp4";
 import { useLoginMedia } from "@/lib/login-media";
-import { MOCK_OTP } from "@/api/mock/handlers";
 import { useAuth } from "@/contexts/AuthContext";
-import { isMockApi } from "@/lib/env";
 import { setStatusBarTheme } from "@/lib/native";
 import { useTheme } from "next-themes";
 
@@ -18,15 +16,17 @@ const OTP_LENGTH = 6;
 const RESEND_SECONDS = 30;
 
 export default function LoginPage() {
-  const { requestOtp, verifyOtp } = useAuth();
-  // Custom backgrounds are switched off for now (the API will provide it); always use the built-in loop.
-  const SHOW_CUSTOM_BACKGROUND = false;
+  const { requestOtp, verifyOtp, signInWithPassword } = useAuth();
+  // The owner's own photo or video from Settings → Login background (saved on this phone).
   const login = useLoginMedia();
-  const customBg = SHOW_CUSTOM_BACKGROUND ? login.media : null;
-  const bgReady = SHOW_CUSTOM_BACKGROUND ? login.ready : true;
+  const customBg = login.media;
+  const bgReady = login.ready;
   const { resolvedTheme } = useTheme();
-  const [step, setStep] = useState<"phone" | "otp">("phone");
-  const [phone, setPhone] = useState(isMockApi ? "613187029" : "");
+  // Owners usually sign in with a code to their phone; staff added in the app use email and password.
+  const [step, setStep] = useState<"phone" | "otp" | "email">("phone");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -81,6 +81,19 @@ export default function LoginPage() {
     }
   }
 
+  async function signIn(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      await signInWithPassword(email.trim(), password);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Sign in failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="flex min-h-dvh flex-col items-center bg-background">
       <div
@@ -126,7 +139,7 @@ export default function LoginPage() {
         {step === "phone" ? (
           <form onSubmit={sendCode} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="phone">Owner phone number</Label>
+              <Label htmlFor="phone">Phone number</Label>
               <div className="flex rounded-md border bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
                 <span className="flex items-center gap-1.5 border-r px-3 text-sm text-muted-foreground">
                   <Phone className="h-4 w-4" /> +252
@@ -149,6 +162,29 @@ export default function LoginPage() {
             <Button type="submit" className="h-11 w-full" disabled={loading || phone.replace(/\D/g, "").length < 7}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Send code </>}
             </Button>
+            <SwitchLink onClick={() => (setError(null), setStep("email"))}>Sign in with email instead</SwitchLink>
+          </form>
+        ) : step === "email" ? (
+          <form onSubmit={signIn} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <div className="relative">
+                <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input id="email" type="email" inputMode="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-9" required />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input id="password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-9" required />
+              </div>
+            </div>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <Button type="submit" className="h-11 w-full" disabled={loading || !email.includes("@") || !password}>
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Sign in</>}
+            </Button>
+            <SwitchLink onClick={() => (setError(null), setStep("phone"))}>Use phone number instead</SwitchLink>
           </form>
         ) : (
           <form
@@ -197,13 +233,16 @@ export default function LoginPage() {
         )}
       </Card>
 
-      {isMockApi && (
-        <p className="mt-5 inline-flex items-center gap-1.5 rounded-full border border-dashed px-3 py-1 text-xs text-muted-foreground">
-          <FlaskConical className="h-3.5 w-3.5" /> Demo mode — any phone, code <span className="font-mono font-semibold text-foreground">{MOCK_OTP}</span>
-        </p>
-      )}
 
       <p className="pb-safe mb-6 mt-auto pt-8 text-xs text-muted-foreground">© {new Date().getFullYear()} Diyaar. All rights reserved.</p>
     </div>
+  );
+}
+
+function SwitchLink({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button type="button" onClick={onClick} className="block w-full text-center text-sm font-medium text-primary hover:underline">
+      {children}
+    </button>
   );
 }

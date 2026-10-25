@@ -1,21 +1,25 @@
 # Diyaar Store (Portal)
 
-The web app for **store owners** on Diyaar. Owners use it to accept orders, manage their menu, follow sales and get paid.
-It sits next to the customer app, the driver app and the admin panel, and uses the same backend (`diyaar_backend`).
+The phone app for **store teams** on Diyaar. Owners and staff use it to accept orders, keep the menu up to date, follow sales and see their earnings.
+It talks to the live Diyaar backend (`diyaar_backend`) through the same store-portal endpoints as the web admin panel at
+`https://diyaar-app.easytouch.cloud/admin_panel/store/dashboard`.
+
+The app stays small on purpose: anything a store rarely does (creating categories, branding, payout accounts, documents) is managed on the web panel.
+Home banners and the login background have no API yet, so they're saved on the phone (`src/api/services/banners.ts`, `src/lib/login-media.ts`).
 
 ## Quick start
 
 ```bash
 npm install
-cp .env.example .env     # mock mode is the default
-npm run dev              # http://localhost:8090
+cp .env.example .env
+npm run dev              # http://localhost:8090 — sign in with a real store account
 ```
 
-In mock mode you can sign in with **any phone number** and the code **`123456`**.
+In the browser, the dev server forwards `/api` and `/files` to the backend, so the session cookie stays on one origin.
 
 ## Mobile app (iOS & Android)
 
-Portal ships as a native app called **Diyaar Store** (`so.diyaar.store`), built with Capacitor 8 like the customer and driver apps.
+The app ships as a native app called **Diyaar Store** (`so.diyaar.store`), built with Capacitor 8 like the customer and driver apps.
 
 ```bash
 npm run ios        # build → sync → open Xcode (then ▶ Run on a simulator or iPhone)
@@ -24,13 +28,8 @@ npm run cap:sync   # after any web change, copy it into both native projects
 npm run assets     # regenerate icons & splash from assets/*.png
 ```
 
-**Phones get a separate, native-style interface** (`src/mobile/`), built with [Konsta UI](https://konstaui.com):
-- **iPhone:** iOS styling — large titles, grouped lists, action sheets, swipe-style page transitions, SF font.
-- **Android:** Material 3 styling — top app bar, Material switches, navigation bar, Roboto font.
-- **Website on a computer or tablet:** keeps the sidebar layout (`src/pages/`).
-
-Both interfaces use the same hooks and API layer, so a change to the data appears in both.
-To preview the Android look in a browser, open `http://localhost:8090/login?theme=material` at phone width.
+The interface (`src/mobile/`) is built with [Konsta UI](https://konstaui.com) using the **iOS theme on every device**, so iPhone and Android look the same.
+To preview the Material look in a browser for comparison, open `http://localhost:8090/login?theme=material`.
 
 The app is set up to feel native:
 - **Safe areas:** the top bar sits below the notch or Dynamic Island, and the tab bar sits above the home indicator.
@@ -38,88 +37,68 @@ The app is set up to feel native:
 - **Status bar:** its text color follows light or dark mode.
 - **Splash screen:** stays up until the session is restored.
 - **Android back button:** closes an open sheet first, then goes back a page, and leaves the app from Home.
-- **Bottom sheets:** forms, order details and the **Menu** open as sheets that slide up from the bottom.
 
 Icon and splash sources are in `assets/` (lime `#BEFF00` with the Diyaar hand, and dark `#2B330F` for dark mode).
-**For live mode in the app**, set `VITE_API_BASE_URL` to the full backend URL. The app has no same-origin proxy.
 
-## Pages
+## Screens
 
-| Section  | Page          | What the owner does there |
-|----------|---------------|---------------------------|
-| Overview | Dashboard     | Live order counts, today's sales, 7-day trend, best sellers, latest reviews |
-|          | Orders        | Accept / reject → prepare → ready, history with search, order details and timeline |
-| Menu     | Products      | Add and edit items, sold-out switch, sale price, review status |
-|          | Categories    | Create, rename, reorder and hide categories |
-| Business | Earnings      | Balance, withdraw, transactions (CSV export), payout history |
-|          | Reports       | Sales, net earnings, cancel rate, prep time, busy hours, payment mix |
-|          | Reviews       | Rating summary, filters, quick replies |
-|          | Promotions    | % off, $ off, free delivery, buy 1 get 1, promo codes |
-| Store    | Store Profile | Name, contact, delivery fee, minimum order, delivery time |
-|          | Opening Hours | Weekly schedule and holiday closures |
-|          | Team          | Invite managers and staff, change roles |
-| Account  | Notifications | Orders, reviews, payouts, product approvals |
-|          | Support       | Tickets with chat-style replies, call and WhatsApp |
-|          | Settings      | Auto-accept, order sound, alerts, theme, language |
+| Screen        | What the store does there | Backend |
+|---------------|---------------------------|---------|
+| Sign in       | Code sent to the phone, or email and password | `admin_send_otp`, `admin_verify_otp`, `admin_login` |
+| Home          | Open / closed switch, live order counts, today's sales, 7-day trend, recent orders | `get_store_dashboard`, `update_store_settings` |
+| Orders        | Accept → cooking → ready (→ picked up for pickup orders), history with search | `get_orders`, `get_order_details`, `update_store_order_status` |
+| Products      | Add and edit items, photo, sale price, sold-out switch, CSV import / export | `get_products`, `create_product`, `update_product`, `delete_product`, `get_categories`, `upload_store_image` |
+| Categories    | Browse the store's categories (read-only) and open their items | `get_categories` |
+| Home banners  | Make offer banners for the Home screen | *none yet — saved on the phone* |
+| Earnings      | Earnings to be paid, this month, commission, payout accounts | `get_store_earnings`, `get_store_settings` |
+| Reviews       | Rating summary and reviews by stars | `get_store_reviews` |
+| Store Profile | Tagline, description, contact, minimum order, prep time (sent for approval) | `get_store_settings`, `submit_store_edit_request` |
+| Opening Hours | Weekly schedule (sent for approval) | `get_store_settings`, `submit_store_edit_request` |
+| Team          | Owners add staff (email + password) and turn their access on or off | `get_admin_users`, `create_admin_user`, `update_admin_user` |
+| Settings      | Auto-accept orders, new-order sound, login background (saved on the phone), appearance | `update_store_settings` |
 
-**Navigation**
-- **Desktop:** a sidebar with every page, plus a top bar with the store switch (Open / Busy / Closed), notifications and the account menu.
-- **Phone:** a 5-item bottom bar: **Menu** · Home · Orders · Products · Earnings. **Menu** opens a bottom sheet with all pages.
-- **New orders:** a chime plays, a toast appears, and badges update every 15 seconds. The browser tab title shows the number of new orders.
+**Navigation:** a 5-item bottom bar: **Menu** · Home · Orders · Products · Earnings. **Menu** opens a sheet with the other screens.
+**New orders:** a chime plays, a toast appears, and counts refresh every 15 seconds.
 
 ## Project structure
 
 ```
 src/
   api/
-    endpoints.ts      ← every backend endpoint name, marked ready / planned
-    client.ts         ← one client; picks mock or live from .env
-    types.ts          ← data shapes (same field names as the backend)
+    endpoints.ts      ← every backend endpoint the app calls
+    client.ts         ← one client: session cookie + CSRF token, errors, uploads
+    map.ts            ← turns backend rows into the app's types
+    types.ts          ← data shapes the screens use
     services/         ← one file per area (orders, catalog, money, …)
-    mock/
-      seed.ts         ← demo store data
-      handlers.ts     ← mock API, one handler per endpoint
-  hooks/queries.ts    ← React Query hooks used by pages
-  layouts/            ← sidebar, top bar, mobile bottom bar and Menu sheet
-  pages/              ← desktop / tablet pages
-  mobile/             ← phone app: MobileApp (tabs, Menu sheet, transitions), ui kit, screens/
-  components/
-    shared/           ← PageHeader, StatCard, StatusBadge, dialogs, states
-    ui/               ← shadcn components (copied from the admin panel)
-  lib/                ← env, navigation, formatting
+  hooks/queries.ts    ← React Query hooks used by screens
+  mobile/             ← the app: MobileApp (tabs, Menu sheet, transitions), ui kit, screens/
+  pages/Login.tsx     ← sign in
+  components/         ← logo, status badge and the few shadcn pieces the login uses
+  lib/                ← env, formatting, CSV, native helpers, device preferences
 ```
 
-Pages call **hooks**, hooks call **services**, and services call **`api`**. The pages never know whether the data is mocked.
+Screens call **hooks**, hooks call **services**, and services call **`api`**. Only the services know the backend's field names.
 
 ## Environment (.env)
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `VITE_API_MODE` | `mock` | `mock` = built-in demo API, `live` = Frappe backend |
-| `VITE_API_BASE_URL` | *(empty)* | Backend URL in live mode. Empty = same origin |
-| `VITE_API_METHOD_PATH` | `/api/method/diyaar_backend.api.stores.self_service` | Frappe module for store endpoints |
+| `VITE_API_BASE_URL` | `https://diyaar-app.easytouch.cloud` | Backend the phone app calls |
+| `VITE_API_METHOD_PATH` | `/api/method/diyaar_backend.admin_api` | Frappe module for the store-portal endpoints |
 | `VITE_API_TIMEOUT_MS` | `20000` | Request timeout |
-| `VITE_MOCK_LATENCY_MS` | `350` | Fake delay in mock mode |
 | `VITE_DEFAULT_CURRENCY` / `VITE_DEFAULT_LOCALE` | `USD` / `en-US` | Money and number formatting |
 | `PORTAL_DEV_PORT` | `8090` | Dev server port |
-| `PORTAL_DEV_PROXY_TARGET` | *(empty)* | e.g. `http://localhost:8000`, which forwards `/api` to your bench |
+| `PORTAL_DEV_PROXY_TARGET` | *(the live backend)* | Where the dev server forwards `/api` and `/files`, e.g. `http://localhost:8000` for a local bench |
 
 `.env` is git-ignored. Only `.env.example` is committed.
 
-## Switching to the real backend
+## Sign-in and sessions
 
-1. Set `VITE_API_MODE=live` and `PORTAL_DEV_PROXY_TARGET=http://localhost:8000` in `.env`.
-2. Endpoints marked **`ready`** in `src/api/endpoints.ts` already exist in
-   `diyaar_backend/api/stores/self_service.py`: login and OTP, profile, open/close, orders, order status, products, analytics.
-3. Endpoints marked **`planned`** need to be added to the backend. They are categories, dashboard, reports, reviews, earnings, promotions, team, notifications, support, hours and settings.
-   Their request and response shapes are defined by the mock handlers in `src/api/mock/handlers.ts` and the types in `src/api/types.ts`, so the mock acts as the spec.
-
-Sign-in uses the backend's `store_login` → `store_verify_otp` flow. The returned `api_key:api_secret` is sent as `Authorization: token …`.
+Sign-in uses a Frappe **session cookie**, like the web panel. The login response carries a CSRF token, which the client sends on every POST.
+In the phone app, CapacitorHttp keeps the cookie in the device's cookie store. Accounts that aren't linked to a store (platform staff) are turned away.
 
 ## Scripts
 
 - `npm run dev` starts the dev server.
 - `npm run build` runs the type check and builds a production bundle into `dist/`.
 - `npm run typecheck` runs TypeScript only.
-
-In mock mode, **Settings → Reset demo data** restores the sample store.

@@ -6,26 +6,9 @@ import { BellRing, CheckCircle2, Info, Loader2, XCircle } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { AppLayout } from "@/layouts/AppLayout";
 import LoginPage from "@/pages/Login";
-import { hideSplash, isNative, setStatusBarTheme } from "@/lib/native";
-import { useMediaQuery } from "@/hooks/use-media";
+import { hideSplash, setStatusBarTheme } from "@/lib/native";
 
-const Dashboard = lazy(() => import("@/pages/Dashboard"));
-const Orders = lazy(() => import("@/pages/Orders"));
-const Products = lazy(() => import("@/pages/Products"));
-const Categories = lazy(() => import("@/pages/Categories"));
-const Earnings = lazy(() => import("@/pages/Earnings"));
-const Reports = lazy(() => import("@/pages/Reports"));
-const Reviews = lazy(() => import("@/pages/Reviews"));
-const Promotions = lazy(() => import("@/pages/Promotions"));
-const StoreProfile = lazy(() => import("@/pages/StoreProfile"));
-const Hours = lazy(() => import("@/pages/Hours"));
-const Team = lazy(() => import("@/pages/Team"));
-const Notifications = lazy(() => import("@/pages/Notifications"));
-const Support = lazy(() => import("@/pages/Support"));
-const Settings = lazy(() => import("@/pages/Settings"));
-const NotFound = lazy(() => import("@/pages/NotFound"));
 const MobileApp = lazy(() => import("@/mobile/MobileApp"));
 
 const queryClient = new QueryClient({
@@ -43,12 +26,9 @@ function FullScreenLoader() {
 }
 
 /**
- * Toasts: on phones a small floating pill (like iOS notifications) with room
- * below the notch; on larger screens the regular card toasts.
+ * Toasts: a small floating pill (like iOS notifications) with room below the notch.
  */
 function AppToaster() {
-  const phone = useMediaQuery("(max-width: 767px)") || isNative;
-  if (!phone) return <Toaster position="top-center" richColors closeButton />;
   return (
     <Toaster
       position="top-center"
@@ -91,37 +71,11 @@ function NativeBridge() {
   return null;
 }
 
-function DesktopRoutes() {
-  return (
-    <Routes>
-      <Route element={<AppLayout />}>
-        <Route index element={<Dashboard />} />
-        <Route path="orders" element={<Orders />} />
-        <Route path="products" element={<Products />} />
-        <Route path="categories" element={<Categories />} />
-        <Route path="earnings" element={<Earnings />} />
-        <Route path="reports" element={<Reports />} />
-        <Route path="reviews" element={<Reviews />} />
-        <Route path="promotions" element={<Promotions />} />
-        <Route path="store" element={<StoreProfile />} />
-        <Route path="hours" element={<Hours />} />
-        <Route path="team" element={<Team />} />
-        <Route path="notifications" element={<Notifications />} />
-        <Route path="support" element={<Support />} />
-        <Route path="settings" element={<Settings />} />
-        <Route path="*" element={<NotFound />} />
-      </Route>
-    </Routes>
-  );
-}
-
 function ProtectedRoutes() {
   const { status } = useAuth();
-  // Phones and the native app get the mobile UI; tablets and desktops get the web layout.
-  const phone = useMediaQuery("(max-width: 767px)") || isNative;
   if (status === "loading") return <FullScreenLoader />;
   if (status === "signed-out") return <Navigate to="/login" replace />;
-  return phone ? <MobileApp /> : <DesktopRoutes />;
+  return <MobileApp />;
 }
 
 function PublicOnly() {

@@ -1,9 +1,9 @@
 import { useRef, useState } from "react";
-import { ArrowDown, ArrowUp, Camera, Check, Eye, EyeOff, GalleryHorizontal, Globe, LayoutGrid, Package, Pencil, Plus, Search, Smile, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Camera, Check, Eye, EyeOff, FolderOpen, GalleryHorizontal, Globe, LayoutGrid, Package, Pencil, Plus, Search, Smile, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { ActionsGroup, ActionsLabel, Link as KLink, List, ListInput, Toggle } from "konsta/react";
-import { useBanners, useCategories, useDeleteBanner, useProducts, useSaveBanner } from "@/hooks/queries";
-import type { Banner, Product } from "@/api";
+import { useBanners, useStoreCategories, useDeleteBanner, useProducts, useSaveBanner } from "@/hooks/queries";
+import type { Banner, Category, Product } from "@/api";
 import { haptic } from "@/lib/native";
 import { readPhoto } from "@/lib/photo";
 import { cn } from "@/lib/utils";
@@ -15,11 +15,11 @@ const EMOJIS = ["🛵", "🔥", "🎉", "🍔", "🍕", "🌯", "🍗", "🍰", 
 
 /** Where the banner's button takes the customer/owner. */
 const LINKS = [
-  { value: "/promotions", label: "Promotions" },
   { value: "/products", label: "Menu items" },
+  { value: "/categories", label: "Categories" },
   { value: "/orders", label: "Orders" },
-  { value: "/reports", label: "Reports" },
   { value: "/reviews", label: "Reviews" },
+  { value: "/hours", label: "Opening hours" },
   { value: "/store", label: "Store profile" },
 ];
 
@@ -28,7 +28,7 @@ type LinkKind = "page" | "product" | "category" | "web";
 const LINK_KINDS: Array<{ value: LinkKind; label: string; icon: typeof Globe }> = [
   { value: "page", label: "Page", icon: LayoutGrid },
   { value: "product", label: "Product", icon: Package },
-  // { value: "category", label: "Category", icon: FolderOpen }, // categories hidden for now
+  { value: "category", label: "Category", icon: FolderOpen },
   { value: "web", label: "Website", icon: Globe },
 ];
 
@@ -36,7 +36,7 @@ const kindOf = (link: string): LinkKind =>
   /^https?:\/\//.test(link) ? "web" : /^\/products\/[^/?]+/.test(link) && link !== "/products/new" ? "product" : link.startsWith("/products?category=") ? "category" : "page";
 
 /** Human label for a link, e.g. "Opens Chicken Shawarma". */
-function describeLink(link: string, products?: Product[]) {
+function describeLink(link: string, products?: Product[], categories?: Category[]) {
   switch (kindOf(link)) {
     case "web":
       return link.replace(/^https?:\/\//, "").replace(/\/$/, "");
@@ -44,19 +44,21 @@ function describeLink(link: string, products?: Product[]) {
       const id = decodeURIComponent(link.split("/")[2]);
       return products?.find((p) => p.name === id)?.product_name ?? "a product";
     }
-    case "category":
-      return `${decodeURIComponent(link.split("=")[1] ?? "")} items`;
+    case "category": {
+      const id = decodeURIComponent(link.split("=")[1] ?? "");
+      return `${categories?.find((c) => c.name === id)?.category_name ?? "category"} items`;
+    }
     default:
       return LINKS.find((l) => l.value === link)?.label ?? link;
   }
 }
 
 type Draft = Omit<Banner, "name" | "sort_order">;
-const EMPTY: Draft = { title: "", subtitle: "", cta: "Learn more", link: "/promotions", theme: "lime", emoji: "🛵", is_active: 1 };
+const EMPTY: Draft = { title: "", subtitle: "", cta: "Learn more", link: "/products", theme: "lime", emoji: "🛵", is_active: 1 };
 
 const TEMPLATES: Array<{ label: string; draft: Draft }> = [
-  { label: "Free delivery", draft: { title: "Free Delivery Fridays", subtitle: "No delivery fee on every order this Friday", cta: "Order now", link: "/promotions", theme: "lime", emoji: "🛵", is_active: 1 } },
-  { label: "Discount", draft: { title: "20% off this weekend", subtitle: "On all grills and platters", cta: "See deals", link: "/promotions", theme: "sunset", emoji: "🔥", is_active: 1 } },
+  { label: "Free delivery", draft: { title: "Free Delivery Fridays", subtitle: "No delivery fee on every order this Friday", cta: "Order now", link: "/products", theme: "lime", emoji: "🛵", is_active: 1 } },
+  { label: "Discount", draft: { title: "20% off this weekend", subtitle: "On all grills and platters", cta: "See deals", link: "/products", theme: "sunset", emoji: "🔥", is_active: 1 } },
   { label: "New item", draft: { title: "New on the menu", subtitle: "Try our latest dish today", cta: "View menu", link: "/products", theme: "violet", emoji: "🎉", is_active: 1 } },
 ];
 
@@ -67,7 +69,7 @@ function BannerEditor({ editing, onClose }: { editing: Banner | "new" | null; on
   const [pictureMode, setPictureMode] = useState<"emoji" | "photo">("emoji");
   const fileRef = useRef<HTMLInputElement>(null);
   const { data: products } = useProducts();
-  const { data: categories } = useCategories();
+  const { data: categories } = useStoreCategories();
   const [linkKind, setLinkKind] = useState<LinkKind>("page");
   const [productSearch, setProductSearch] = useState("");
   const [webUrl, setWebUrl] = useState("");
@@ -237,7 +239,7 @@ function BannerEditor({ editing, onClose }: { editing: Banner | "new" | null; on
       </List>
 
       <p className="px-5 pb-2 pt-5 text-[13px] font-bold uppercase tracking-wide text-black/45 dark:text-white/50">When tapped, open</p>
-      <div className="mx-4 grid grid-cols-3 gap-1 rounded-xl bg-primary/[0.08] p-1">
+      <div className="mx-4 grid grid-cols-4 gap-1 rounded-xl bg-primary/[0.08] p-1">
         {LINK_KINDS.map((k) => (
           <button
             key={k.value}
@@ -246,9 +248,9 @@ function BannerEditor({ editing, onClose }: { editing: Banner | "new" | null; on
               haptic.tap();
               setLinkKind(k.value);
               // Point the link at something sensible for the new kind straight away.
-              if (k.value === "page") set("link", "/promotions");
+              if (k.value === "page") set("link", "/products");
               if (k.value === "product") set("link", products?.data[0] ? `/products/${encodeURIComponent(products.data[0].name)}` : "/products");
-              if (k.value === "category") set("link", categories?.[0] ? `/products?category=${encodeURIComponent(categories[0].category_name)}` : "/products");
+              if (k.value === "category") set("link", categories?.[0] ? `/products?category=${encodeURIComponent(categories[0].name)}` : "/products");
               if (k.value === "web") set("link", webUrl);
             }}
             className={cn("flex h-12 flex-col items-center justify-center gap-0.5 rounded-[10px] text-[11.5px] font-bold transition-colors", linkKind === k.value ? "bg-white text-primary shadow-sm dark:bg-[#2c2c2e]" : "text-black/50 dark:text-white/55")}
@@ -302,10 +304,10 @@ function BannerEditor({ editing, onClose }: { editing: Banner | "new" | null; on
                       }}
                       className={cn("flex w-full items-center gap-3 px-3 py-2 text-left", active && "bg-primary/[0.06]")}
                     >
-                      <ProductArt category={p.category} image={p.image} className="h-9 w-9 shrink-0 rounded-lg" emojiClassName="text-[18px]" />
+                      <ProductArt category={p.category_name} image={p.image} className="h-9 w-9 shrink-0 rounded-lg" emojiClassName="text-[18px]" />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-[14px] font-semibold">{p.product_name}</span>
-                        <span className="block truncate text-[12px] text-black/45 dark:text-white/50">{p.category}</span>
+                        <span className="block truncate text-[12px] text-black/45 dark:text-white/50">{p.category_name}</span>
                       </span>
                       {active && <Check className="h-5 w-5 shrink-0 text-primary" strokeWidth={3} />}
                     </button>
@@ -318,7 +320,7 @@ function BannerEditor({ editing, onClose }: { editing: Banner | "new" | null; on
         {linkKind === "category" && (
           <div className="grid grid-cols-3 gap-2 px-4">
             {categories?.map((c) => {
-              const link = `/products?category=${encodeURIComponent(c.category_name)}`;
+              const link = `/products?category=${encodeURIComponent(c.name)}`;
               const active = draft.link === link;
               return (
                 <button
@@ -362,16 +364,15 @@ function BannerEditor({ editing, onClose }: { editing: Banner | "new" | null; on
         )}
 
         <p className="flex items-center gap-1.5 px-5 pt-3 text-[12.5px] text-black/45 dark:text-white/50">
-          <Check className="h-3.5 w-3.5 text-primary" /> Tapping the banner opens <span className="truncate font-semibold text-black/70 dark:text-white/75">{draft.link ? describeLink(draft.link, products?.data) : "—"}</span>
+          <Check className="h-3.5 w-3.5 text-primary" /> Tapping the banner opens <span className="truncate font-semibold text-black/70 dark:text-white/75">{draft.link ? describeLink(draft.link, products?.data, categories) : "—"}</span>
         </p>
       </div>
     </FormSheet>
   );
 }
 
-// The live API can only list banners for now (no create/update/delete endpoints yet),
-// so editing is switched off. Set to true once those endpoints exist.
-const CAN_EDIT_BANNERS = false;
+// Banners are saved on this phone until Diyaar adds a banners API (see api/services/banners).
+const CAN_EDIT_BANNERS = true;
 
 export default function BannersScreen() {
   const { data, isLoading, error, refetch } = useBanners();
@@ -381,8 +382,9 @@ export default function BannersScreen() {
   const [selected, setSelected] = useState<Banner | null>(null);
   const live = data?.filter((b) => b.is_active !== 0).length ?? 0;
   const { data: products } = useProducts();
+  const { data: categories } = useStoreCategories();
 
-  const move = (b: Banner, dir: -1 | 1) => {
+  const move =(b: Banner, dir: -1 | 1) => {
     const i = data!.findIndex((x) => x.name === b.name);
     const other = data![i + dir];
     if (!other) return;
@@ -434,7 +436,7 @@ export default function BannersScreen() {
                     <span className={cn("rounded-md px-1.5 text-[11px] font-bold uppercase leading-[18px]", hidden ? "bg-black/[0.06] text-black/50 dark:bg-white/10 dark:text-white/55" : "bg-primary/10 text-primary")}>
                       {hidden ? "Hidden" : "Showing"}
                     </span>
-                    <span className="truncate text-[12.5px] text-black/45 dark:text-white/50">Opens {describeLink(b.link, products?.data)}</span>
+                    <span className="truncate text-[12.5px] text-black/45 dark:text-white/50">Opens {describeLink(b.link, products?.data, categories)}</span>
                     <span className="ml-auto">
                       {CAN_EDIT_BANNERS && <Toggle checked={!hidden} onChange={() => save.mutate({ id: b.name, data: { is_active: hidden ? 1 : 0 }, silent: true })} />}
                     </span>
@@ -444,7 +446,9 @@ export default function BannersScreen() {
             })}
           </div>
           <p className="px-5 pb-2 pt-5 text-[13px] leading-snug text-black/45 dark:text-white/50">
-            {CAN_EDIT_BANNERS ? "Tap a banner to edit, reorder or delete it. Switch one off to hide it from Home without losing it." : "These are the banners showing on your Home. Contact Diyaar to change them."}
+            {CAN_EDIT_BANNERS
+              ? "Tap a banner to edit, reorder or delete it. Switch one off to hide it from Home without losing it. Banners are saved on this phone for now."
+              : "These are the banners showing on your Home. Contact Diyaar to change them."}
           </p>
         </>
       )}

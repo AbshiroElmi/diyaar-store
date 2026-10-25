@@ -1,17 +1,44 @@
 import { api } from "../client";
 import { ENDPOINTS } from "../endpoints";
-import type { EarningsData, Promotion, PromotionInput } from "../types";
+import type { EarningsData } from "../types";
+import { currentStore } from "./store";
+
+interface EarningsRow {
+  total_revenue: number;
+  commission_paid: number;
+  pending_payout: number;
+  this_month: number;
+  orderCount: number;
+  commission_rate: number;
+}
+
+interface PayoutAccounts {
+  bankAccounts: Array<{ bankName: string; accountNumber: string }>;
+  mobileMoneyAccounts: Array<{ provider: string; mobileNumber: string }>;
+}
+
+const last4 = (s: string) => `•••• ${String(s ?? "").slice(-4)}`;
 
 export const earningsService = {
-  get: () => api.get<{ success: boolean; data: EarningsData }>(ENDPOINTS.getEarnings).then((r) => r.data),
-  requestPayout: () => api.post<{ success: boolean; message: string }>(ENDPOINTS.requestPayout),
-};
-
-export const promotionsService = {
-  list: () => api.get<{ success: boolean; promotions: Promotion[] }>(ENDPOINTS.getPromotions).then((r) => r.promotions),
-  create: (data: PromotionInput) =>
-    api.post<{ success: boolean; promotion: Promotion }>(ENDPOINTS.createPromotion, data).then((r) => r.promotion),
-  update: (promotionId: string, data: Partial<Promotion>) =>
-    api.post<{ success: boolean; promotion: Promotion }>(ENDPOINTS.updatePromotion, { promotion_id: promotionId, ...data }).then((r) => r.promotion),
-  remove: (promotionId: string) => api.post<{ success: boolean }>(ENDPOINTS.deletePromotion, { promotion_id: promotionId }),
+  get: async (): Promise<EarningsData> => {
+    const [{ earnings: e }, { settings: s }] = await Promise.all([
+      api.get<{ earnings: EarningsRow }>(ENDPOINTS.getEarnings, { store_id: currentStore.id }),
+      api.get<{ settings: PayoutAccounts }>(ENDPOINTS.getSettings, { store_id: currentStore.id }),
+    ]);
+    const rate = Number(e.commission_rate) || 0;
+    return {
+      pending_payout: e.pending_payout,
+      total_revenue: e.total_revenue,
+      total_earned: e.total_revenue - e.commission_paid,
+      commission_paid: e.commission_paid,
+      commission_rate: rate,
+      this_month_gross: e.this_month,
+      this_month_net: e.this_month * (1 - rate / 100),
+      order_count: e.orderCount,
+      payout_accounts: [
+        ...(s.bankAccounts ?? []).map((b) => `${b.bankName} · ${last4(b.accountNumber)}`),
+        ...(s.mobileMoneyAccounts ?? []).map((m) => `${m.provider} · ${last4(m.mobileNumber)}`),
+      ],
+    };
+  },
 };

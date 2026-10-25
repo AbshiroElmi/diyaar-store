@@ -51,107 +51,62 @@ export async function saveCsv(filename: string, csv: string) {
 
 // ── Menu items ──────────────────────────────────────────────
 
-const HEADERS = ["name", "description", "category", "price", "sale_price", "prep_time", "in_stock", "popular"] as const;
+const HEADERS = ["name", "description", "category", "price", "sale_price", "in_stock"] as const;
 
 const yes = (v: string) => /^(1|y|yes|true)$/i.test(v.trim());
 
 export const productsToCsv = (products: Product[]) =>
-  toCsv([
-    [...HEADERS],
-    ...products.map((p) => [p.product_name, p.description, p.category, p.price, p.discount_price ?? "", p.preparation_time ?? "", p.is_available ? "yes" : "no", p.is_popular ? "yes" : "no"]),
-  ]);
+  toCsv([[...HEADERS], ...products.map((p) => [p.product_name, p.description, p.category_name, p.price, p.discount_price ?? "", p.is_available ? "yes" : "no"])]);
 
 export const productTemplateCsv = (categories: Category[]) =>
   toCsv([
     [...HEADERS],
-    ["Chicken Shawarma", "Grilled chicken, garlic sauce, pickles", categories[0]?.category_name ?? "Grills", 8.5, "", 15, "yes", "no"],
+    ["Chicken Shawarma", "Grilled chicken, garlic sauce, pickles", categories[0]?.category_name ?? "Grills", 8.5, "", "yes"],
   ]);
 
 export interface ImportRow {
   line: number;
   data?: ProductInput;
-  /** The row's category doesn't exist yet and will be created on import. */
-  newCategory?: boolean;
+  /** Display name of the row's category (data.category holds its ID). */
+  categoryName?: string;
   error?: string;
 }
 
-/** Turn CSV text into validated product rows; bad rows carry an error instead of data. */
+/**
+ * Turn CSV text into validated product rows; bad rows carry an error instead of data.
+ * Categories must already exist: they're managed on the Diyaar web panel.
+ */
 export function readProductsCsv(text: string, categories: Category[]): ImportRow[] {
   const [head, ...body] = parseCsv(text);
   if (!head) throw new Error("The file is empty");
   const col = Object.fromEntries(head.map((h, i) => [h.trim().toLowerCase().replace(/\s+/g, "_"), i]));
   for (const h of ["name", "price"]) if (col[h] === undefined) throw new Error(`Missing “${h}” column`);
   const get = (r: string[], h: string) => (col[h] === undefined ? "" : (r[col[h]] ?? "").trim());
-  const byName = new Map(categories.map((c) => [c.category_name.toLowerCase(), c.category_name]));
+  const byName = new Map(categories.map((c) => [c.category_name.toLowerCase(), c]));
 
   return body.map((r, i) => {
     const line = i + 2;
     const name = get(r, "name");
-    // Category is optional (categories are hidden for now): blank rows go into the first one.
-    const rawCategory = get(r, "category") || categories[0]?.category_name || "Menu";
-    const category = byName.get(rawCategory.toLowerCase()) ?? rawCategory;
+    // A blank category goes into the first one.
+    const rawCategory = get(r, "category");
+    const category = rawCategory ? byName.get(rawCategory.toLowerCase()) : categories[0];
     const price = Number(get(r, "price"));
     const sale = get(r, "sale_price") ? Number(get(r, "sale_price")) : undefined;
-    const prep = get(r, "prep_time") ? Number(get(r, "prep_time")) : undefined;
     if (!name) return { line, error: "Name is empty" };
-    if (!category) return { line, error: "Category is empty" };
+    if (!category) return { line, error: rawCategory ? `No category “${rawCategory}” — add it on the Diyaar web panel` : "Category is empty" };
     if (!(price > 0)) return { line, error: "Price must be above 0" };
     if (sale !== undefined && !(sale > 0 && sale < price)) return { line, error: "Sale price must be lower than price" };
-    if (prep !== undefined && !(prep >= 0)) return { line, error: "Prep time must be a number" };
     return {
       line,
-      newCategory: !byName.has(category.toLowerCase()),
+      categoryName: category.category_name,
       data: {
         product_name: name,
         description: get(r, "description"),
-        category,
+        category: category.name,
         price,
         discount_price: sale,
-        preparation_time: prep,
         is_available: get(r, "in_stock") ? (yes(get(r, "in_stock")) ? 1 : 0) : 1,
-        is_popular: yes(get(r, "popular")) ? 1 : 0,
       },
     };
-  });
-}
-
-// ── Categories ──────────────────────────────────────────────
-
-const CATEGORY_HEADERS = ["name", "description", "visible"] as const;
-
-export interface CategoryImportRow {
-  line: number;
-  data?: { category_name: string; description: string; is_active: 0 | 1 };
-  error?: string;
-}
-
-export const categoriesToCsv = (categories: Category[]) =>
-  toCsv([[...CATEGORY_HEADERS], ...categories.map((c) => [c.category_name, c.description ?? "", c.is_active ? "yes" : "no"])]);
-
-export const categoryTemplateCsv = () =>
-  toCsv([
-    [...CATEGORY_HEADERS],
-    ["Breakfast", "Served until 11am", "yes"],
-    ["Fresh Juices", "", "yes"],
-  ]);
-
-/** Validate category rows; names already on the menu (or repeated in the file) are skipped. */
-export function readCategoriesCsv(text: string, existing: Category[]): CategoryImportRow[] {
-  const [head, ...body] = parseCsv(text);
-  if (!head) throw new Error("The file is empty");
-  const col = Object.fromEntries(head.map((h, i) => [h.trim().toLowerCase().replace(/\s+/g, "_"), i]));
-  const nameCol = col.name ?? col.category ?? col.category_name;
-  if (nameCol === undefined) throw new Error("Missing “name” column");
-  const get = (r: string[], i: number | undefined) => (i === undefined ? "" : (r[i] ?? "").trim());
-  const seen = new Set(existing.map((c) => c.category_name.toLowerCase()));
-
-  return body.map((r, i) => {
-    const line = i + 2;
-    const name = get(r, nameCol);
-    if (!name) return { line, error: "Name is empty" };
-    if (seen.has(name.toLowerCase())) return { line, error: `“${name}” already exists` };
-    seen.add(name.toLowerCase());
-    const visible = get(r, col.visible);
-    return { line, data: { category_name: name, description: get(r, col.description), is_active: visible && !yes(visible) ? 0 : 1 } };
   });
 }

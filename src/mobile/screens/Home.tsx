@@ -3,10 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { useTheme } from "next-themes";
 import { Area, AreaChart, ResponsiveContainer, XAxis } from "recharts";
-import { BarChart3, Bell, ChefHat, ChevronDown, ChevronRight, Clock, Headphones, Megaphone, PackageCheck, PackagePlus, ReceiptText, Search, ShoppingBag, Star } from "lucide-react";
-import { useBanners, /* useCategories, */ useDashboard, useNotifications, useProducts, useSetStoreOpen, useStore } from "@/hooks/queries";
+import { ChefHat, ChevronDown, Clock, PackageCheck, PackagePlus, ReceiptText, Search, ShoppingBag, Star, Users } from "lucide-react";
+import { useBanners, useStoreCategories, useDashboard, useOrderCounts, useSetStoreOpen, useStore } from "@/hooks/queries";
 import { formatMoney, formatNumber, initials, timeAgo } from "@/lib/format";
 import { haptic, setStatusBarTheme } from "@/lib/native";
+import { useHomeCategories } from "@/lib/prefs";
 import { cn } from "@/lib/utils";
 import { BannerCarousel } from "../BannerCarousel";
 import { CARD, ErrorBlock, Kpi, Loading, ProductArt, Screen, SectionTitle } from "../ui";
@@ -20,25 +21,25 @@ const PIPELINE = [
 
 const QUICK = [
   { label: "Add item", icon: PackagePlus, href: "/products/new" },
-  { label: "Offers", icon: Megaphone, href: "/promotions" },
-  { label: "Reports", icon: BarChart3, href: "/reports" },
-  { label: "Help", icon: Headphones, href: "/support" },
+  { label: "Reviews", icon: Star, href: "/reviews" },
+  { label: "Hours", icon: Clock, href: "/hours" },
+  { label: "Team", icon: Users, href: "/team" },
 ];
 
 export default function HomeScreen() {
   const navigate = useNavigate();
   const { resolvedTheme } = useTheme();
   const { data, isLoading, error, refetch } = useDashboard();
+  const { data: store } = useStore();
   const { data: allBanners } = useBanners();
   const banners = allBanners?.filter((b) => b.is_active !== 0);
-  // Categories hidden for now — products only.
-  // const { data: allCategories } = useCategories();
-  // const categories = allCategories?.filter((c) => c.is_active);
-  const { data: store } = useStore();
-  const { data: products } = useProducts();
-  // Best sellers come from past orders; show each product's current name and photo.
-  const productOf = (id: string) => products?.data.find((x) => x.name === id);
-  const { data: notifications } = useNotifications();
+  const { data: allCategories } = useStoreCategories();
+  const activeCategories = allCategories?.filter((c) => c.is_active) ?? [];
+  // The owner picks which categories show here (Categories screen, saved on this phone).
+  const { shown } = useHomeCategories(activeCategories.map((c) => c.name));
+  const categories = activeCategories.filter((c) => shown.has(c.name));
+  // Live counts cover every active order, not just today's.
+  const { data: counts } = useOrderCounts();
   const setOpen = useSetStoreOpen();
   const go = (href: string) => {
     haptic.tap();
@@ -92,7 +93,7 @@ export default function HomeScreen() {
     };
   }, []);
 
-  const newOrders = data?.today.confirming ?? 0;
+  const newOrders = counts?.confirming ?? data?.today.confirming ?? 0;
 
   return (
     <Screen title="Home" bare tabbar>
@@ -129,10 +130,6 @@ export default function HomeScreen() {
           <button onClick={() => go("/orders?tab=history")} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15" aria-label="Search">
             <Search className="h-[18px] w-[18px]" />
           </button>
-          <button onClick={() => go("/notifications")} className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15" aria-label="Notifications">
-            <Bell className="h-[18px] w-[18px]" />
-            {!!notifications?.unread && <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#BEFF00] ring-2 ring-[#1d8278]" />}
-          </button>
         </div>
       </div>
 
@@ -153,10 +150,6 @@ export default function HomeScreen() {
               <ChevronDown className="h-4 w-4 shrink-0" />
             </p>
           </button>
-          <button onClick={() => go("/notifications")} className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15" aria-label="Notifications">
-            <Bell className="h-5 w-5" />
-            {!!notifications?.unread && <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-[#BEFF00] ring-2 ring-[#1d8278]" />}
-          </button>
           <button onClick={() => go("/store")} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[13px] font-extrabold text-[#219186]">
             {store ? initials(store.store_name) : ""}
           </button>
@@ -168,7 +161,7 @@ export default function HomeScreen() {
             <Clock className="h-4 w-4" /> {store?.preparation_time ?? "–"} min prep
           </span>
           <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/15 px-2.5 py-1.5 text-[13px] font-bold">
-            <Star className="h-4 w-4 fill-[#BEFF00] text-[#BEFF00]" /> {store?.rating.toFixed(1) ?? "–"}
+            <Star className="h-4 w-4 fill-[#BEFF00] text-[#BEFF00]" /> {data ? data.kpis.rating.value.toFixed(1) : "–"}
           </span>
           <button
             onClick={toggleOpen}
@@ -204,7 +197,7 @@ export default function HomeScreen() {
             </SectionTitle>
             <div className="grid grid-cols-4 gap-2 px-4">
               {PIPELINE.map((p) => {
-                const count = data.today[p.key];
+                const count = counts?.[p.key] ?? data.today[p.key];
                 const hot = p.key === "confirming" && count > 0;
                 return (
                   <button key={p.key} onClick={() => go(`/orders?status=${p.key}`)} className={cn("relative flex flex-col items-center rounded-xl py-3 transition-transform active:scale-95", p.tint, hot && "ring-2 ring-[#e07b00]")}>
@@ -220,18 +213,13 @@ export default function HomeScreen() {
 
           {/* ── Today ─────────────────────────────────── */}
           <section>
-            <SectionTitle action="Reports" onAction={() => go("/reports")}>
-              Today's business
-            </SectionTitle>
+            <SectionTitle>Today's business</SectionTitle>
             <div className="grid grid-cols-2 gap-2 px-4">
               <Kpi label="Sales" value={formatMoney(data.kpis.revenue.value)} current={data.kpis.revenue.value} previous={data.kpis.revenue.previous} hint="vs yesterday" />
               <Kpi label="Orders" value={formatNumber(data.kpis.orders.value)} current={data.kpis.orders.value} previous={data.kpis.orders.previous} hint="vs yesterday" />
             </div>
-            <button onClick={() => go("/reports")} className={cn(CARD, "mx-4 mt-2 block w-[calc(100%-2rem)] p-3.5 text-left")}>
-              <div className="flex items-center justify-between">
-                <p className="text-[12px] font-semibold uppercase tracking-wide text-black/45 dark:text-white/50">Last 7 days</p>
-                <ChevronRight className="h-4 w-4 text-black/30" />
-              </div>
+            <div className={cn(CARD, "mx-4 mt-2 p-3.5")}>
+              <p className="text-[12px] font-semibold uppercase tracking-wide text-black/45 dark:text-white/50">Last 7 days</p>
               <p className="tabular text-[22px] font-extrabold tracking-tight">{formatMoney(data.trend.reduce((s, d) => s + d.revenue, 0))}</p>
               <div className="mt-2 h-20">
                 <ResponsiveContainer width="100%" height="100%">
@@ -247,7 +235,7 @@ export default function HomeScreen() {
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
-            </button>
+            </div>
           </section>
 
           {/* ── Quick actions ─────────────────────────── */}
@@ -260,46 +248,29 @@ export default function HomeScreen() {
             ))}
           </div>
 
-          {/* ── Your menu (category tiles) — hidden for now, products only ──
-          {!!categories?.length && (
+
+
+          {/* ── Your menu (category tiles) ──────────────── */}
+          {!!activeCategories.length && (
             <section>
-              <SectionTitle action="Manage" onAction={() => go("/categories")}>
+              <SectionTitle action="Edit" onAction={() => go("/categories")}>
                 Your menu
               </SectionTitle>
+              {!categories.length && (
+                <button onClick={() => go("/categories")} className={cn(CARD, "mx-4 block w-[calc(100%-2rem)] p-3.5 text-left text-[14px] text-black/55 dark:text-white/55")}>
+                  No categories on Home. Tap to choose some.
+                </button>
+              )}
               <div className="grid grid-cols-4 gap-x-2 gap-y-3 px-4">
-                {categories.map((c) => {
-                  return (
-                    <button key={c.name} onClick={() => go(`/products?category=${encodeURIComponent(c.category_name)}`)} className="flex flex-col items-center gap-1.5 transition-transform active:scale-95">
-                      <ProductArt category={c.category_name} image={c.image} className="aspect-square w-full rounded-xl" emojiClassName="text-[34px]" />
-                      <span className="line-clamp-2 text-center text-[11px] font-bold leading-tight">{c.category_name}</span>
-                    </button>
-                  );
-                })}
+                {categories.map((c) => (
+                  <button key={c.name} onClick={() => go(`/products?category=${encodeURIComponent(c.name)}`)} className="flex flex-col items-center gap-1.5 transition-transform active:scale-95">
+                    <ProductArt category={c.category_name} image={c.image} className="aspect-square w-full rounded-xl" emojiClassName="text-[34px]" />
+                    <span className="line-clamp-2 text-center text-[11px] font-bold leading-tight">{c.category_name}</span>
+                  </button>
+                ))}
               </div>
             </section>
           )}
-          */}
-
-          {/* ── Best sellers ──────────────────────────── */}
-          <section>
-            <SectionTitle action="See all" onAction={() => go("/products")}>
-              Best sellers this week
-            </SectionTitle>
-            <div className="no-scrollbar flex gap-2.5 overflow-x-auto px-4 pb-1">
-              {data.top_products.map((p, i) => {
-                const current = productOf(p.product);
-                return (
-                <button key={p.product} onClick={() => go(`/products/${p.product}`)} className={cn(CARD, "relative w-[132px] shrink-0 p-2.5 text-left")}>
-                  {i === 0 && <span className="absolute left-4 top-4 z-10 rounded-md bg-[#BEFF00] px-1.5 text-[10px] font-extrabold uppercase leading-[18px] text-[#2B330F]">#1</span>}
-                  <ProductArt category={current?.category ?? ""} image={current?.image} className="h-[110px] w-full rounded-xl" emojiClassName="text-[52px]" />
-                  <p className="mt-2 line-clamp-2 h-9 text-[13px] font-bold leading-tight">{current?.product_name ?? p.product_name}</p>
-                  <p className="mt-1 text-[11px] font-semibold text-black/45 dark:text-white/50">{p.quantity} sold</p>
-                  <p className="tabular text-[14px] font-extrabold">{formatMoney(p.revenue)}</p>
-                </button>
-                );
-              })}
-            </div>
-          </section>
 
           {/* ── Recent orders ─────────────────────────── */}
           <section>
@@ -315,7 +286,7 @@ export default function HomeScreen() {
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[15px] font-bold">{o.customer_name}</span>
                       <span className="block text-[12px] text-black/45 dark:text-white/50">
-                        {o.item_count} item{o.item_count > 1 ? "s" : ""} · {timeAgo(o.creation)}
+                        {timeAgo(o.creation)}
                       </span>
                     </span>
                     <span className="text-right">

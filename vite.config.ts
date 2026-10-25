@@ -9,10 +9,10 @@ export default defineConfig(({ mode }) => {
     server: {
       host: "::",
       port: Number(env.PORTAL_DEV_PORT) || 8090,
-      // In live mode the browser calls /api/... and Vite forwards it to Frappe.
-      proxy: env.PORTAL_DEV_PROXY_TARGET
-        ? { "/api": { target: env.PORTAL_DEV_PROXY_TARGET, changeOrigin: true } }
-        : undefined,
+      // The browser calls /api/... (and loads /files/... photos) on its own origin; Vite forwards them to Frappe.
+      proxy: Object.fromEntries(
+        ["/api", "/files"].map((path) => [path, { target: env.PORTAL_DEV_PROXY_TARGET || "https://diyaar-app.easytouch.cloud", changeOrigin: true }]),
+      ),
     },
     plugins: [react()],
     define: { __APP_VERSION__: JSON.stringify(process.env.npm_package_version ?? "") },

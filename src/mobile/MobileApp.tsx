@@ -4,15 +4,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import { App as KonstaApp, Icon, List, ListItem, Tabbar, TabbarLink } from "konsta/react";
 import { useTheme } from "next-themes";
 import {
-  BarChart3,
-  Bell,
   Clock,
-  // FolderTree, // Categories hidden for now
-  // GalleryHorizontal, Bike — used by the hidden banners/drivers menu entries
-  Headphones,
+  FolderTree,
+  GalleryHorizontal,
   LayoutGrid,
   LogOut,
-  Megaphone,
   Menu as MenuIcon,
   Package,
   ReceiptText,
@@ -25,9 +21,10 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNotifications, useOrderCounts, useReviews, useSettings, useStore } from "@/hooks/queries";
+import { useOrderCounts, useStore } from "@/hooks/queries";
 import { haptic, registerBackButton } from "@/lib/native";
 import { initials } from "@/lib/format";
+import { orderSoundEnabled } from "@/lib/prefs";
 import { cn } from "@/lib/utils";
 import { IconTile, Sheet } from "./ui";
 import HomeScreen from "./screens/Home";
@@ -36,20 +33,12 @@ import OrderDetailScreen from "./screens/OrderDetail";
 import ProductsScreen from "./screens/Products";
 import ProductEditScreen from "./screens/ProductEdit";
 import EarningsScreen from "./screens/Earnings";
-import ReportsScreen from "./screens/Reports";
 import ReviewsScreen from "./screens/Reviews";
-import PromotionsScreen from "./screens/Promotions";
-// Banners and drivers come from the Diyaar API; the store can't create them, so these screens are hidden for now.
-// import BannersScreen from "./screens/Banners";
-// import DriversScreen from "./screens/Drivers";
-// Categories hidden for now — products only.
-// import CategoriesScreen from "./screens/Categories";
+import CategoriesScreen from "./screens/Categories";
+import BannersScreen from "./screens/Banners";
 import StoreProfileScreen from "./screens/StoreProfile";
 import HoursScreen from "./screens/Hours";
 import TeamScreen from "./screens/Team";
-import NotificationsScreen from "./screens/Notifications";
-import SupportScreen from "./screens/Support";
-import TicketScreen from "./screens/Ticket";
 import SettingsScreen from "./screens/Settings";
 
 /** iOS styling on every platform, Android included, so both apps look the same. `?theme=material` forces Material for testing. */
@@ -79,36 +68,28 @@ interface MenuEntry {
   label: string;
   icon: LucideIcon;
   tint: string;
-  badge?: "reviews" | "notifications";
 }
 
 const MENU: Array<{ title: string; items: MenuEntry[] }> = [
   {
-    title: "Business",
+    title: "Menu",
     items: [
-      { href: "/reports", label: "Reports", icon: BarChart3, tint: "bg-[#007aff]" },
-      { href: "/reviews", label: "Reviews", icon: Star, tint: "bg-[#ff9500]", badge: "reviews" },
-      { href: "/promotions", label: "Promotions", icon: Megaphone, tint: "bg-[#ff2d55]" },
-      // { href: "/banners", label: "Home banners", icon: GalleryHorizontal, tint: "bg-[#34c759]" }, // banners come from the API
-      // { href: "/categories", label: "Categories", icon: FolderTree, tint: "bg-[#5856d6]" },
+      { href: "/categories", label: "Categories", icon: FolderTree, tint: "bg-[#5856d6]" },
+      { href: "/banners", label: "Home banners", icon: GalleryHorizontal, tint: "bg-[#34c759]" },
     ],
   },
   {
     title: "Store",
     items: [
+      { href: "/reviews", label: "Reviews", icon: Star, tint: "bg-[#ff9500]" },
       { href: "/store", label: "Store Profile", icon: Store, tint: "bg-[#219186]" },
       { href: "/hours", label: "Opening Hours", icon: Clock, tint: "bg-[#34c759]" },
       { href: "/team", label: "Team", icon: Users, tint: "bg-[#5ac8fa]" },
-      // { href: "/drivers", label: "Delivery drivers", icon: Bike, tint: "bg-[#ff9500]" }, // drivers come from the API
     ],
   },
   {
     title: "Account",
-    items: [
-      { href: "/notifications", label: "Notifications", icon: Bell, tint: "bg-[#ff3b30]", badge: "notifications" },
-      { href: "/support", label: "Help & Support", icon: Headphones, tint: "bg-[#af52de]" },
-      { href: "/settings", label: "Settings", icon: Settings, tint: "bg-[#8e8e93]" },
-    ],
+    items: [{ href: "/settings", label: "Settings", icon: Settings, tint: "bg-[#8e8e93]" }],
   },
 ];
 
@@ -165,9 +146,6 @@ function MenuSheet({ opened, onClose }: { opened: boolean; onClose: () => void }
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { data: store } = useStore();
-  const { data: notifications } = useNotifications();
-  const { data: reviews } = useReviews({ filter: "unreplied" });
-  const badges = { notifications: notifications?.unread ?? 0, reviews: reviews?.summary.unreplied ?? 0 };
 
   const go = (href: string) => {
     haptic.tap();
@@ -242,20 +220,9 @@ function MenuSheet({ opened, onClose }: { opened: boolean; onClose: () => void }
           <div key={group.title}>
             <p className="px-8 pb-1.5 pt-4 text-[13px] uppercase text-black/45 dark:text-white/45">{group.title}</p>
             <List strong inset dividers className="!my-0">
-              {group.items.map((item) => {
-                const count = item.badge ? badges[item.badge] : 0;
-                return (
-                  <ListItem
-                    key={item.href}
-                    link
-                    chevron
-                    onClick={() => go(item.href)}
-                    media={<IconTile icon={item.icon} className={item.tint} />}
-                    title={item.label}
-                    after={count ? <span className="tabular flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-[#ff3b30] px-1.5 text-[13px] font-medium text-white">{count}</span> : undefined}
-                  />
-                );
-              })}
+              {group.items.map((item) => (
+                <ListItem key={item.href} link chevron onClick={() => go(item.href)} media={<IconTile icon={item.icon} className={item.tint} />} title={item.label} />
+              ))}
             </List>
           </div>
         ))}
@@ -283,7 +250,6 @@ function MenuSheet({ opened, onClose }: { opened: boolean; onClose: () => void }
 
 function NewOrderAlert() {
   const { data: counts } = useOrderCounts();
-  const { data: settings } = useSettings();
   const navigate = useNavigate();
   const previous = useRef<number | null>(null);
 
@@ -291,7 +257,7 @@ function NewOrderAlert() {
     if (!counts) return;
     if (previous.current !== null && counts.confirming > previous.current) {
       haptic.warning();
-      if (settings?.notifications.new_order_sound !== false) {
+      if (orderSoundEnabled()) {
         try {
           const ctx = new AudioContext();
           [880, 1175].forEach((f, i) => {
@@ -312,7 +278,7 @@ function NewOrderAlert() {
       toast.warning("New order 🛎️", { description: "Waiting for you to accept", action: { label: "View", onClick: () => navigate("/orders") }, duration: 6000 });
     }
     previous.current = counts.confirming;
-  }, [counts, settings, navigate]);
+  }, [counts, navigate]);
 
   return null;
 }
@@ -366,7 +332,6 @@ export default function MobileApp() {
   const { resolvedTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const { data: counts } = useOrderCounts();
-  const { data: notifications } = useNotifications();
   const pathRef = useRef(location.pathname);
   pathRef.current = location.pathname;
 
@@ -390,18 +355,12 @@ export default function MobileApp() {
         <Route path="products/new" element={<ProductEditScreen />} />
         <Route path="products/:id" element={<ProductEditScreen />} />
         <Route path="earnings" element={<EarningsScreen />} />
-        <Route path="reports" element={<ReportsScreen />} />
         <Route path="reviews" element={<ReviewsScreen />} />
-        <Route path="promotions" element={<PromotionsScreen />} />
-        {/* <Route path="banners" element={<BannersScreen />} /> */}
-        {/* <Route path="categories" element={<CategoriesScreen />} /> */}
+        <Route path="categories" element={<CategoriesScreen />} />
+        <Route path="banners" element={<BannersScreen />} />
         <Route path="store" element={<StoreProfileScreen />} />
         <Route path="hours" element={<HoursScreen />} />
         <Route path="team" element={<TeamScreen />} />
-        {/* <Route path="drivers" element={<DriversScreen />} /> */}
-        <Route path="notifications" element={<NotificationsScreen />} />
-        <Route path="support" element={<SupportScreen />} />
-        <Route path="support/:id" element={<TicketScreen />} />
         <Route path="settings" element={<SettingsScreen />} />
         <Route path="*" element={<HomeScreen />} />
       </PageStack>
@@ -424,7 +383,6 @@ export default function MobileApp() {
                 icon={
                   <span className="relative inline-flex">
                     <MenuIcon className={mobileTheme === "ios" ? "h-7 w-7" : "h-6 w-6"} />
-                    {!!notifications?.unread && <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-[#ff3b30] ring-2 ring-white dark:ring-black" />}
                   </span>
                 }
                 label="Menu"
