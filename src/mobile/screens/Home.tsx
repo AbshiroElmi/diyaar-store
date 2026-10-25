@@ -253,7 +253,7 @@ export default function HomeScreen() {
           {/* ── Your menu (category tiles) ──────────────── */}
           {!!activeCategories.length && (
             <section>
-              <SectionTitle action="Edit" onAction={() => go("/categories")}>
+              <SectionTitle action="Manage" onAction={() => go("/categories")}>
                 Your menu
               </SectionTitle>
               {!categories.length && (
