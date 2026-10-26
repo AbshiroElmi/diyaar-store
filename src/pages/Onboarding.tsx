@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 /** Slide 2: a new order arriving, written so it fits any kind of store. */
 function OrderArt() {
   return (
-    <div className="relative flex h-full items-center justify-center bg-gradient-to-br from-[#3fd0bd] via-[#219186] to-[#0f4f48] pb-[34vh]">
+    <div className="relative flex h-full items-center justify-center bg-gradient-to-br from-[#3fd0bd] via-[#219186] to-[#0f4f48]">
       <span className="absolute -left-10 top-16 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
       <span className="absolute -right-8 bottom-10 h-40 w-40 rounded-full bg-[#BEFF00]/20 blur-2xl" />
       <div className="relative w-[78%] max-w-[300px]">
@@ -56,7 +56,7 @@ function ProductsArt() {
     ["📱", "Charger", "bg-[#ffeef2]", true],
   ];
   return (
-    <div className="relative flex h-full items-center justify-center bg-gradient-to-b from-[#2aa898] via-[#16685f] to-[#0b3b36] pb-[34vh]">
+    <div className="relative flex h-full items-center justify-center bg-gradient-to-br from-[#e9fbf8] to-[#cdeee9] dark:from-[#0d2a27] dark:to-[#0a1f1d]">
       <div className="relative grid w-[80%] max-w-[310px] grid-cols-3 gap-2.5">
         {items.map(([emoji, label, tint, inStock], i) => (
           <div key={label} className={cn("rounded-2xl bg-white p-2 shadow-[0_10px_24px_-14px_rgba(15,79,72,0.5)] dark:bg-[#1c1c1d]", i % 2 ? "translate-y-3" : "")}>
@@ -120,21 +120,22 @@ export default function OnboardingPage({ onDone }: { onDone: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black">
-      {/* Slides fill the screen; the words sit in white on a shadow rising from the bottom. Swipe or tap Next. */}
+    <div className="fixed inset-0 flex flex-col bg-white dark:bg-black">
+      {/* Slides: media on top, words below; swipe or tap Next */}
       <div
         ref={track}
         onScroll={(e) => setIndex(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}
-        className="no-scrollbar flex h-full snap-x snap-mandatory overflow-x-auto"
+        className="no-scrollbar flex min-h-0 flex-1 snap-x snap-mandatory overflow-x-auto"
       >
         {SLIDES.map((s) => (
-          <section key={s.title} className="relative h-full w-full shrink-0 snap-center overflow-hidden">
-            <div className="absolute inset-0">{s.media}</div>
-            <span className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/35 to-transparent" />
-            <span className="pointer-events-none absolute inset-x-0 bottom-0 h-[52%] bg-gradient-to-t from-black via-black/80 to-transparent" />
-            <div className="absolute inset-x-0 bottom-0 px-7 pb-[calc(env(safe-area-inset-bottom)+104px)]">
-              <h1 className="text-[30px] font-extrabold leading-tight tracking-tight text-white drop-shadow-md">{s.title}</h1>
-              <p className="mt-2.5 text-[16px] leading-relaxed text-white/85">{s.text}</p>
+          <section key={s.title} className="flex w-full shrink-0 snap-center flex-col">
+            <div className="relative min-h-0 flex-1 overflow-hidden rounded-b-[36px]">
+              {s.media}
+              <span className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/35 to-transparent" />
+            </div>
+            <div className="px-7 pb-4 pt-7">
+              <h1 className="text-[28px] font-extrabold leading-tight tracking-tight text-[#1c1c1e] dark:text-white">{s.title}</h1>
+              <p className="mt-2.5 text-[16px] leading-relaxed text-black/60 dark:text-white/60">{s.text}</p>
             </div>
           </section>
         ))}
@@ -149,16 +150,16 @@ export default function OnboardingPage({ onDone }: { onDone: () => void }) {
       </button>
 
       {/* Dots and the main button */}
-      <div className="absolute inset-x-0 bottom-0 flex items-center justify-between px-7 pb-[calc(env(safe-area-inset-bottom)+28px)]">
+      <div className="flex items-center justify-between px-7 pb-[calc(env(safe-area-inset-bottom)+20px)] pt-2">
         <div className="flex gap-1.5">
           {SLIDES.map((s, i) => (
-            <button key={s.title} type="button" aria-label={`Slide ${i + 1}`} onClick={() => goTo(i)} className={cn("h-2 rounded-full transition-all duration-300", i === index ? "w-6 bg-[#BEFF00]" : "w-2 bg-white/35")} />
+            <button key={s.title} type="button" aria-label={`Slide ${i + 1}`} onClick={() => goTo(i)} className={cn("h-2 rounded-full transition-all duration-300", i === index ? "w-6 bg-primary" : "w-2 bg-black/15 dark:bg-white/25")} />
           ))}
         </div>
         <button
           type="button"
           onClick={next}
-          className={cn("flex h-12 items-center justify-center gap-1 rounded-2xl bg-primary font-bold text-white shadow-[0_10px_24px_-8px_rgba(0,0,0,0.6)] transition-all active:scale-[0.97]", last ? "px-7 text-[16px]" : "w-12")}
+          className={cn("flex h-12 items-center justify-center gap-1 rounded-2xl bg-primary font-bold text-white shadow-[0_10px_24px_-10px_rgba(33,145,134,0.7)] transition-all active:scale-[0.97]", last ? "px-7 text-[16px]" : "w-12")}
           aria-label={last ? "Get started" : "Next"}
         >
           {last ? "Get started" : <ChevronRight className="h-6 w-6" strokeWidth={2.5} />}
