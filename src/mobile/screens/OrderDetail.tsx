@@ -12,6 +12,49 @@ import { ErrorBlock, IconTile, Loading, Screen } from "../ui";
 const PAYMENT: Record<Order["payment_method"], string> = { cash: "Cash on delivery", card: "Card", wallet: "Diyaar wallet", mobile_money: "Mobile money (EVC)" };
 const isPickup = (o: Order) => o.delivery_type.includes("pickup");
 
+interface Step {
+  label: string;
+  /** When it happened; empty for steps still to come. */
+  time?: string;
+  /** Who did it: customer, store, or the driver's name. */
+  who: string;
+  done: boolean;
+}
+
+/**
+ * The order's journey as one row per step. The backend logs several driver updates
+ * (assigned, picking up, on the way…), so each step keeps only its first entry.
+ * Steps that haven't happened yet are listed too, greyed out.
+ */
+function buildSteps(order: Order): Step[] {
+  const firstAt = (...statuses: OrderStatus[]) => order.timeline.find((t) => statuses.includes(t.status))?.timestamp;
+  const driver = order.driver_name ?? "Driver";
+  const flow: Array<{ status: OrderStatus[]; label: string; who: string }> = [
+    { status: ["confirming"], label: "New", who: "Customer" },
+    { status: ["accepted"], label: "Accepted", who: "Store" },
+    { status: ["preparing"], label: "Preparing", who: "Store" },
+    { status: ["ready"], label: "Ready", who: "Store" },
+    ...(isPickup(order)
+      ? [{ status: ["completed", "delivered"] as OrderStatus[], label: "Picked up", who: "Customer" }]
+      : [
+          { status: ["picked_up"] as OrderStatus[], label: "On the way", who: driver },
+          { status: ["delivered", "completed"] as OrderStatus[], label: "Delivered", who: driver },
+        ]),
+  ];
+  // How far the order has got, even if a step was never logged.
+  const reached = flow.findIndex((f) => f.status.includes(order.status));
+  const steps = flow.map((f, i) => {
+    const time = firstAt(...f.status);
+    return { label: f.label, time, who: f.who, done: !!time || (reached >= 0 && i <= reached) };
+  });
+  if (order.status === "cancelled" || order.status === "rejected") {
+    // A stopped order shows what happened, then why it ended.
+    const end = order.timeline.find((t) => t.status === order.status);
+    return [...steps.filter((x) => x.done), { label: statusLabel(order.status), time: end?.timestamp, who: end?.actor_type === "store" ? "Store" : end?.actor_type === "customer" ? "Customer" : "Diyaar", done: true }];
+  }
+  return steps;
+}
+
 /** The next step for the store. Diyaar assigns drivers, so delivery orders end at "ready". */
 function ActionBar({ order }: { order: Order }) {
   const update = useUpdateOrderStatus();
@@ -123,22 +166,31 @@ export default function OrderDetailScreen() {
           <BlockTitle>Timeline</BlockTitle>
           <List strong inset>
             <div className="px-4 py-3">
-              {order.timeline.map((t, i) => {
-                const last = i === order.timeline.length - 1;
-                return (
-                  <div key={i} className="relative flex gap-3 pb-4 last:pb-0">
-                    {!last && <span className="absolute left-[5px] top-4 h-full w-0.5 bg-black/10 dark:bg-white/15" />}
-                    <span className={cn("relative mt-1.5 h-3 w-3 shrink-0 rounded-full", last ? "bg-primary ring-4 ring-primary/20" : "bg-black/20 dark:bg-white/30")} />
-                    <div>
-                      <p className="text-[15px] font-medium">{statusLabel(t.status)}</p>
-                      <p className="text-[13px] capitalize text-black/50 dark:text-white/50">
-                        {formatTime(t.timestamp)} · {t.actor_type}
-                        {t.note ? ` · ${t.note}` : ""}
-                      </p>
+              {(() => {
+                const steps = buildSteps(order);
+                const current = steps.map((x) => x.done).lastIndexOf(true);
+                return steps.map((st, i) => {
+                  const last = i === steps.length - 1;
+                  const now = i === current;
+                  return (
+                    <div key={st.label} className="relative flex gap-3 pb-4 last:pb-0">
+                      {!last && <span className={cn("absolute left-[5px] top-4 h-full w-0.5", i < current ? "bg-primary/40" : "bg-black/10 dark:bg-white/15")} />}
+                      <span
+                        className={cn(
+                          "relative mt-1.5 h-3 w-3 shrink-0 rounded-full",
+                          now ? "bg-primary ring-4 ring-primary/20" : st.done ? "bg-primary/50" : "border-2 border-black/15 bg-white dark:border-white/20 dark:bg-transparent",
+                        )}
+                      />
+                      <div>
+                        <p className={cn("text-[15px] font-medium", !st.done && "text-black/35 dark:text-white/35")}>{st.label}</p>
+                        <p className={cn("text-[13px]", st.done ? "text-black/50 dark:text-white/50" : "text-black/30 dark:text-white/30")}>
+                          {st.time ? `${formatTime(st.time)} · ${st.who}` : st.done ? st.who : st.who === "Driver" ? "Waiting for a driver" : st.who}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                });
+              })()}
             </div>
           </List>
 
