@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { useTheme } from "next-themes";
 import { Area, AreaChart, ResponsiveContainer, XAxis } from "recharts";
 import { ChefHat, ChevronDown, Clock, PackageCheck, PackagePlus, ReceiptText, Search, ShoppingBag, Star, Users } from "lucide-react";
-import { useBanners, useStoreCategories, useDashboard, useOrderCounts, useSetStoreOpen, useStore } from "@/hooks/queries";
+import { useBanners, useCategories, useDashboard, useOrderCounts, useSetStoreOpen, useStore } from "@/hooks/queries";
 import { formatMoney, formatNumber, initials, timeAgo } from "@/lib/format";
 import { haptic, setStatusBarTheme } from "@/lib/native";
 import { useHomeCategories } from "@/lib/prefs";
@@ -35,7 +35,7 @@ export default function HomeScreen() {
   const { data: allBanners } = useBanners();
   const isMyBanner = (b: { store?: { name: string } }) => !!store && b.store?.name === store.store_name;
   const banners = allBanners && [...allBanners.filter(isMyBanner), ...allBanners.filter((b) => !isMyBanner(b))];
-  const { data: allCategories } = useStoreCategories();
+  const { data: allCategories } = useCategories();
   const activeCategories = allCategories?.filter((c) => c.is_active) ?? [];
   // The owner picks which categories show here (Categories screen, saved on this phone).
   const { shown } = useHomeCategories(activeCategories.map((c) => c.name));

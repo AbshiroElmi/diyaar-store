@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { FolderTree } from "lucide-react";
 import { BlockFooter, BlockTitle, List, ListItem, Toggle } from "konsta/react";
-import { useStoreCategories } from "@/hooks/queries";
+import { useCategories } from "@/hooks/queries";
 import { haptic } from "@/lib/native";
 import { useHomeCategories } from "@/lib/prefs";
 import { cn } from "@/lib/utils";
@@ -13,7 +13,7 @@ import { Empty, ErrorBlock, Loading, ProductArt, Screen } from "../ui";
  */
 export default function CategoriesScreen() {
   const navigate = useNavigate();
-  const { data, isLoading, error, refetch } = useStoreCategories();
+  const { data, isLoading, error, refetch } = useCategories();
   const active = data?.filter((c) => c.is_active) ?? [];
   const hidden = data?.filter((c) => !c.is_active) ?? [];
   const { shown, toggle } = useHomeCategories(active.map((c) => c.name));

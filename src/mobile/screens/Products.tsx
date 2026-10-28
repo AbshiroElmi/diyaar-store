@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { AlertCircle, CheckCircle2, Download, FileDown, FileUp, Package, PackagePlus, Plus } from "lucide-react";
 import { ActionsGroup, ActionsLabel } from "konsta/react";
 import { toast } from "sonner";
-import { useCategories, useStoreCategories, useImportProducts, useProducts, useToggleProduct } from "@/hooks/queries";
+import { useCategories, useImportProducts, useProducts, useToggleProduct } from "@/hooks/queries";
 import { useDebounce } from "@/hooks/use-debounce";
 import type { Product } from "@/api";
 import { productsToCsv, productTemplateCsv, readProductsCsv, saveCsv, type ImportRow } from "@/lib/csv";
@@ -58,9 +58,8 @@ export default function ProductsScreen() {
   const category = params.get("category") ?? "all";
   const [search, setSearch] = useState("");
   const debounced = useDebounce(search, 250);
-  // The rail shows this store's categories; a CSV may name any category the store can use.
-  const { data: categories } = useStoreCategories();
-  const { data: allCategories } = useCategories();
+  // The rail shows every category the store can use, its own first.
+  const { data: categories } = useCategories();
   const { data: all } = useProducts();
   const { data, isLoading, error, refetch } = useProducts({ search: debounced || undefined, category: category === "all" ? undefined : category });
 
@@ -101,7 +100,7 @@ export default function ProductsScreen() {
     e.target.value = "";
     if (!file) return;
     try {
-      const rows = readProductsCsv(await file.text(), allCategories ?? []);
+      const rows = readProductsCsv(await file.text(), categories ?? []);
       if (!rows.length) return toast.error("No items found in that file");
       setImportRows(rows);
     } catch (err) {
@@ -194,7 +193,7 @@ export default function ProductsScreen() {
           <ActionItem icon={FileDown} onClick={pick(exportCsv)}>
             Export CSV{all ? ` (${all.total})` : ""}
           </ActionItem>
-          <ActionItem icon={Download} onClick={pick(() => saveCsv("menu-items-template.csv", productTemplateCsv(categories?.length ? categories : (allCategories ?? []))))}>
+          <ActionItem icon={Download} onClick={pick(() => saveCsv("menu-items-template.csv", productTemplateCsv(categories?.some((c) => c.in_store) ? categories.filter((c) => c.in_store) : (categories ?? []))))}>
             Download CSV template
           </ActionItem>
         </ActionsGroup>

@@ -23,9 +23,7 @@ export default function ProductEditScreen() {
   const { id } = useParams();
   const isNew = !id;
   const navigate = useNavigate();
-  const { data: allCategories } = useCategories();
-  // The store's own categories first, then the rest it can use.
-  const categories = allCategories && [...allCategories.filter((c) => c.in_store), ...allCategories.filter((c) => !c.in_store)];
+  const { data: categories } = useCategories();
   const { data: products, isLoading } = useProducts(isNew ? {} : { search: id });
   const product = products?.data.find((p) => p.name === id);
   const save = useSaveProduct();

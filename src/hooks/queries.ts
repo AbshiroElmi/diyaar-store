@@ -152,11 +152,14 @@ export function useUpdateOrderStatus() {
 export const useProducts = (params: ProductListParams = {}) =>
   useQuery({ queryKey: qk.products(params), queryFn: () => productsService.list(params), placeholderData: keepPreviousData });
 
-/** Every category the store can file a product under (the product form's picker). */
-export const useCategories = () => useQuery({ queryKey: qk.categories, queryFn: categoriesService.list, staleTime: 10 * 60_000 });
-/** Only the categories this store's products are in, for Home, the Categories screen and the Products list. */
-export const useStoreCategories = () =>
-  useQuery({ queryKey: qk.categories, queryFn: categoriesService.list, staleTime: 10 * 60_000, select: (all) => all.filter((c) => c.in_store) });
+/** Every category the store can file a product under, the store's own first. */
+export const useCategories = () =>
+  useQuery({
+    queryKey: qk.categories,
+    queryFn: categoriesService.list,
+    staleTime: 10 * 60_000,
+    select: (all) => [...all.filter((c) => c.in_store), ...all.filter((c) => !c.in_store)],
+  });
 
 function useCatalogInvalidate() {
   const qc = useQueryClient();
