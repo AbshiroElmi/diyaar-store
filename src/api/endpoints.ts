@@ -35,6 +35,11 @@ export const ENDPOINTS = {
   updateProduct: "update_product",
   deleteProduct: "delete_product",
   getCategories: "get_categories",
+  /** A product's price, discount, availability and stock at each of the store's locations. */
+  getProductLocations: "get_product_location_overrides",
+  setProductLocations: "set_product_location_overrides",
+  /** The store's branches; a new product has no location rows yet. */
+  getStoreLocations: "get_store_locations",
 
   // Reviews & money
   getReviews: "get_store_reviews",

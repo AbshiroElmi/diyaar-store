@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { useTheme } from "next-themes";
 import { Area, AreaChart, ResponsiveContainer, XAxis } from "recharts";
 import { ChefHat, ChevronDown, Clock, PackageCheck, PackagePlus, ReceiptText, Search, ShoppingBag, Star, Users } from "lucide-react";
-import { useBanners, useCategories, useDashboard, useOrderCounts, useSetStoreOpen, useStore } from "@/hooks/queries";
+import { useBanners, useCategories, useDashboard, useOrderCounts, useProducts, useSetStoreOpen, useStore } from "@/hooks/queries";
 import { formatMoney, formatNumber, initials, timeAgo } from "@/lib/format";
 import { haptic, setStatusBarTheme } from "@/lib/native";
 import { useHomeCategories } from "@/lib/prefs";
@@ -40,6 +40,9 @@ export default function HomeScreen() {
   // The owner picks which categories show here (Categories screen, saved on this phone).
   const { shown } = useHomeCategories(activeCategories.map((c) => c.name));
   const categories = activeCategories.filter((c) => shown.has(c.name));
+  // Products the owner tagged "Best seller" (Edit product → Tag).
+  const { data: products } = useProducts();
+  const bestSellers = products?.data.filter((p) => p.tags.includes("best_seller")) ?? [];
   // Live counts cover every active order, not just today's.
   const { data: counts } = useOrderCounts();
   const setOpen = useSetStoreOpen();
@@ -269,6 +272,30 @@ export default function HomeScreen() {
                   <button key={c.name} onClick={() => go(`/products?category=${encodeURIComponent(c.name)}`)} className="flex w-[76px] shrink-0 flex-col items-center gap-1.5 transition-transform active:scale-95">
                     <ProductArt category={c.category_name} image={c.image} className="h-[76px] w-[76px] rounded-xl" emojiClassName="text-[34px]" />
                     <span className="line-clamp-2 text-center text-[11px] font-bold leading-tight">{c.category_name}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* ── Best sellers (tagged by the owner) ──────── */}
+          {!!bestSellers.length && (
+            <section>
+              <SectionTitle action="All items" onAction={() => go("/products")}>
+                Best sellers
+              </SectionTitle>
+              <div className="no-scrollbar flex gap-3 overflow-x-auto px-4 pb-1">
+                {bestSellers.map((p) => (
+                  <button key={p.name} onClick={() => go(`/products/${encodeURIComponent(p.name)}`)} className={cn(CARD, "w-[140px] shrink-0 overflow-hidden text-left transition-transform active:scale-95")}>
+                    <ProductArt category={p.category_name} image={p.image} className={cn("aspect-square w-full", !p.is_available && "opacity-50")} emojiClassName="text-[44px]" />
+                    <span className="block px-2.5 pb-2.5 pt-2">
+                      <span className="block truncate text-[14px] font-bold">{p.product_name}</span>
+                      <span className="mt-0.5 flex items-baseline gap-1.5">
+                        <span className="tabular text-[14px] font-extrabold">{formatMoney(p.discount_price || p.price)}</span>
+                        {!!p.discount_price && <span className="tabular text-[11px] text-black/40 line-through dark:text-white/40">{formatMoney(p.price)}</span>}
+                      </span>
+                      {!p.is_available && <span className="block text-[11px] font-bold uppercase text-[#ff3b30]">Sold out</span>}
+                    </span>
                   </button>
                 ))}
               </div>

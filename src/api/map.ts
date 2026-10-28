@@ -116,6 +116,11 @@ export function mapProduct(r: Row): Product {
     discount_price: num(r.discount_price) || undefined,
     image: fileUrl(r.image),
     is_available: r.is_available ? 1 : 0,
+    stock_quantity: num(r.stock_quantity),
+    // Older products have no flag and count stock.
+    is_stock_item: r.is_stock_item === 0 || r.is_stock_item === "0" ? 0 : 1,
+    sku: str(r.sku),
+    tags: Array.isArray(r.tags) ? r.tags.map(String) : [],
     status: productStatus(r.status),
   };
 }

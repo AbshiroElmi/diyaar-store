@@ -87,4 +87,12 @@ export function initNativeShell() {
     root.classList.remove("kb-open");
     root.style.setProperty("--kb", "0px");
   });
+
+  // Screens scroll inside their own page, never the window. iOS still scrolls the window up to
+  // reveal a focused field, which pushes the navbar off screen, so keep it at the top.
+  if (platform === "ios") {
+    window.addEventListener("scroll", () => {
+      if (window.scrollY !== 0) window.scrollTo(0, 0);
+    });
+  }
 }

@@ -145,7 +145,43 @@ export interface Product {
   discount_price?: number;
   image?: string;
   is_available: 0 | 1;
+  /** How many are left; only counts while is_stock_item is on. */
+  stock_quantity: number;
+  /** 1 when the store tracks inventory for it, 0 for an item that never runs out. */
+  is_stock_item: 0 | 1;
+  sku: string;
+  /** At most one tag key, see PRODUCT_TAGS. */
+  tags: string[];
   status: ProductStatus;
+}
+
+/** The tags Diyaar knows (key: label), in display order. A product has at most one. */
+export const PRODUCT_TAGS = {
+  new: "New",
+  hot: "Hot",
+  popular: "Popular",
+  best_seller: "Best seller",
+  chefs_pick: "Chef's pick",
+  spicy: "Spicy",
+  vegetarian: "Vegetarian",
+  low_stock: "Low stock",
+} as const;
+
+export type ProductTag = keyof typeof PRODUCT_TAGS;
+
+/**
+ * A product at one store location. Empty (null) price and discount mean the product's own apply there;
+ * a location's own discount is struck against its price (or the product's).
+ */
+export interface ProductLocation {
+  location: string;
+  location_name: string;
+  price: number | null;
+  discount_price: number | null;
+  is_available: boolean;
+  /** The location counts its own stock instead of sharing the product's (only for a product that tracks inventory). */
+  track_own_stock: boolean;
+  stock_quantity: number | null;
 }
 
 export interface ProductInput {
@@ -155,6 +191,10 @@ export interface ProductInput {
   price: number;
   discount_price?: number | null;
   is_available?: 0 | 1;
+  stock_quantity?: number;
+  is_stock_item?: 0 | 1;
+  sku?: string;
+  tags?: string[];
   image?: string | null;
 }
 

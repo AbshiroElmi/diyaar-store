@@ -1,8 +1,8 @@
 import { api, fileUrl, filePath } from "../client";
 import { ENDPOINTS } from "../endpoints";
 import { mapProduct } from "../map";
-import type { Category, Paginated, Product, ProductInput, ProductListParams } from "../types";
-import { storeService } from "./store";
+import type { Category, Paginated, Product, ProductInput, ProductListParams, ProductLocation } from "../types";
+import { currentStore, storeService } from "./store";
 
 /** A photo picked on the device is a data URL; upload it first and send the server's file path. */
 async function imagePath(image?: string | null) {
@@ -31,9 +31,15 @@ export const productsService = {
     return { data: r.data.map(mapProduct), total: r.total, page: r.page, page_size: r.page_size };
   },
   /** Returns whether the product is live straight away or waiting for Diyaar's review. */
-  create: async ({ product_name, category, ...rest }: ProductInput) => {
-    const r = await api.post<{ data: { status: string } }>(ENDPOINTS.createProduct, { ...(await body(rest)), name: product_name, category_id: category });
-    return { pending: /pending/i.test(r.data.status) };
+  /** Returns the new product's ID and whether it's live straight away or waiting for Diyaar's review. */
+  create: async ({ product_name, category, stock_quantity, ...rest }: ProductInput) => {
+    const r = await api.post<{ product_id: string; data: { status: string } }>(ENDPOINTS.createProduct, {
+      ...(await body(rest)),
+      name: product_name,
+      category_id: category,
+      stock: stock_quantity,
+    });
+    return { id: r.product_id, pending: /pending/i.test(r.data.status) };
   },
   update: async (productId: string, data: Partial<ProductInput>) => {
     await api.post(ENDPOINTS.updateProduct, { product_id: productId, ...(await body(data)) });
@@ -41,6 +47,50 @@ export const productsService = {
     return r.data.find((p) => p.name === productId) ?? ({ name: productId, ...data } as Product);
   },
   remove: (productId: string) => api.post<{ success: boolean }>(ENDPOINTS.deleteProduct, { product_id: productId }),
+};
+
+interface LocationRow {
+  location: string;
+  location_name: string;
+  override_price: number | null;
+  override_discount_price: number | null;
+  override_is_available: number;
+  track_own_stock: number;
+  override_stock_quantity: number | null;
+}
+
+export const productLocationsService = {
+  /** The product at each active location of the store; a new product (no ID) starts from the store's locations. */
+  list: async (productId?: string): Promise<ProductLocation[]> => {
+    if (!productId) {
+      const r = await api.get<{ locations: Array<{ name: string; location_name: string; is_active: number }> }>(ENDPOINTS.getStoreLocations, { store_id: currentStore.id });
+      return r.locations
+        .filter((l) => l.is_active)
+        .map((l) => ({ location: l.name, location_name: l.location_name, price: null, discount_price: null, is_available: true, track_own_stock: false, stock_quantity: null }));
+    }
+    const r = await api.get<{ locations: LocationRow[] }>(ENDPOINTS.getProductLocations, { product_id: productId });
+    return r.locations.map((l) => ({
+      location: l.location,
+      location_name: l.location_name,
+      price: l.override_price,
+      discount_price: l.override_discount_price,
+      is_available: !!l.override_is_available,
+      track_own_stock: !!l.track_own_stock,
+      stock_quantity: l.override_stock_quantity,
+    }));
+  },
+  /** A row back at the product's defaults removes the location's own values. Stock is only sent for a product that tracks it. */
+  save: (productId: string, rows: ProductLocation[], tracksStock: boolean) =>
+    api.post(ENDPOINTS.setProductLocations, {
+      product_id: productId,
+      overrides: rows.map((l) => ({
+        location: l.location,
+        price: l.price,
+        discount_price: l.discount_price,
+        is_available: l.is_available ? 1 : 0,
+        ...(tracksStock && { track_own_stock: l.track_own_stock ? 1 : 0, stock_quantity: l.track_own_stock ? (l.stock_quantity ?? 0) : 0 }),
+      })),
+    }),
 };
 
 interface CategoryNode {

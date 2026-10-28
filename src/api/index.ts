@@ -9,3 +9,4 @@ export * from "./services/money";
 export * from "./services/account";
 export * from "./services/banners";
 export type * from "./types";
+export { PRODUCT_TAGS } from "./types";

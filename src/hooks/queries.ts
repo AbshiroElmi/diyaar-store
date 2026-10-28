@@ -13,6 +13,7 @@ import {
   dashboardService,
   earningsService,
   ordersService,
+  productLocationsService,
   productsService,
   reviewsService,
   storeService,
@@ -21,6 +22,7 @@ import {
   type OrderStatus,
   type ProductInput,
   type ProductListParams,
+  type ProductLocation,
 } from "@/api";
 
 export const qk = {
@@ -32,6 +34,7 @@ export const qk = {
   orderCounts: ["orders", "counts"] as const,
   order: (id: string) => ["orders", "detail", id] as const,
   products: (p?: ProductListParams) => ["products", p ?? {}] as const,
+  productLocations: (id?: string) => ["products", "locations", id ?? "new"] as const,
   categories: ["categories"] as const,
   reviews: (p?: object) => ["reviews", p ?? {}] as const,
   reviewSummary: ["reviews", "summary"] as const,
@@ -171,13 +174,31 @@ function useCatalogInvalidate() {
   };
 }
 
+/** The product at each of the store's locations; without an ID, the store's locations for a new product. */
+export const useProductLocations = (id?: string) => useQuery({ queryKey: qk.productLocations(id), queryFn: () => productLocationsService.list(id) });
+
+/** Saves the product, then its location prices. A failed location save doesn't undo the product, so it's reported on its own. */
 export function useSaveProduct() {
   const invalidate = useCatalogInvalidate();
   return useMutation({
-    mutationFn: async ({ id, data }: { id?: string; data: ProductInput }) => (id ? (await productsService.update(id, data), { pending: false }) : productsService.create(data)),
-    onSuccess: ({ pending }, { id }) => {
+    mutationFn: async ({ id, data, locations }: { id?: string; data: ProductInput; locations?: ProductLocation[] }) => {
+      const { id: savedId, pending } = id ? (await productsService.update(id, data), { id, pending: false }) : await productsService.create(data);
+      let locationError: string | null = null;
+      if (locations?.length) {
+        try {
+          await productLocationsService.save(savedId, locations, data.is_stock_item !== 0);
+        } catch (err) {
+          locationError = err instanceof Error ? err.message : "Something went wrong";
+        }
+      }
+      return { pending, locationError };
+    },
+    onSuccess: ({ pending, locationError }, { id }) => {
       invalidate();
-      toast.success(id ? "Product updated" : pending ? "Product submitted for approval" : "Product added");
+      if (locationError) {
+        haptic.error();
+        toast.error(`${id ? "Product updated" : "Product added"}, but its location prices weren't saved: ${locationError}`);
+      } else toast.success(id ? "Product updated" : pending ? "Product submitted for approval" : "Product added");
     },
     onError,
   });
