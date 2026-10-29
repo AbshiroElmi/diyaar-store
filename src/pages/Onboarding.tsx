@@ -35,7 +35,7 @@ function OrderArt() {
           </div>
           <div className="mt-4 flex items-center justify-between border-t border-dashed border-black/10 pt-3">
             <span className="tabular text-[18px] font-extrabold">$24.50</span>
-            <span className="flex items-center gap-1 rounded-xl bg-[#219186] px-3.5 py-2 text-[14px] font-bold text-white">
+            <span className="flex items-center gap-1 rounded-xl bg-[#BEFF00] px-3.5 py-2 text-[14px] font-bold text-[#2B330F]">
               <Check className="h-4 w-4" strokeWidth={3} /> Accept
             </span>
           </div>
@@ -62,7 +62,7 @@ function ProductsArt() {
           <div key={label} className={cn("rounded-2xl bg-white p-2 shadow-[0_10px_24px_-14px_rgba(15,79,72,0.5)] dark:bg-[#1c1c1d]", i % 2 ? "translate-y-3" : "")}>
             <div className={cn("flex aspect-square items-center justify-center rounded-xl text-[30px]", tint, !inStock && "opacity-40 grayscale")}>{emoji}</div>
             <p className="mt-1.5 truncate text-[11px] font-bold text-[#1c1c1e] dark:text-white">{label}</p>
-            <span className={cn("mt-1 inline-block rounded-md px-1.5 text-[9px] font-extrabold uppercase leading-[15px]", inStock ? "bg-[#219186]/10 text-[#219186]" : "bg-black/[0.06] text-black/45 dark:bg-white/10 dark:text-white/55")}>
+            <span className={cn("mt-1 inline-block rounded-md px-1.5 text-[9px] font-extrabold uppercase leading-[15px]", inStock ? "bg-[#BEFF00]/25 text-[#2B330F] dark:bg-[#BEFF00]/15 dark:text-[#BEFF00]" : "bg-black/[0.06] text-black/45 dark:bg-white/10 dark:text-white/55")}>
               {inStock ? "In stock" : "Sold out"}
             </span>
           </div>
@@ -158,7 +158,7 @@ export default function OnboardingPage({ onDone }: { onDone: () => void }) {
         <button
           type="button"
           onClick={next}
-          className={cn("flex h-12 items-center justify-center gap-1 rounded-2xl bg-primary font-bold text-white shadow-[0_10px_24px_-8px_rgba(0,0,0,0.6)] transition-all active:scale-[0.97]", last ? "px-7 text-[16px]" : "w-12")}
+          className={cn("flex h-12 items-center justify-center gap-1 rounded-2xl bg-primary font-bold text-primary-foreground shadow-[0_10px_24px_-8px_rgba(0,0,0,0.6)] transition-all active:scale-[0.97]", last ? "px-7 text-[16px]" : "w-12")}
           aria-label={last ? "Get started" : "Next"}
         >
           {last ? "Get started" : <ChevronRight className="h-6 w-6" strokeWidth={2.5} />}

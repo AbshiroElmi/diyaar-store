@@ -10,7 +10,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import LoginPage from "@/pages/Login";
 import OnboardingPage from "@/pages/Onboarding";
 import { markOnboardingSeen, onboardingSeen } from "@/lib/prefs";
-import { LaunchScreen } from "@/components/shared/LaunchScreen";
+import { LAUNCH_DARK, LaunchScreen } from "@/components/shared/LaunchScreen";
 import { NoInternet } from "@/components/shared/NoInternet";
 import { hideSplash, setStatusBarTheme } from "@/lib/native";
 import { useOnline } from "@/lib/network";
@@ -57,7 +57,7 @@ function AppToaster() {
           title: "text-[14px] font-semibold leading-tight text-[#1c1c1e] dark:text-white",
           description: "mt-0.5 text-[12px] leading-tight text-black/55 dark:text-white/60",
           icon: "flex h-[18px] w-[18px] shrink-0 items-center justify-center",
-          actionButton: "ml-auto shrink-0 rounded-lg bg-primary px-3 py-1.5 text-[12px] font-semibold text-white",
+          actionButton: "ml-auto shrink-0 rounded-lg bg-primary px-3 py-1.5 text-[12px] font-semibold text-primary-foreground",
         },
       }}
     />
@@ -88,10 +88,10 @@ function Launch() {
     return () => clearTimeout(t);
   }, []);
   const show = !played || status === "loading";
-  // White status-bar icons on the teal. The first screen after it (Home or Login) wants them too,
-  // and each screen restores the app's own colour when it's left.
+  // Dark status-bar icons on the lime (white on the olive in dark mode). The first screen after it
+  // (Home, Login or Onboarding) wants white ones, and each screen restores the app's own colour when it's left.
   useEffect(() => {
-    if (show) setStatusBarTheme(true);
+    setStatusBarTheme(show ? LAUNCH_DARK : true);
   }, [show]);
   return <AnimatePresence>{show && <LaunchScreen key="launch" />}</AnimatePresence>;
 }

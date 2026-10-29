@@ -89,7 +89,7 @@ const MENU: Array<{ title: string; items: MenuEntry[] }> = [
     title: "Store",
     items: [
       { href: "/reviews", label: "Reviews", icon: Star, tint: "bg-[#ff9500]" },
-      { href: "/store", label: "Store Profile", icon: Store, tint: "bg-[#219186]" },
+      { href: "/store", label: "Store Profile", icon: Store, tint: "bg-primary text-primary-foreground" },
       { href: "/hours", label: "Opening Hours", icon: Clock, tint: "bg-[#34c759]" },
       { href: "/team", label: "Team", icon: Users, tint: "bg-[#5ac8fa]" },
     ],
@@ -211,14 +211,14 @@ function MenuSheet({ opened, onClose }: { opened: boolean; onClose: () => void }
           inset
           dividers
           className="!mt-4 !mb-2"
-          // light teal card so the store stands out from the menu rows
-          colors={{ strongBgIos: "bg-[#219186]/10 dark:bg-[#3fd0bd]/15", strongBgMaterial: "bg-[#219186]/10 dark:bg-[#3fd0bd]/15" }}
+          // light lime card so the store stands out from the menu rows
+          colors={{ strongBgIos: "bg-[#BEFF00]/20 dark:bg-[#BEFF00]/15", strongBgMaterial: "bg-[#BEFF00]/20 dark:bg-[#BEFF00]/15" }}
         >
           <ListItem
             link
             chevron
             onClick={() => go("/store")}
-            media={<span className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[#2bb5a7] to-[#1b6f67] text-[17px] font-semibold text-white">{store ? initials(store.store_name) : ""}</span>}
+            media={<span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#2B330F] text-[17px] font-semibold text-[#BEFF00]">{store ? initials(store.store_name) : ""}</span>}
             title={<span className="font-semibold">{store?.store_name ?? "My store"}</span>}
             text={`${user?.full_name ?? store?.owner_name ?? ""} · ${user?.role ?? "Owner"}`}
           />
@@ -308,7 +308,7 @@ function NewOrdersBar({ count, visible }: { count: number; visible: boolean }) {
             navigate("/orders?status=confirming");
           }}
           className={cn(
-            "hide-on-kb fixed inset-x-3 z-30 flex items-center gap-3 rounded-xl bg-[#219186] px-4 py-3 text-left text-white shadow-[0_10px_30px_-10px_rgba(33,145,134,0.7)] active:scale-[0.98]",
+            "hide-on-kb fixed inset-x-3 z-30 flex items-center gap-3 rounded-xl bg-[#2B330F] px-4 py-3 text-left text-white shadow-[0_10px_30px_-10px_rgba(43,51,15,0.7)] active:scale-[0.98]",
             mobileTheme === "ios" ? "bottom-[calc(env(safe-area-inset-bottom)+62px)]" : "bottom-[calc(env(safe-area-inset-bottom)+90px)]",
           )}
         >

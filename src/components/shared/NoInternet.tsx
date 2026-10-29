@@ -32,7 +32,7 @@ export function NoInternet({ offline = true, onRetry, className }: { offline?: b
           type="button"
           onClick={retry}
           disabled={retrying}
-          className="mt-6 inline-flex h-11 min-w-[160px] items-center justify-center rounded-xl bg-primary px-6 text-[15px] font-semibold text-white transition-transform active:scale-[0.97] disabled:opacity-70"
+          className="mt-6 inline-flex h-11 min-w-[160px] items-center justify-center rounded-xl bg-primary px-6 text-[15px] font-semibold text-primary-foreground transition-transform active:scale-[0.97] disabled:opacity-70"
         >
           {retrying ? <Loader2 className="h-5 w-5 animate-spin" /> : "Try again"}
         </button>

@@ -131,7 +131,10 @@ export function IconTile({ icon: Icon, className, size = "md" }: { icon: LucideI
 /** Blinkit-style flat card: white, thin border, almost no shadow. */
 export const CARD = "rounded-xl border border-black/[0.06] bg-white dark:border-white/10 dark:bg-[#1c1c1d]";
 
-export const BRAND = "#219186";
+export const BRAND = "#BEFF00";
+
+/** Konsta filled buttons default to white text; on lime it needs the dark olive. */
+export const LIME_BUTTON = { fillTextIos: "text-primary-foreground", fillTextMaterial: "text-primary-foreground" };
 
 export function SectionTitle({ children, action, onAction }: { children: ReactNode; action?: string; onAction?: () => void }) {
   return (
@@ -228,7 +231,7 @@ export function ChipBar<T extends string>({ value, onChange, items }: { value: T
             )}
           >
             {it.label}
-            {!!it.count && <span className={cn("tabular rounded-md px-1.5 text-[11px] leading-[18px]", active ? "bg-primary text-white" : "bg-black/[0.07] dark:bg-white/15")}>{it.count}</span>}
+            {!!it.count && <span className={cn("tabular rounded-md px-1.5 text-[11px] leading-[18px]", active ? "bg-primary text-primary-foreground" : "bg-black/[0.07] dark:bg-white/15")}>{it.count}</span>}
           </button>
         );
       })}
@@ -237,7 +240,7 @@ export function ChipBar<T extends string>({ value, onChange, items }: { value: T
 }
 
 /** Thumbnail for products (photo or coloured initials). */
-const THUMB = ["bg-[#34c759]", "bg-[#ff9500]", "bg-[#5856d6]", "bg-[#ff2d55]", "bg-[#007aff]", "bg-[#219186]"];
+const THUMB = ["bg-[#34c759]", "bg-[#ff9500]", "bg-[#5856d6]", "bg-[#ff2d55]", "bg-[#007aff]", "bg-[#2B330F]"];
 export function Thumb({ id, label, image, className }: { id: string; label: string; image?: string; className?: string }) {
   if (image) return <img src={image} alt="" className={cn("h-12 w-12 rounded-xl object-cover", className)} />;
   const color = THUMB[id.charCodeAt(id.length - 1) % THUMB.length];

@@ -151,7 +151,7 @@ export default function ProductEditScreen() {
             />
             <button type="button" onClick={() => fileRef.current?.click()} className="relative transition-transform active:scale-95">
               <ProductArt category={categoryName} image={form.image || undefined} className="h-24 w-24 rounded-3xl shadow-[0_8px_24px_-12px_rgba(0,0,0,0.35)]" emojiClassName="text-[52px]" />
-              <span className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white shadow-lg ring-4 ring-[#f7f9f9] dark:ring-black">
+              <span className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-4 ring-[#f7f9f9] dark:ring-black">
                 <Camera className="h-4 w-4" />
               </span>
             </button>
@@ -199,7 +199,7 @@ export default function ProductEditScreen() {
                 }}
                 className={cn(
                   "rounded-full px-3.5 py-1.5 text-[14px] font-semibold transition-transform active:scale-95",
-                  form.tag === tag ? "bg-primary text-white" : "bg-white text-black/70 dark:bg-[#1c1c1d] dark:text-white/75",
+                  form.tag === tag ? "bg-primary text-primary-foreground" : "bg-white text-black/70 dark:bg-[#1c1c1d] dark:text-white/75",
                 )}
               >
                 {PRODUCT_TAGS[tag]}
@@ -302,7 +302,7 @@ export default function ProductEditScreen() {
                     <span className="line-clamp-2 text-center text-[12px] font-bold leading-tight">{c.category_name}</span>
                     {!c.is_active && <span className="-mt-1 text-[10px] font-semibold text-black/40 dark:text-white/40">Hidden</span>}
                     {selected && (
-                      <span className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white shadow">
+                      <span className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow">
                         <Check className="h-3 w-3" strokeWidth={3} />
                       </span>
                     )}

@@ -134,7 +134,7 @@ export default function ProductsScreen() {
                 onClick={() => setCategory(c.name)}
                 className={cn(
                   "flex h-10 shrink-0 items-center gap-2 rounded-full pl-1 pr-3.5 text-[14px] transition-colors active:scale-95",
-                  active ? "bg-primary font-bold text-white" : "bg-white font-semibold text-black/70 ring-1 ring-black/[0.06] dark:bg-white/10 dark:text-white/75 dark:ring-white/10",
+                  active ? "bg-primary font-bold text-primary-foreground" : "bg-white font-semibold text-black/70 ring-1 ring-black/[0.06] dark:bg-white/10 dark:text-white/75 dark:ring-white/10",
                 )}
               >
                 <ProductArt category={c.name === "all" ? "" : c.category_name} image={"image" in c ? c.image : undefined} className="h-8 w-8 rounded-full" emojiClassName="text-[16px]" />
@@ -173,7 +173,7 @@ export default function ProductsScreen() {
           haptic.tap();
           setMenuOpen(true);
         }}
-        className="hide-on-kb fixed right-4 z-20 bottom-[calc(6.5rem+env(safe-area-inset-bottom))] flex h-11 items-center gap-1.5 rounded-xl bg-primary pl-3 pr-4 text-[15px] font-bold text-white shadow-[0_8px_20px_-8px_rgba(33,145,134,0.65)] transition-transform active:scale-95"
+        className="hide-on-kb fixed right-4 z-20 bottom-[calc(6.5rem+env(safe-area-inset-bottom))] flex h-11 items-center gap-1.5 rounded-xl bg-primary pl-3 pr-4 text-[15px] font-bold text-primary-foreground shadow-[0_8px_20px_-8px_rgba(43,51,15,0.55)] transition-transform active:scale-95"
       >
         <Plus className="h-5 w-5" strokeWidth={2.5} />
         Add item

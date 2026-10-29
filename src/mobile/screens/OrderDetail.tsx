@@ -7,7 +7,7 @@ import type { Order, OrderStatus } from "@/api";
 import { formatDateTime, formatMoney, formatTime } from "@/lib/format";
 import { haptic } from "@/lib/native";
 import { cn } from "@/lib/utils";
-import { ErrorBlock, IconTile, Loading, Screen } from "../ui";
+import { ErrorBlock, IconTile, LIME_BUTTON, Loading, Screen } from "../ui";
 
 const PAYMENT: Record<Order["payment_method"], string> = { cash: "Cash on delivery", card: "Card", wallet: "Diyaar wallet", mobile_money: "Mobile money (EVC)" };
 const isPickup = (o: Order) => o.delivery_type.includes("pickup");
@@ -65,13 +65,13 @@ function ActionBar({ order }: { order: Order }) {
   let content: React.ReactNode = null;
   if (order.status === "confirming")
     content = (
-      <Button large disabled={update.isPending} onClick={() => run("accepted")}>
+      <Button large colors={LIME_BUTTON} disabled={update.isPending} onClick={() => run("accepted")}>
         Accept order
       </Button>
     );
   else if (order.status === "accepted")
     content = (
-      <Button large disabled={update.isPending} onClick={() => run("preparing")}>
+      <Button large colors={LIME_BUTTON} disabled={update.isPending} onClick={() => run("preparing")}>
         Start cooking
       </Button>
     );
@@ -83,7 +83,7 @@ function ActionBar({ order }: { order: Order }) {
     );
   else if (order.status === "ready" && isPickup(order))
     content = (
-      <Button large disabled={update.isPending} onClick={() => run("completed")}>
+      <Button large colors={LIME_BUTTON} disabled={update.isPending} onClick={() => run("completed")}>
         Picked up by customer
       </Button>
     );
@@ -154,7 +154,7 @@ export default function OrderDetailScreen() {
             <>
               <BlockTitle>Driver</BlockTitle>
               <List strong inset dividers>
-                <ListItem link href={`tel:${order.driver_phone}`} media={<IconTile icon={Bike} className="bg-primary" />} title={order.driver_name} after="Call" />
+                <ListItem link href={`tel:${order.driver_phone}`} media={<IconTile icon={Bike} className="bg-primary text-primary-foreground" />} title={order.driver_name} after="Call" />
               </List>
             </>
           )}

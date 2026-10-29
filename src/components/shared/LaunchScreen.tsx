@@ -1,9 +1,11 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { Heart } from "lucide-react";
-import hand from "@/assets/logo-hand.png";
+import { cn } from "@/lib/utils";
+import darkHand from "@/assets/logo-hand-dark.png";
+import limeHand from "@/assets/logo-hand-lime.png";
 
-// Same colours as the native splash (assets/splash*.png), which is plain teal, so the logo appears only here.
-const DARK = typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+// Same colours as the native splash (assets/splash*.png): Diyaar lime with the dark hand, or olive with the lime hand in dark mode.
+export const LAUNCH_DARK = typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)").matches;
 
 /** Little hearts that pop out of the finger-heart and float away. */
 const HEARTS = [
@@ -18,7 +20,7 @@ export function LaunchScreen() {
   return (
     <motion.div
       className="fixed inset-0 z-[90] flex items-center justify-center"
-      style={{ backgroundColor: DARK ? "#0F4F48" : "#219186" }}
+      style={{ backgroundColor: LAUNCH_DARK ? "#2B330F" : "#BEFF00" }}
       initial={{ opacity: 1 }}
       exit={{ opacity: 0, transition: { duration: 0.35, ease: "easeOut" } }}
     >
@@ -34,7 +36,7 @@ export function LaunchScreen() {
           HEARTS.map((h, i) => (
             <motion.span
               key={i}
-              className="absolute left-1/2 top-[8%] text-[#BEFF00]"
+              className={cn("absolute left-1/2 top-[8%]", LAUNCH_DARK ? "text-[#BEFF00]" : "text-[#2B330F]")}
               initial={{ opacity: 0, x: 0, y: 0, scale: 0.4 }}
               animate={{ opacity: [0, 1, 1, 0], x: h.x, y: -70, scale: [0.4, 1.1, 1, 0.8], rotate: h.x / 3 }}
               transition={{ duration: 1.3, delay: h.delay, ease: "easeOut", repeat: Infinity, repeatDelay: 0.6 }}
@@ -43,7 +45,7 @@ export function LaunchScreen() {
             </motion.span>
           ))}
         <motion.img
-          src={hand}
+          src={LAUNCH_DARK ? limeHand : darkHand}
           alt="Diyaar"
           className="relative h-full w-full select-none"
           draggable={false}

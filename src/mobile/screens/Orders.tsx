@@ -9,7 +9,7 @@ import type { Order, OrderStatus } from "@/api";
 import { formatMoney, formatDay, formatTime, initials } from "@/lib/format";
 import { haptic } from "@/lib/native";
 import { cn } from "@/lib/utils";
-import { Empty, ErrorBlock, Loading, Screen, SearchField } from "../ui";
+import { Empty, ErrorBlock, LIME_BUTTON, Loading, Screen, SearchField } from "../ui";
 
 type Stage = "confirming" | "accepted" | "preparing" | "ready";
 
@@ -95,7 +95,7 @@ function Ticket({ order }: { order: Order }) {
           <button
             disabled={update.isPending}
             onClick={() => advance("accepted")}
-            className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary text-[15px] font-bold text-white transition-transform active:scale-[0.98] disabled:opacity-50"
+            className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary text-[15px] font-bold text-primary-foreground transition-transform active:scale-[0.98] disabled:opacity-50"
           >
             <Check className="h-[18px] w-[18px]" strokeWidth={3} /> Accept
           </button>
@@ -234,7 +234,7 @@ function History() {
           ))}
           {data.total > page * 30 && (
             <div className="px-4 pt-4">
-              <Button large disabled={isFetching} onClick={() => setPage((p) => p + 1)}>
+              <Button large colors={LIME_BUTTON} disabled={isFetching} onClick={() => setPage((p) => p + 1)}>
                 {isFetching ? "Loading…" : "Load more"}
               </Button>
             </div>

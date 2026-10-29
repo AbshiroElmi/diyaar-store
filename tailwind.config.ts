@@ -5,7 +5,7 @@ import konstaConfig from "konsta/config";
 
 export default konstaConfig({
   konsta: {
-    colors: { primary: "#219186" },
+    colors: { primary: "#BEFF00" },
   },
   darkMode: ["class"],
   content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
@@ -74,6 +74,12 @@ export default konstaConfig({
           "accent-foreground": "hsl(var(--sidebar-accent-foreground) / <alpha-value>)",
           border: "hsl(var(--sidebar-border) / <alpha-value>)",
           ring: "hsl(var(--sidebar-ring) / <alpha-value>)",
+        },
+      },
+      // Lime is too light for text on white, so text-primary uses the ink shade (olive in light, lime in dark).
+      textColor: {
+        primary: {
+          DEFAULT: "hsl(var(--primary-ink) / <alpha-value>)",
         },
       },
       borderRadius: {

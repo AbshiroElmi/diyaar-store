@@ -50,9 +50,9 @@ export default function StoreProfileScreen() {
         <>
           <div className="flex flex-col items-center px-4 pb-2 pt-6 text-center">
             {store.logo ? (
-              <img src={store.logo} alt="" className="h-24 w-24 rounded-[28px] object-cover shadow-lg shadow-[#219186]/30" />
+              <img src={store.logo} alt="" className="h-24 w-24 rounded-[28px] object-cover shadow-lg shadow-[#2B330F]/30" />
             ) : (
-              <span className="flex h-24 w-24 items-center justify-center rounded-[28px] bg-gradient-to-br from-[#2bb5a7] to-[#155e57] text-[32px] font-bold text-white shadow-lg shadow-[#219186]/30">{initials(store.store_name)}</span>
+              <span className="flex h-24 w-24 items-center justify-center rounded-[28px] bg-[#2B330F] text-[32px] font-bold text-[#BEFF00] shadow-lg shadow-[#2B330F]/30">{initials(store.store_name)}</span>
             )}
             <p className="mt-3 text-[22px] font-bold tracking-tight">{store.store_name}</p>
             {store.tagline && <p className="mt-1 text-[14px] text-black/50 dark:text-white/50">{store.tagline}</p>}

@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { useTheme } from "next-themes";
 import { Area, AreaChart, ResponsiveContainer, XAxis } from "recharts";
 import { ChefHat, ChevronDown, Clock, PackageCheck, PackagePlus, ReceiptText, Search, ShoppingBag, Star, Users } from "lucide-react";
+import limeHand from "@/assets/logo-hand-lime.png";
 import { useBanners, useCategories, useDashboard, useOrderCounts, useProducts, useSetStoreOpen, useStore } from "@/hooks/queries";
 import { formatMoney, formatNumber, initials, timeAgo } from "@/lib/format";
 import { haptic, setStatusBarTheme } from "@/lib/native";
@@ -155,8 +156,8 @@ export default function HomeScreen() {
               <ChevronDown className="h-4 w-4 shrink-0" />
             </p>
           </button>
-          <button onClick={() => go("/store")} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[13px] font-extrabold text-[#219186]">
-            {store ? initials(store.store_name) : ""}
+          <button onClick={() => go("/store")} className="shrink-0 active:scale-95" aria-label="Store profile">
+            <img src={limeHand} alt="Diyaar" className="h-10 w-10 drop-shadow-[0_4px_8px_rgba(0,0,0,0.3)]" draggable={false} />
           </button>
         </div>
 
@@ -231,12 +232,12 @@ export default function HomeScreen() {
                   <AreaChart data={data.trend} margin={{ top: 4, left: 0, right: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="home-rev" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#219186" stopOpacity={0.3} />
-                        <stop offset="100%" stopColor="#219186" stopOpacity={0} />
+                        <stop offset="0%" stopColor="#BEFF00" stopOpacity={0.55} />
+                        <stop offset="100%" stopColor="#BEFF00" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <XAxis dataKey="date" tickFormatter={(d) => format(new Date(d), "EEE")} tickLine={false} axisLine={false} fontSize={10} stroke="#9a9a9f" interval={0} padding={{ left: 12, right: 12 }} />
-                    <Area type="monotone" dataKey="revenue" stroke="#219186" strokeWidth={2.5} fill="url(#home-rev)" dot={false} activeDot={false} />
+                    <Area type="monotone" dataKey="revenue" stroke={resolvedTheme === "dark" ? "#BEFF00" : "#2B330F"} strokeWidth={2.5} fill="url(#home-rev)" dot={false} activeDot={false} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -247,7 +248,7 @@ export default function HomeScreen() {
           <div className="grid grid-cols-4 gap-2 px-4">
             {QUICK.map((q) => (
               <button key={q.label} onClick={() => go(q.href)} className={cn(CARD, "flex flex-col items-center gap-1.5 py-3 transition-transform active:scale-95")}>
-                <q.icon className="h-6 w-6 text-[#219186]" strokeWidth={2.2} />
+                <q.icon className="h-6 w-6 text-primary" strokeWidth={2.2} />
                 <span className="text-[12px] font-bold">{q.label}</span>
               </button>
             ))}
