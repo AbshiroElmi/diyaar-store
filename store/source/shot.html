@@ -1,0 +1,188 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Diyaar Store screenshot</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="stage" id="stage"></div>
+<script src="screens.js"></script>
+<script>
+/* Usage: shot.html?kind=ios-phone&shot=1&w=1320&h=2868
+   kind: ios-phone | ios-duo | android-phone | ios-tablet | android-tablet
+   The browser window size is the final canvas size (set by render.sh). */
+const { S } = window.DiyaarScreens;
+
+const KINDS = {
+  'ios-phone':      { os: 'ios',     w: 390, h: 844,  bezel: 14, r: 55, cam: 'island', top: 54, bottom: 26, maxW: 0.70 },
+  'android-phone':  { os: 'android', w: 400, h: 880,  bezel: 12, r: 40, cam: 'punch',  top: 38, bottom: 16, maxW: 0.68, bleed: 0.015 },
+  'ios-tablet':     { os: 'ios',     w: 620, h: 892,  bezel: 24, r: 24, cam: 'tab',    top: 30, bottom: 18, maxW: 0.80, tablet: true },
+  'ios-duo':        { os: 'ios',     w: 560, h: 780,  bezel: 16, r: 38, cam: 'island', top: 54, bottom: 22, maxW: 0.80, bleed: 0.06 },
+  'android-tablet': { os: 'android', w: 600, h: 960,  bezel: 26, r: 22, cam: 'tab',    top: 30, bottom: 14, maxW: 0.78, tablet: true },
+};
+
+const sparkle = (size, color, rot = 0) =>
+  `<svg width="${size}" height="${size}" viewBox="0 0 24 24" style="transform:rotate(${rot}deg)"><path d="M12 0C13 8 16 11 24 12 16 13 13 16 12 24 11 16 8 13 0 12 8 11 11 8 12 0Z" fill="${color}"/></svg>`;
+const heart = (size, color, rot = 0) =>
+  `<svg width="${size}" height="${size}" viewBox="0 0 24 24" style="transform:rotate(${rot}deg)"><path d="M12 21s-8-5.2-8-11a4.6 4.6 0 0 1 8-3 4.6 4.6 0 0 1 8 3c0 5.8-8 11-8 11z" fill="${color}"/></svg>`;
+
+/* Copy + artwork per screenshot. Sticker positions are % of the device box.
+   Keep these in sync with the caption table in STORE_LISTING.md. */
+const SHOTS = {
+  1: {
+    slug: 'your-store', theme: 'light', screen: 'home',
+    h1: 'Your whole store<br><mark>in your pocket</mark>',
+    p: 'Orders, menu, sales & earnings in one app',
+    stickers: [
+      { l: -12, t: -3, r: -7, cls: 'big', html: '<span class="em">🟢</span> Open in one tap' },
+      { rt: -10, t: 61, r: 6, cls: 'lime', html: '<span class="em">📈</span> +18% today' },
+    ],
+  },
+  2: {
+    slug: 'accept-orders', theme: 'dark', screen: 'orders',
+    h1: 'Accept orders<br><mark>in a snap</mark> 🫰',
+    p: 'New orders ring in. Tap Accept and get cooking',
+    stickers: [
+      { l: -11, t: -3, r: -8, cls: 'lime big', html: '<span class="em">🛎️</span> Ding ding!' },
+      { rt: -10, t: 46, r: 7, cls: '', html: '<span class="em">💚</span> +$18.50' },
+      { l: -10, t: 67.5, r: -5, cls: '', html: '<span class="em">⏱️</span> Live timers' },
+    ],
+  },
+  3: {
+    slug: 'kitchen-to-door', theme: 'peach', screen: 'detail',
+    h1: 'From kitchen<br>to <mark>doorstep</mark>',
+    p: 'Track every order from cooking to delivered',
+    stickers: [
+      { rt: -11, t: 10, r: 7, cls: 'big', html: '<span class="em">🧑‍🍳</span> Cooking' },
+      { l: -11, t: 59.5, r: -7, cls: 'lime', html: '<span class="em">📞</span> Call the customer' },
+      { rt: -8, t: 85, r: 5, cls: 'dark', html: '<span class="em">✅</span> <b>Ready in one tap</b>' },
+    ],
+  },
+  4: {
+    slug: 'menu', theme: 'mint', screen: 'products',
+    h1: 'Update your menu<br><mark>in seconds</mark>',
+    p: 'Add items, edit prices & mark sold out',
+    stickers: [
+      { l: -11, t: 30, r: -7, cls: 'big', html: '<span class="em">📸</span> Add a photo' },
+      { rt: -10, t: 46, r: 7, cls: 'lime', html: '<span class="em">🏷️</span> 15% off' },
+      { l: -9, t: 66, r: -5, cls: 'dark', html: '<span class="em">✅</span> <b>In stock</b>' },
+    ],
+  },
+  5: {
+    slug: 'earnings', theme: 'lime', screen: 'earnings',
+    h1: 'Watch your<br>sales <mark>grow</mark> 💸',
+    p: 'See your payout and every dollar you earn',
+    stickers: [
+      { rt: -10, t: 8, r: 7, cls: 'dark big', html: '<span class="em">📈</span> <b>+18%</b>' },
+      { l: -11, t: 79, r: -6, cls: '', html: '<span class="em">📱</span> Paid to EVC Plus' },
+    ],
+  },
+  6: {
+    slug: 'reviews', theme: 'teal', screen: 'reviews',
+    h1: 'See what customers<br><mark>love</mark> ⭐',
+    p: 'Every rating and review in one place',
+    stickers: [
+      { l: -11, t: -3, r: -7, cls: 'lime big', html: '<span class="em">⭐</span> 4.8 rating' },
+      { rt: -9, t: 52.5, r: 6, cls: '', html: '<span class="em">😍</span> Best in Hodan!' },
+      { l: -10, t: 84, r: -5, cls: 'dark', html: '<span class="em">💬</span> <b>1,248 reviews</b>' },
+    ],
+  },
+  7: {
+    slug: 'hours-team', theme: 'light', screen: 'hours',
+    h1: 'Your store,<br><mark>your rules</mark>',
+    p: 'Set opening hours, add your team & close any time',
+    stickers: [
+      { l: -11, t: -3, r: -7, cls: 'big', html: '<span class="em">⏰</span> Open 7am to 11pm' },
+      { rt: -10, t: 90, r: 7, cls: 'lime', html: '<span class="em">👥</span> Team of 4' },
+      { l: -10, t: 84, r: -5, cls: 'dark', html: '<span class="em">⚡</span> <b>Auto-accept</b>' },
+    ],
+  },
+};
+
+const DECOR = {
+  light: [['blob', 8, 32, 520, '#E2FF8A', .55], ['blob', 78, 52, 460, '#FFFFFF', .7], ['blob', -6, 78, 380, '#D6FF66', .45]],
+  mint:  [['blob', 76, 30, 520, '#B9EEE4', .6], ['blob', -8, 64, 480, '#E6FF9E', .55], ['blob', 70, 86, 380, '#FFFFFF', .7]],
+  peach: [['blob', -6, 36, 520, '#FFD3BA', .55], ['blob', 74, 66, 460, '#E6FF9E', .55], ['blob', 10, 92, 360, '#FFFFFF', .6]],
+  lime:  [['blob', 78, 30, 540, '#D8FF5C', .9], ['blob', -10, 70, 460, '#A2E000', .6], ['blob', 60, 92, 380, '#DFFF7A', .8]],
+  dark:  [['blob', 80, 32, 560, '#BEFF00', .08], ['blob', -12, 66, 500, '#BEFF00', .06], ['blob', 50, 96, 400, '#ffffff', .04]],
+  teal:  [['blob', 80, 32, 560, '#BEFF00', .12], ['blob', -12, 66, 500, '#ffffff', .08], ['blob', 50, 96, 400, '#0f4f48', .5]],
+};
+
+const P = new URLSearchParams(location.search);
+const kind = KINDS[P.get('kind') || 'ios-phone'];
+const shot = SHOTS[+P.get('shot') || 1];
+const W = +P.get('w') || innerWidth, H = +P.get('h') || innerHeight;
+const SW = 1320, SH = Math.round(H * SW / W);
+
+const stage = document.getElementById('stage');
+stage.className = `stage theme-${shot.theme}`;
+stage.style.height = SH + 'px';
+stage.style.transform = `scale(${W / SW})`;
+
+const dark = shot.theme === 'dark' || shot.theme === 'teal';
+const sparkleColor = dark ? '#BEFF00' : '#2B330F';
+
+// Background decor
+let html = '';
+for (const [, x, y, size, color, op] of DECOR[shot.theme]) {
+  html += `<div class="blob" style="left:${x}%;top:${y}%;width:${size}px;height:${size}px;margin:-${size / 2}px 0 0 -${size / 2}px;background:${color};opacity:${op}"></div>`;
+}
+html += `<div class="dots" style="left:-40px;top:${SH * 0.30}px;width:260px;height:300px;color:${sparkleColor}"></div>`;
+html += `<div class="dots" style="right:-40px;top:${SH * 0.70}px;width:240px;height:260px;color:${sparkleColor}"></div>`;
+
+// Caption
+const capTop = Math.round(SH * (kind.tablet ? 0.045 : 0.05));
+html += `<div class="cap" id="cap" style="top:${capTop}px">
+  <div class="brandpill"><span class="ico"><img src="assets/hand.png" alt=""></span>Diyaar Store</div>
+  <h1>${shot.h1}</h1><p>${shot.p}</p></div>`;
+
+// Floating sparkles around the caption
+html += `<div class="decor" style="left:70px;top:${capTop + 20}px">${sparkle(64, sparkleColor, 10)}</div>
+  <div class="decor" style="left:150px;top:${capTop + 110}px">${sparkle(30, dark ? '#fff' : '#BEFF00', -10)}</div>
+  <div class="decor" style="right:84px;top:${capTop + 40}px">${heart(54, dark ? '#BEFF00' : '#FF8FB1', 14)}</div>
+  <div class="decor" style="right:170px;top:${capTop - 6}px">${sparkle(34, sparkleColor, 20)}</div>`;
+
+stage.innerHTML = html;
+
+// Device
+const cap = document.getElementById('cap');
+const capBottom = capTop + cap.offsetHeight;
+const outerW = kind.w + kind.bezel * 2, outerH = kind.h + kind.bezel * 2;
+const gap = kind.tablet ? 64 : 72;
+const avail = SH - capBottom - gap;
+const bleed = kind.bleed ?? (kind.tablet ? 0.07 : 0.09);
+const k = Math.min((SW * kind.maxW) / outerW, avail / (outerH * (1 - bleed)));
+const left = (SW - outerW * k) / 2;
+
+const ctx = { os: kind.os, tablet: !!kind.tablet, w: kind.w, h: kind.h, bottom: kind.bottom };
+
+const camHtml = kind.cam === 'island' ? '<div class="island"></div>'
+  : kind.cam === 'punch' ? '<div class="punch"></div>' : '';
+
+const fs = outerW * (kind.tablet ? 0.040 : 0.050);
+const stickerHtml = shot.stickers.map((s) => {
+  const pos = s.l !== undefined ? `left:${s.l * (kind.tablet ? 0.75 : 1)}%` : `right:${s.rt * (kind.tablet ? 0.75 : 1)}%`;
+  return `<div class="sticker ${s.cls}" style="${pos};top:${s.t}%;transform:rotate(${s.r}deg)">${s.html}</div>`;
+}).join('');
+const spark = `
+  <div class="sparkle" style="left:-7%;top:6%">${sparkle(fs * 1.6, sparkleColor, 0)}</div>
+  <div class="sparkle" style="right:-6%;top:58%">${sparkle(fs * 1.2, dark ? '#fff' : '#BEFF00', 18)}</div>
+  <div class="sparkle" style="left:-5%;top:88%">${heart(fs * 1.3, dark ? '#BEFF00' : '#FF8FB1', -12)}</div>`;
+
+const device = document.createElement('div');
+device.className = 'device';
+device.style.cssText = `left:${left}px;top:${capBottom + gap}px;width:${outerW}px;height:${outerH}px;transform:scale(${k});font-size:${fs}px`;
+device.innerHTML = `
+  <div class="frame" style="width:${outerW}px;height:${outerH}px;border-radius:${kind.r + kind.bezel}px">
+    ${kind.cam === 'tab' ? `<div class="tabcam" style="top:${kind.bezel / 2 - 5}px"></div>` : ''}
+    <div class="screen" style="left:${kind.bezel}px;top:${kind.bezel}px;width:${kind.w}px;height:${kind.h}px;border-radius:${kind.r}px">
+      ${camHtml}${S[shot.screen](ctx)}
+    </div>
+  </div>${stickerHtml}${spark}`;
+stage.appendChild(device);
+
+document.title = `ready ${shot.slug}`;
+</script>
+</body>
+</html>

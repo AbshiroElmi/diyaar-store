@@ -1,0 +1,106 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Diyaar Store graphic</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .fg { position: absolute; inset: 0; overflow: hidden;
+    background: radial-gradient(90% 120% at 78% 40%, #4F6119 0%, var(--olive) 55%, #1E2408 100%); }
+  .fg .txt { position: absolute; left: 64px; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; color: #fff; z-index: 5; }
+  .fg .logo { width: 92px; height: 92px; border-radius: 28px; background: var(--lime); display: grid; place-items: center;
+    box-shadow: 0 10px 30px rgba(190,255,0,.35); transform: rotate(-6deg); }
+  .fg .logo img { width: 62px; filter: brightness(0) saturate(100%) invert(14%) sepia(31%) saturate(1200%) hue-rotate(38deg); }
+  .fg h1 { font: 600 70px/1 'Fredoka', sans-serif; letter-spacing: -1px; margin-top: 24px; }
+  .fg h2 { font: 600 34px/1.1 'Fredoka', sans-serif; color: var(--lime); margin-top: 10px; }
+  .fg .chips { display: flex; gap: 10px; margin-top: 24px; }
+  .fg .chip2 { font: 700 17px/1 'Nunito', sans-serif; padding: 10px 14px; border-radius: 999px; background: rgba(255,255,255,.1); color: #fff; border: 1.5px solid rgba(255,255,255,.14); }
+  .fg .ph { position: absolute; transform-origin: top left; }
+  .ic { position: absolute; inset: 0; background: #2C330F; display: grid; place-items: center; }
+  .ic img { width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+<div id="root" style="position:absolute;left:0;top:0;transform-origin:top left"></div>
+<script src="screens.js"></script>
+<script>
+/* graphic.html?g=feature&w=1024&h=500  |  graphic.html?g=icon&w=1024&h=1024  |  graphic.html?g=header&w=3840&h=1646 */
+const { S } = window.DiyaarScreens;
+const P = new URLSearchParams(location.search);
+const g = P.get('g') || 'feature';
+const W = +P.get('w') || innerWidth, H = +P.get('h') || innerHeight;
+const root = document.getElementById('root');
+const sparkle = (size, color, rot = 0) =>
+  `<svg width="${size}" height="${size}" viewBox="0 0 24 24" style="transform:rotate(${rot}deg)"><path d="M12 0C13 8 16 11 24 12 16 13 13 16 12 24 11 16 8 13 0 12 8 11 11 8 12 0Z" fill="${color}"/></svg>`;
+
+if (g === 'icon') {
+  // Flattened (no alpha) copy of the app icon — required by App Store & Play.
+  root.style.cssText += `width:${W}px;height:${H}px`;
+  root.innerHTML = `<div class="ic"><img src="assets/app-icon-source.png" alt=""></div>`;
+} else if (g === 'header') {
+  // App Store product page header. The store lays the app name and icon over it, so no copy here:
+  // a fan of phones centred in the frame, bleeding off the bottom edge.
+  const LW = 1920, LH = Math.round(H * LW / W);
+  root.style.cssText += `width:${LW}px;height:${LH}px;transform:scale(${W / LW})`;
+  const ctx = { os: 'ios', tablet: false, w: 390, h: 844, bottom: 26 };
+  // Layout is drawn for a 1920×823 frame; taller frames (16:9) grow it a little and centre it vertically.
+  const u = Math.min(LH / 823, 1.1), oy = (LH - 823 * u) * 0.55;
+  const kc = 823 * u * 0.92 / 872;
+  const phone = (screen, dx, top, rot, k, z) => `
+    <div class="ph" style="left:${960 + dx - 209}px;top:${top}px;z-index:${z};transform-origin:top center;transform:rotate(${rot}deg) scale(${k})">
+      <div class="frame" style="width:418px;height:872px;border-radius:69px">
+        <div class="screen" style="left:14px;top:14px;width:390px;height:844px;border-radius:55px">
+          <div class="island"></div>${S[screen](ctx)}</div></div></div>`;
+  const fs = 30 * u;
+  const sticker = (x, y, rot, cls, html) =>
+    `<div class="sticker ${cls}" style="left:${x}px;top:${y}px;z-index:9;font-size:${fs}px;transform:rotate(${rot}deg)">${html}</div>`;
+  root.innerHTML = `
+    <div class="fg" style="background:radial-gradient(70% 90% at 50% 30%, #55691B 0%, var(--olive) 55%, #1B2008 100%)">
+      <div class="blob" style="left:${960 - 450}px;top:${LH * 0.05}px;width:900px;height:900px;background:#BEFF00;opacity:.09"></div>
+      <div class="blob" style="left:-220px;top:${LH * 0.55}px;width:600px;height:600px;background:#BEFF00;opacity:.06"></div>
+      <div class="blob" style="left:1560px;top:-260px;width:600px;height:600px;background:#fff;opacity:.04"></div>
+      <div class="dots" style="left:60px;top:${oy + 823 * u * 0.08}px;width:260px;height:220px;color:#BEFF00;opacity:.2"></div>
+      <div class="dots" style="left:1600px;top:${LH * 0.6}px;width:260px;height:220px;color:#BEFF00;opacity:.2"></div>
+      ${phone('detail', -820, oy + 823 * u * 0.26, -14, kc * 0.78, 1)}
+      ${phone('reviews', 820, oy + 823 * u * 0.26, 14, kc * 0.78, 1)}
+      ${phone('home', -430 * u, oy + 823 * u * 0.16, -8, kc * 0.88, 2)}
+      ${phone('earnings', 430 * u, oy + 823 * u * 0.16, 8, kc * 0.88, 2)}
+      ${phone('orders', 0, oy + 823 * u * 0.08, 0, kc, 3)}
+      ${sticker(960 - 470 * u, oy + 823 * u * 0.13, -8, 'lime big', '<span class="em">🛎️</span> Ding ding!')}
+      ${sticker(960 + 200 * u, oy + 823 * u * 0.40, 7, '', '<span class="em">💚</span> +$18.50')}
+      ${sticker(960 - 720 * u, oy + 823 * u * 0.52, -6, '', '<span class="em">📈</span> +18% today')}
+      ${sticker(960 + 560 * u, oy + 823 * u * 0.12, 6, 'dark', '<span class="em">⭐</span> <b>4.8 rating</b>')}
+      <div class="decor" style="left:${960 - 260 * u}px;top:${oy + 823 * u * 0.04}px;z-index:9">${sparkle(48 * u, '#BEFF00', 10)}</div>
+      <div class="decor" style="left:${960 + 300 * u}px;top:${oy + 823 * u * 0.03}px;z-index:9">${sparkle(28 * u, '#fff', -10)}</div>
+      <div class="decor" style="left:120px;top:${LH * 0.4}px">${sparkle(30 * u, '#fff', 20)}</div>
+      <div class="decor" style="left:1760px;top:${LH * 0.42}px">${sparkle(36 * u, '#BEFF00', -20)}</div>
+    </div>`;
+} else {
+  root.style.cssText += `width:1024px;height:500px;transform:scale(${W / 1024})`;
+  const ctx = { os: 'ios', tablet: false, w: 390, h: 844, bottom: 26 };
+  const phone = (screen, x, y, rot, k) => `
+    <div class="ph" style="left:${x}px;top:${y}px;transform:rotate(${rot}deg) scale(${k})">
+      <div class="frame" style="width:418px;height:872px;border-radius:69px">
+        <div class="screen" style="left:14px;top:14px;width:390px;height:844px;border-radius:55px">
+          <div class="island"></div>${S[screen](ctx)}</div></div></div>`;
+  root.innerHTML = `
+    <div class="fg">
+      <div class="blob" style="left:620px;top:-120px;width:520px;height:520px;background:#BEFF00;opacity:.08"></div>
+      <div class="dots" style="left:470px;top:30px;width:180px;height:140px;color:#BEFF00;opacity:.22"></div>
+      ${phone('orders', 820, 60, 9, 0.56)}
+      ${phone('home', 590, 46, -6, 0.6)}
+      <div class="decor" style="left:560px;top:60px;z-index:6">${sparkle(40, '#BEFF00', 10)}</div>
+      <div class="decor" style="left:968px;top:34px;z-index:6">${sparkle(26, '#fff', -10)}</div>
+      <div class="decor" style="left:420px;top:380px">${sparkle(22, '#BEFF00', 20)}</div>
+      <div class="txt">
+        <div class="logo"><img src="assets/hand.png" alt=""></div>
+        <h1>Diyaar Store</h1>
+        <h2>Orders. Menu. Sales. 🫰</h2>
+        <div class="chips"><span class="chip2">🛎️ Live orders</span><span class="chip2">💸 Daily sales</span></div>
+      </div>
+    </div>`;
+}
+document.title = 'ready';
+</script>
+</body>
+</html>
