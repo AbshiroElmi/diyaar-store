@@ -97,7 +97,7 @@ Everything here was checked after rendering: exact pixel sizes ✓, **no alpha c
    - In Xcode: bump **Version** (`MARKETING_VERSION`) and **Build** (`CURRENT_PROJECT_VERSION`), select *Any iOS Device (arm64)* → **Product › Archive** → **Distribute App › App Store Connect › Upload**.
 2. **App Store Connect → Apps → ➕ New App** (first time only)
    - Platform iOS · Name **Diyaar Store** · Language English (U.S.) · Bundle ID `so.diyaar.store` · SKU e.g. `diyaar-store-ios`.
-3. **App Information**: subtitle, categories (Business / Food & Drink), privacy policy URL, age rating questionnaire, content rights. Everything is in `STORE_LISTING.md`.
+3. **App Information**: subtitle, categories (Business / Productivity), privacy policy URL, age rating questionnaire, content rights. Everything is in `STORE_LISTING.md`.
 4. **App Privacy**: answer using the table in `STORE_LISTING.md`.
 5. **Version page (1.0 Prepare for Submission)**
    - **App Previews and Screenshots**: for each device tab shown, drag in the matching folder from `screenshots/ios/` (keep the 01→07 order). Start with *6.9" Display* → `iPhone 6.9in_1320x2868/*`.

@@ -45,10 +45,10 @@ Orders, menu & sales, all set
 New orders ring in, you tap Accept. Update prices, mark items sold out, follow today's sales and your payout, and open or close your store in one tap. 🫰
 ```
 
-### Keywords `(97/100)`
+### Keywords `(96/100)`
 *Comma-separated, no spaces. Don't repeat words from the name ("Diyaar", "Store"). Apple already indexes those.*
 ```
-merchant,restaurant,orders,menu,seller,partner,shop,kitchen,sales,business,Somalia,Mogadishu,food
+merchant,orders,seller,shop,sales,business,inventory,delivery,grocery,pharmacy,Somalia,Mogadishu
 ```
 
 ### Description `(≤4000)`
@@ -108,7 +108,7 @@ Welcome to Diyaar Store! 🫰
 | | |
 |---|---|
 | Primary | **Business** |
-| Secondary | **Food & Drink** |
+| Secondary | **Productivity** *(optional; avoid Food & Drink, since any kind of store can use the app)* |
 
 ### Age rating
 Fill in the questionnaire honestly. Notes:
@@ -186,7 +186,7 @@ Same as the App Store "What's New" above.
 |---|---|
 | App or game | App |
 | Category | **Business** |
-| Tags (pick up to 5) | Business tools · Restaurant management · Point of sale · Inventory · Food delivery |
+| Tags (pick up to 5) | Business tools · Point of sale · Inventory · Order management · Delivery *(pick the closest matches from Play's list; keep them general, not food-only)* |
 | Contains ads | **No** |
 | Email | **TODO**: support@diyaar.so |
 | Phone | optional |
